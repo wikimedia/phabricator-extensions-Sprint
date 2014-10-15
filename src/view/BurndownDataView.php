@@ -52,95 +52,6 @@ final class BurndownDataView extends SprintView {
     return array ($chart, $tasks_table, $burndown_table, $event_table);
   }
 
-  private function getAuxFields() {
-    $field_list = PhabricatorCustomField::getObjectFields($this->project, PhabricatorCustomField::ROLE_EDIT);
-    $field_list->setViewer($this->viewer);
-    $field_list->readFieldsFromStorage($this->project);
-    $aux_fields = $field_list->getFields();
-    return $aux_fields;
-  }
-
-  private function getStartDate($aux_fields) {
-    $start = idx($aux_fields, 'isdc:sprint:startdate')
-        ->getProxy()->getFieldValue();
-    return $start;
-  }
-
-  private function getEndDate($aux_fields) {
-    $end = idx($aux_fields, 'isdc:sprint:enddate')
-        ->getProxy()->getFieldValue();
-    return $end;
-  }
-
-  private function buildDateArray($start, $end) {
-    // Build an array of dates between start and end
-    $period = new DatePeriod(
-        id(new DateTime("@" . $start))->setTime(0, 0),
-        new DateInterval('P1D'), // 1 day interval
-        id(new DateTime("@" . $end))->modify('+1 day')->setTime(0, 0));
-
-    $dates = array('before' => new BurndownDataDate('Start of Sprint'));
-    foreach ($period as $day) {
-      $dates[$day->format('D M j')] = new BurndownDataDate(
-          $day->format('D M j'));
-    }
-    $dates['after'] = new BurndownDataDate('After end of Sprint');
-    return $dates;
-  }
-
-  // Examine all the transactions and extract "events" out of them. These are
-  // times when a task was opened or closed. Make some effort to also track
-  // "scope" events (when a task was added or removed from a project).
-  private function examineXactions($xactions, $tasks) {
-    $scope_phids = array($this->project->getPHID());
-    $this->events = $this->extractEvents($xactions, $scope_phids);
-
-    $this->xactions = mpull($xactions, null, 'getPHID');
-    $this->tasks = mpull($tasks, null, 'getPHID');
-
-  }
-
-  // Load the data for the chart. This approach tries to be simple, but loads
-  // and processes large amounts of unnecessary data, so it is not especially
-  // fast. Some performance improvements can be made at the cost of fragility
-  // by using raw SQL; real improvements can be made once Facts comes online.
-
-  // First, load *every task* in the project. We have to do something like
-  // this because there's no straightforward way to determine which tasks
-  // have activity in the project period.
-  private function getTasks() {
-    $tasks = id(new ManiphestTaskQuery())
-        ->setViewer($this->viewer)
-        ->withAnyProjects(array($this->project->getPHID()))
-        ->execute();
-    return $tasks;
-  }
-
-  private function checkNull($start, $end, $tasks) {
-    if (!$start OR !$end) {
-      throw new BurndownException("This project is not set up for Burndowns, "
-          . "make sure it has 'Sprint' in the name, and then edit it to add the "
-          . "sprint start and end date.");
-    }
-
-    if (!$tasks) {
-      throw new BurndownException("This project has no tasks.");
-    }
-  }
-
-  // Now load *every transaction* for those tasks. This loads all the
-  // comments, etc., for every one of the tasks. Again, not very fast, but
-  // we largely do not have ways to select this data more narrowly yet.
-  private function getXactions($tasks) {
-    $task_phids = mpull($tasks, 'getPHID');
-
-    $xactions = id(new ManiphestTransactionQuery())
-        ->setViewer($this->viewer)
-        ->withObjectPHIDs($task_phids)
-        ->execute();
-    return $xactions;
-  }
-
   // Now that we have the data for each day, we need to loop over and sum
   // up the relevant columns
   private function sumSprintStats() {
@@ -175,13 +86,12 @@ final class BurndownDataView extends SprintView {
   }
 
   // Now loop through the events and build the data for each day
-  private function buildDailyData($start, $end) {
-    foreach ($this->events as $event) {
+  private function buildDailyData($events, $start, $end) {
+    foreach ($events as $event) {
 
       $xaction = $this->xactions[$event['transactionPHID']];
       $xaction_date = $xaction->getDateCreated();
       $task_phid = $xaction->getObjectPHID();
-      // $task = $this->tasks[$task_phid];
 
       // Determine which date to attach this data to
       if ($xaction_date < $start) {
@@ -221,44 +131,6 @@ final class BurndownDataView extends SprintView {
       }
     }
   }
-
-  /**
-   * Compute the values for the "Ideal Points" line.
-   */
-
-  // This is a cheap hacky way to get business days, and does not account for
-  // holidays at all.
-  private function computeIdealPoints() {
-    $total_business_days = 0;
-    foreach ($this->dates as $key => $date) {
-      if ($key == 'before' OR $key == 'after')
-        continue;
-      $day_of_week = id(new DateTime($date->getDate()))->format('w');
-      if ($day_of_week != 0 AND $day_of_week != 6) {
-        $total_business_days++;
-      }
-    }
-
-    $elapsed_business_days = 0;
-    foreach ($this->dates as $key => $date) {
-      if ($key == 'before') {
-        $date->points_ideal_remaining = $date->points_total;
-        continue;
-      } else if ($key == 'after') {
-        $date->points_ideal_remaining = 0;
-        continue;
-      }
-
-      $day_of_week = id(new DateTime($date->getDate()))->format('w');
-      if ($day_of_week != 0 AND $day_of_week != 6) {
-        $elapsed_business_days++;
-      }
-
-      $date->points_ideal_remaining = round($date->points_total *
-          (1 - ($elapsed_business_days / $total_business_days)), 1);
-    }
-  }
-
 
   /**
    * These handle the relevant math for adding, removing, closing, etc.
@@ -311,26 +183,33 @@ final class BurndownDataView extends SprintView {
 
   private function buildChartDataSet() {
 
+    $query = id(new SprintQuery())
+         ->setProject($this->project)
+         ->setViewer($this->viewer);
+    $aux_fields = $query->getAuxFields();
+    $start = $query->getStartDate($aux_fields);
+    $end = $query->getEndDate($aux_fields);
 
-    $aux_fields = $this->getAuxFields();
-    $start = $this->getStartDate($aux_fields);
-    $end = $this->getEndDate($aux_fields);
-    $this->dates = $this->buildDateArray($start, $end);
+    $tasks = $query->getTasks();
 
-    $tasks = $this->getTasks();
+    $query->checkNull($start, $end, $tasks);
 
-    $this->checkNull($start, $end, $tasks);
+    $xactions = $query->getXactions($tasks);
 
-    $xactions = $this->getXactions($tasks);
+    $stats = id(new SprintBuildStats());
+    $this->dates = $stats->buildDateArray($start, $end);
 
-    $this->examineXactions($xactions, $tasks);
+    $events = $query->getEvents($xactions, $tasks);
 
-    $this->buildDailyData($start, $end);
-    $this->buildTaskArrays();
+    $this->xactions = mpull($xactions, null, 'getPHID');
+    $this->tasks = mpull($tasks, null, 'getPHID');
+
+    $this->buildDailyData($events, $start, $end);
+    $stats->buildTaskArrays();
 
 
-    $this->sumSprintStats();
-    $this->computeIdealPoints();
+    $stats->sumSprintStats($this->dates);
+    $stats->computeIdealPoints($this->dates);
 
     $data = array(array(
         pht('Date'),
@@ -676,116 +555,4 @@ HERE
 
     return $points_data;
   }
-
-  /**
-   * Extract important events (the times when tasks were opened or closed)
-   * from a list of transactions.
-   *
-   * @param array<ManiphestTransaction> List of transactions.
-   * @param array<phid> List of project PHIDs to emit "scope" events for.
-   * @return array<dict> Chronologically sorted events.
-   */
-  private function extractEvents($xactions, array $scope_phids) {
-    assert_instances_of($xactions, 'ManiphestTransaction');
-
-    $scope_phids = array_fuse($scope_phids);
-
-    $events = array();
-    foreach ($xactions as $xaction) {
-      $old = $xaction->getOldValue();
-      $new = $xaction->getNewValue();
-
-      $event_type = null;
-      switch ($xaction->getTransactionType()) {
-        case ManiphestTransaction::TYPE_STATUS:
-          $old_is_closed = ($old === null) ||
-                           ManiphestTaskStatus::isClosedStatus($old);
-          $new_is_closed = ManiphestTaskStatus::isClosedStatus($new);
-
-          if ($old_is_closed == $new_is_closed) {
-            // This was just a status change from one open status to another,
-            // or from one closed status to another, so it's not an events we
-            // care about.
-            break;
-          }
-          if ($old === null) {
-            // This would show as "reopened" even though it's when the task was
-            // created so we skip it. Instead we will use the title for created
-            // events
-            break;
-          }
-
-          if ($new_is_closed) {
-            $event_type = 'close';
-          } else {
-            $event_type = 'reopen';
-          }
-          break;
-
-        case ManiphestTransaction::TYPE_TITLE:
-          if ($old === null)
-          {
-            $event_type = 'create';
-          }
-          break;
-
-        // Project changes are "core:edge" transactions
-        case PhabricatorTransactions::TYPE_EDGE:
-
-          // We only care about ProjectEdgeType
-          if (idx($xaction->getMetadata(), 'edge:type') !==
-            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST)
-            break;
-
-          $old = ipull($old, 'dst');
-          $new = ipull($new, 'dst');
-
-          $in_old_scope = array_intersect_key($scope_phids, $old);
-          $in_new_scope = array_intersect_key($scope_phids, $new);
-
-          if ($in_new_scope && !$in_old_scope) {
-            $event_type = 'task-add';
-          } else if ($in_old_scope && !$in_new_scope) {
-            // NOTE: We will miss some of these events, becuase we are only
-            // examining tasks that are currently in the project. If a task
-            // is removed from the project and not added again later, it will
-            // just vanish from the chart completely, not show up as a
-            // scope contraction. We can't do better until the Facts application
-            // is avialable without examining *every* task.
-            $event_type = 'task-remove';
-          }
-          break;
-
-        case PhabricatorTransactions::TYPE_CUSTOMFIELD:
-          if ($xaction->getMetadataValue('customfield:key') == 'isdc:sprint:storypoints') {
-            // POINTS!
-            $event_type = 'points';
-          }
-          break;
-
-        default:
-          // This is something else (comment, subscription change, etc) that
-          // we don't care about for now.
-          break;
-      }
-
-      // If we found some kind of events that we care about, stick it in the
-      // list of events.
-      if ($event_type !== null) {
-        $events[] = array(
-          'transactionPHID' => $xaction->getPHID(),
-          'epoch' => $xaction->getDateCreated(),
-          'key'   => $xaction->getMetadataValue('customfield:key'),
-          'type'  => $event_type,
-          'title' => $xaction->getTitle(),
-        );
-      }
-    }
-
-    // Sort all events chronologically.
-    $events = isort($events, 'epoch');
-
-    return $events;
-  }
-
 }
