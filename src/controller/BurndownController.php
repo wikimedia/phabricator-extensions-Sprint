@@ -6,7 +6,7 @@
 
 abstract class BurndownController extends PhabricatorController {
 
-    public function shouldAllowPublic() {
+  public function shouldAllowPublic() {
         return true;
    }
 
@@ -16,6 +16,20 @@ abstract class BurndownController extends PhabricatorController {
 
   public function buildApplicationMenu() {
     return $this->buildSideNavView(true)->getMenu();
+  }
+
+  public function buildNavMenu() {
+    $nav = new AphrontSideNavFilterView();
+    $nav->setBaseURI(new PhutilURI('/sprint/report/'));
+    $nav->addLabel(pht('Sprint Projects'));
+    $nav->addFilter('list', pht('List'));
+    $nav->addLabel(pht('Open Tasks'));
+    $nav->addFilter('project', pht('By Project'));
+    $nav->addFilter('user', pht('By User'));
+    $nav->addLabel(pht('Burndown'));
+    $nav->addFilter('burn', pht('Burndown Rate'));
+
+    return $nav;
   }
 
   public function buildSideNavView($for_app = false) {

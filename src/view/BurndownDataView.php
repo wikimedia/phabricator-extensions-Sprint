@@ -648,7 +648,6 @@ HERE
 
 
   private function getPointsData () {
-    $handle = null;
 
     $project_phid = $this->project->getPHID();
     $table = new ManiphestTransaction();
@@ -705,7 +704,7 @@ HERE
 
           if ($old_is_closed == $new_is_closed) {
             // This was just a status change from one open status to another,
-            // or from one closed status to another, so it's not an event we
+            // or from one closed status to another, so it's not an events we
             // care about.
             break;
           }
@@ -770,7 +769,7 @@ HERE
           break;
       }
 
-      // If we found some kind of event that we care about, stick it in the
+      // If we found some kind of events that we care about, stick it in the
       // list of events.
       if ($event_type !== null) {
         $events[] = array(

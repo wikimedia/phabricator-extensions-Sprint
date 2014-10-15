@@ -73,7 +73,7 @@ final class SprintReportBurndownView extends SprintView {
         $data[$key]['_is_close'] = $is_close;
 
         if (!$is_open && !$is_close) {
-          // This is either some kind of bogus event, or a resolution change
+          // This is either some kind of bogus events, or a resolution change
           // (e.g., resolved -> invalid). Just skip it.
           continue;
         }

@@ -15,7 +15,7 @@ final class BurndownListController extends BurndownController {
 
     $nav = $this->buildNavMenu();
     $projects = $this->loadAllProjects($viewer);
-
+    $this->view = $nav->selectFilter($this->view, 'list');
     $order = $request->getStr('order', 'name');
     list($order, $reverse) = AphrontTableView::parseSort($order);
 
@@ -120,22 +120,6 @@ final class BurndownListController extends BurndownController {
         'title' => array(pht('Sprint List')),
         'device' => true,
       ));
-  }
-
-  private function buildNavMenu() {
-    $nav = new AphrontSideNavFilterView();
-    $nav->setBaseURI(new PhutilURI('/sprint/report/'));
-    $nav->addLabel(pht('Sprint Projects'));
-    $nav->addFilter('list', pht('List'));
-    $nav->addLabel(pht('Open Tasks'));
-    $nav->addFilter('project', pht('By Project'));
-    $nav->addFilter('user', pht('By User'));
-    $nav->addLabel(pht('Burndown'));
-    $nav->addFilter('burn', pht('Burndown Rate'));
-
-    $this->view = $nav->selectFilter($this->view, 'list');
-
-    return $nav;
   }
 
   // Load all projects with "§" in the name.

@@ -312,7 +312,7 @@ final class SprintReportOpenTasksView extends SprintView {
    */
   private function loadRecentlyClosedTasks() {
 
-    list($ignored, $window_epoch) = $this->getWindow();
+    list(,, $window_epoch) = $this->getWindow();
 
     $table = new ManiphestTask();
     $xtable = new ManiphestTransaction();

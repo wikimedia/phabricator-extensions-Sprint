@@ -22,7 +22,7 @@ final class BurndownActionMenuEventListener extends PhabricatorEventListener {
     $object = $event->getValue('object');
 
     $actions = null;
-    if ($object instanceof PhabricatorProject &&
+    if ($object instanceof \PhabricatorProject &&
       stripos($object->getName(), '§') !== false) {
       $actions = $this->renderUserItems($event);
     }
