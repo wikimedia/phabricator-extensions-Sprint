@@ -25,29 +25,10 @@ final class SprintReportBurndownView extends SprintView {
         $handle = $handles[$project_phid];
       }
 
-      $table = new ManiphestTransaction();
-      $conn = $table->establishConnection('r');
+      $query = id(new SprintQuery())
+        ->setPHID($project_phid);
 
-      $joins = '';
-      if ($project_phid) {
-        $joins = qsprintf(
-            $conn,
-            'JOIN %T t ON x.objectPHID = t.phid
-          JOIN %T p ON p.src = t.phid AND p.type = %d AND p.dst = %s',
-            id(new ManiphestTask())->getTableName(),
-            PhabricatorEdgeConfig::TABLE_NAME_EDGE,
-            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
-            $project_phid);
-      }
-
-      $data = queryfx_all(
-          $conn,
-          'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
-        WHERE transactionType = %s
-        ORDER BY x.dateCreated ASC',
-          $table->getTableName(),
-          $joins,
-          ManiphestTransaction::TYPE_STATUS);
+      $data = $query->getXactionData();
 
       $stats = array();
       $day_buckets = array();

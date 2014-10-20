@@ -4,6 +4,7 @@ final class SprintQuery  {
 
   private $viewer;
   private $project;
+  private $project_phid;
 
 
   public function setProject ($project) {
@@ -13,6 +14,11 @@ final class SprintQuery  {
 
   public function setViewer ($viewer) {
     $this->viewer = $viewer;
+    return $this;
+  }
+
+  public function setPHID ($project_phid) {
+    $this->project_phid = $project_phid;
     return $this;
   }
 
@@ -65,6 +71,44 @@ final class SprintQuery  {
       throw new BurndownException("This project has no tasks.");
     }
   }
+
+  public function getXActionObj () {
+    $table = new ManiphestTransaction();
+    return $table;
+  }
+
+  public function getXActionConn () {
+    $conn = $this->getXActionObj()->establishConnection('r');
+    return $conn;
+  }
+
+  public function getJoins() {
+
+    $joins = '';
+    if ($this->project_phid) {
+      $joins = qsprintf(
+          $this->getXactionConn(),
+          'JOIN %T t ON x.objectPHID = t.phid
+          JOIN %T p ON p.src = t.phid AND p.type = %d AND p.dst = %s',
+          id(new ManiphestTask())->getTableName(),
+          PhabricatorEdgeConfig::TABLE_NAME_EDGE,
+          PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+          $this->project_phid);
+    }
+    return $joins;
+  }
+
+  public function getXactionData() {
+    $data = queryfx_all(
+        $this->getXactionConn(),
+        'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
+        WHERE transactionType = %s
+        ORDER BY x.dateCreated ASC',
+        $this->getXActionObj()->getTableName(),
+        $this->getJoins(),
+        ManiphestTransaction::TYPE_STATUS);
+    return $data;
+ }
 
   public function getEvents($xactions) {
     $scope_phids = array($this->project->getPHID());

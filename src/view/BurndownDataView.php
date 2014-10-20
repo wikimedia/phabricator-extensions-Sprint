@@ -52,39 +52,6 @@ final class BurndownDataView extends SprintView {
     return array ($chart, $tasks_table, $burndown_table, $event_table);
   }
 
-  // Now that we have the data for each day, we need to loop over and sum
-  // up the relevant columns
-  private function sumSprintStats() {
-    $previous = null;
-    foreach ($this->dates as $current) {
-      $current->tasks_total = $current->tasks_added_today;
-      $current->points_total = $current->points_added_today;
-      $current->tasks_remaining = $current->tasks_added_today;
-      $current->points_remaining = $current->points_added_today;
-      if ($previous) {
-        $current->tasks_total += $previous->tasks_total;
-        $current->points_total += $previous->points_total;
-        $current->tasks_remaining += $previous->tasks_remaining - $current->tasks_closed_today;
-        $current->points_remaining += $previous->points_remaining - $current->points_closed_today;
-      }
-      $previous = $current;
-    }
-    return;
-  }
-
-  // Build arrays to store current point and closed status of tasks as we
-  // progress through time, so that these changes reflect on the graph
-  private function buildTaskArrays() {
-    $this->task_points = array();
-    $this->task_statuses = array();
-    foreach ($this->tasks as $task) {
-      $this->task_points[$task->getPHID()] = 0;
-      $this->task_statuses[$task->getPHID()] = null;
-      $this->task_in_sprint[$task->getPHID()] = 0;
-    }
-    return;
-  }
-
   // Now loop through the events and build the data for each day
   private function buildDailyData($events, $start, $end) {
     foreach ($events as $event) {
