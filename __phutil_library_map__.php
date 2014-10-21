@@ -18,6 +18,7 @@ phutil_register_library_map(array(
     'BurndownException' => 'src/exception/BurndownException.php',
     'BurndownListController' => 'src/controller/BurndownListController.php',
     'BurndownTestDataGenerator' => 'src/__tests__/BurndownTestDataGenerator.php',
+    'EventMath' => 'src/view/EventMath.php',
     'SprintBuildStats' => 'src/storage/SprintBuildStats.php',
     'SprintConstants' => 'src/constants/SprintConstants.php',
     'SprintEndDateField' => 'src/customfield/SprintEndDateField.php',

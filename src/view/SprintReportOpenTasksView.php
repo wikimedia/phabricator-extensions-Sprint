@@ -375,7 +375,6 @@ final class SprintReportOpenTasksView extends SprintView {
     $window_str = $this->request->getStr('window', '12 AM 7 days ago');
 
     $error = null;
-    $window_epoch = null;
 
     // Do locale-aware parsing so that the user's timezone is assumed for
     // time windows like "3 PM", rather than assuming the server timezone.

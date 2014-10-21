@@ -3,6 +3,9 @@
 final class SprintBuildStats {
 
   private $tasks;
+  private $task_points = array();
+  private $task_statuses = array();
+  private $task_in_sprint = array();
 
   public function buildDateArray($start, $end) {
     // Build an array of dates between start and end
@@ -19,6 +22,7 @@ final class SprintBuildStats {
     $dates['after'] = new BurndownDataDate('After end of Sprint');
     return $dates;
   }
+
 
   // Now that we have the data for each day, we need to loop over and sum
   // up the relevant columns
@@ -53,12 +57,6 @@ final class SprintBuildStats {
     return;
   }
 
-  /**
-   * Compute the values for the "Ideal Points" line.
-   */
-
-  // This is a cheap hacky way to get business days, and does not account for
-  // holidays at all.
   public function computeIdealPoints($dates) {
     $total_business_days = 0;
     foreach ($dates as $key => $date) {

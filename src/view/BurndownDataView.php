@@ -6,7 +6,7 @@
 
 final class BurndownDataView extends SprintView {
 
-  // Array of BurndownDataDatessta
+  // Array of BurndownDataDates
   // There are two special keys, 'before' and 'after'
   //
   // Looks like: array(
@@ -16,22 +16,17 @@ final class BurndownDataView extends SprintView {
   //   ...
   //   'after' => BurndownDataDate
   // )
-  private $type_status = SprintConstants::CUSTOMFIELD_TYPE_STATUS;
 
   private $dates;
   private $data;
-  // These hold an array of each task, and how many points are assigned, and
-  // whether it's open or closed. These values change as we progress through
-  // time, so that changes to points or status reflect on the graph.
-  private $task_points = array();
-  private $task_statuses = array();
-  private $task_in_sprint = array();
-  // Project associated with this burndown.
+   // Project associated with this burndown.
   private $project;
   private $viewer;
   private $tasks;
-  private $events;
   private $xactions;
+  private $task_points = array();
+  private $task_statuses = array();
+  private $task_in_sprint = array();
 
   public function setProject ($project) {
     $this->project = $project;
@@ -52,8 +47,65 @@ final class BurndownDataView extends SprintView {
     return array ($chart, $tasks_table, $burndown_table, $event_table);
   }
 
+  private function buildChartDataSet() {
+
+    $query = id(new SprintQuery())
+         ->setProject($this->project)
+         ->setViewer($this->viewer);
+    $aux_fields = $query->getAuxFields();
+    $start = $query->getStartDate($aux_fields);
+    $end = $query->getEndDate($aux_fields);
+
+    $tasks = $query->getTasks();
+
+    $query->checkNull($start, $end, $tasks);
+
+    $xactions = $query->getXactions($tasks);
+
+    $stats = id(new SprintBuildStats());
+    $this->dates = $stats->buildDateArray($start, $end);
+
+    $events = $query->getEvents($xactions, $tasks);
+
+    $this->xactions = mpull($xactions, null, 'getPHID');
+    $this->tasks = mpull($tasks, null, 'getPHID');
+
+    $this->buildDailyData($events, $start, $end);
+
+
+    $stats->sumSprintStats($this->dates);
+    $stats->computeIdealPoints($this->dates);
+
+
+    $data = array(array(
+        pht('Date'),
+        pht('Total Points'),
+        pht('Remaining Points'),
+        pht('Ideal Points'),
+        pht('Points Today'),
+    ));
+
+    $future = false;
+    foreach ($this->dates as $key => $date) {
+      if ($key != 'before' AND $key != 'after') {
+        $future = new DateTime($date->getDate()) > id(new DateTime())->setTime(0, 0);
+      }
+      $data[] = array(
+          $date->getDate(),
+          $future ? null : $date->points_total,
+          $future ? null : $date->points_remaining,
+          $date->points_ideal_remaining,
+          $future ? null : $date->points_closed_today,
+      );
+
+    }
+    return $data;
+
+  }
+
   // Now loop through the events and build the data for each day
   private function buildDailyData($events, $start, $end) {
+
     foreach ($events as $event) {
 
       $xaction = $this->xactions[$event['transactionPHID']];
@@ -146,64 +198,6 @@ final class BurndownDataView extends SprintView {
     }
   }
 
-
-
-  private function buildChartDataSet() {
-
-    $query = id(new SprintQuery())
-         ->setProject($this->project)
-         ->setViewer($this->viewer);
-    $aux_fields = $query->getAuxFields();
-    $start = $query->getStartDate($aux_fields);
-    $end = $query->getEndDate($aux_fields);
-
-    $tasks = $query->getTasks();
-
-    $query->checkNull($start, $end, $tasks);
-
-    $xactions = $query->getXactions($tasks);
-
-    $stats = id(new SprintBuildStats());
-    $this->dates = $stats->buildDateArray($start, $end);
-
-    $events = $query->getEvents($xactions, $tasks);
-
-    $this->xactions = mpull($xactions, null, 'getPHID');
-    $this->tasks = mpull($tasks, null, 'getPHID');
-
-    $this->buildDailyData($events, $start, $end);
-    $stats->buildTaskArrays();
-
-
-    $stats->sumSprintStats($this->dates);
-    $stats->computeIdealPoints($this->dates);
-
-    $data = array(array(
-        pht('Date'),
-        pht('Total Points'),
-        pht('Remaining Points'),
-        pht('Ideal Points'),
-        pht('Points Today'),
-    ));
-
-    $future = false;
-    foreach ($this->dates as $key => $date) {
-      if ($key != 'before' AND $key != 'after') {
-        $future = new DateTime($date->getDate()) > id(new DateTime())->setTime(0, 0);
-      }
-      $data[] = array(
-          $date->getDate(),
-          $future ? null : $date->points_total,
-          $future ? null : $date->points_remaining,
-          $date->points_ideal_remaining,
-          $future ? null : $date->points_closed_today,
-      );
-
-    }
-    return $data;
-
-  }
-
   private function buildBurnDownChart() {
 
     $this->data = $this->buildChartDataSet();
@@ -265,6 +259,9 @@ HERE
    */
   public function buildBurnDownTable() {
     $data = array();
+    $stats = id(new SprintBuildStats());
+    $stats->sumSprintStats($this->dates);
+    $stats->computeIdealPoints($this->dates);
     foreach ($this->dates as $date) {
       $data[] = array(
           $date->getDate(),
@@ -392,6 +389,9 @@ HERE
 
   private function addTaskToTree(&$output, $task, &$map, $handles, $depth = 0) {
     static $included = array();
+    $query = id(new SprintQuery())
+        ->setProject($this->project)
+        ->setViewer($this->viewer);
 
     // Get the owner object so we can render the owner username/link
     $owner = $handles[$task->getOwnerPHID()];
@@ -399,7 +399,7 @@ HERE
     // If this task is already is this tree, this is a repeat.
     $repeat = isset($included[$task->getPHID()]);
 
-    $points_data = $this->getPointsData();
+    $points_data = $query->getPointsData();
     $points = $this->getTaskStoryPoints($task->getPHID(),$points_data);
     $points = trim($points, '"');
 
@@ -443,8 +443,22 @@ HERE
    * @returns PHUIObjectBoxView
    */
   public function buildEventTable() {
+    $query = id(new SprintQuery())
+        ->setProject($this->project)
+        ->setViewer($this->viewer);
+    $aux_fields = $query->getAuxFields();
+    $start = $query->getStartDate($aux_fields);
+    $end = $query->getEndDate($aux_fields);
+
+    $tasks = $query->getTasks();
+
+    $query->checkNull($start, $end, $tasks);
+
+    $xactions = $query->getXactions($tasks);
+
+    $events = $query->getEvents($xactions, $tasks);
     $rows = array();
-    foreach ($this->events as $event) {
+    foreach ($events as $event) {
       $task_phid = $this->xactions[$event['transactionPHID']]->getObjectPHID();
       $task = $this->tasks[$task_phid];
 
@@ -490,36 +504,5 @@ HERE
          }
        }
     return $storypoints;
-  }
-
-
-  private function getPointsData () {
-
-    $project_phid = $this->project->getPHID();
-    $table = new ManiphestTransaction();
-    $conn = $table->establishConnection('r');
-
-    $joins = '';
-    if ($project_phid) {
-      $joins = qsprintf(
-          $conn,
-          'JOIN %T t ON x.objectPHID = t.phid
-          JOIN %T p ON p.src = t.phid AND p.type = %d AND p.dst = %s',
-          id(new ManiphestTask())->getTableName(),
-          PhabricatorEdgeConfig::TABLE_NAME_EDGE,
-          PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
-          $project_phid);
-    }
-
-    $points_data = queryfx_all(
-        $conn,
-        'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
-        WHERE transactionType = %s
-        ORDER BY x.dateCreated ASC',
-        $table->getTableName(),
-        $joins,
-        $this->type_status);
-
-    return $points_data;
   }
 }

@@ -110,6 +110,20 @@ final class SprintQuery  {
     return $data;
  }
 
+  public function getPointsData () {
+
+    $points_data = queryfx_all(
+        $this->getXactionConn(),
+        'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
+        WHERE transactionType = %s
+        ORDER BY x.dateCreated ASC',
+        $this->getXActionObj()->getTableName(),
+        $this->getJoins(),
+        SprintConstants::CUSTOMFIELD_TYPE_STATUS);
+
+    return $points_data;
+  }
+
   public function getEvents($xactions) {
     $scope_phids = array($this->project->getPHID());
     $events = $this->extractEvents($xactions, $scope_phids);
