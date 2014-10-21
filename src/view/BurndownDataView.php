@@ -399,8 +399,8 @@ HERE
     // If this task is already is this tree, this is a repeat.
     $repeat = isset($included[$task->getPHID()]);
 
-    $points_data = $query->getPointsData();
-    $points = $this->getTaskStoryPoints($task->getPHID(),$points_data);
+    $data = $query->getXactionData(SprintConstants::CUSTOMFIELD_TYPE_STATUS);
+    $points = $this->getTaskStoryPoints($task->getPHID(),$data);
     $points = trim($points, '"');
 
     $priority_name = new ManiphestTaskPriority();

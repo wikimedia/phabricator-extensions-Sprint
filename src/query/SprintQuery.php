@@ -98,7 +98,7 @@ final class SprintQuery  {
     return $joins;
   }
 
-  public function getXactionData() {
+  public function getXactionData($where) {
     $data = queryfx_all(
         $this->getXactionConn(),
         'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
@@ -106,23 +106,9 @@ final class SprintQuery  {
         ORDER BY x.dateCreated ASC',
         $this->getXActionObj()->getTableName(),
         $this->getJoins(),
-        ManiphestTransaction::TYPE_STATUS);
+        $where);
     return $data;
  }
-
-  public function getPointsData () {
-
-    $points_data = queryfx_all(
-        $this->getXactionConn(),
-        'SELECT x.objectPHID, x.oldValue, x.newValue, x.dateCreated FROM %T x %Q
-        WHERE transactionType = %s
-        ORDER BY x.dateCreated ASC',
-        $this->getXActionObj()->getTableName(),
-        $this->getJoins(),
-        SprintConstants::CUSTOMFIELD_TYPE_STATUS);
-
-    return $points_data;
-  }
 
   public function getEvents($xactions) {
     $scope_phids = array($this->project->getPHID());

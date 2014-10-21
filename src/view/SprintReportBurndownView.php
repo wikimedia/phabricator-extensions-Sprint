@@ -28,7 +28,7 @@ final class SprintReportBurndownView extends SprintView {
       $query = id(new SprintQuery())
         ->setPHID($project_phid);
 
-      $data = $query->getXactionData();
+      $data = $query->getXactionData(ManiphestTransaction::TYPE_STATUS);
 
       $stats = array();
       $day_buckets = array();
