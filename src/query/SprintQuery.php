@@ -22,6 +22,13 @@ final class SprintQuery  {
     return $this;
   }
 
+  public function getViewerHandles($request, array $phids) {
+    return id(new PhabricatorHandleQuery())
+        ->setViewer($request->getUser())
+        ->withPHIDs($phids)
+        ->execute();
+  }
+
   public function getAuxFields() {
     $field_list = PhabricatorCustomField::getObjectFields($this->project, PhabricatorCustomField::ROLE_EDIT);
     $field_list->setViewer($this->viewer);

@@ -40,7 +40,7 @@ final class BurndownDataView extends SprintView {
 
   public function render() {
 
-    $chart = $this->buildBurnDownChart();
+    $chart = $this->buildC3Chart();
     $tasks_table = $this->buildTasksTable();
     $burndown_table = $this->buildBurnDownTable();
     $event_table = $this->buildEventTable();
@@ -78,7 +78,6 @@ final class BurndownDataView extends SprintView {
 
 
     $data = array(array(
-        pht('Date'),
         pht('Total Points'),
         pht('Remaining Points'),
         pht('Ideal Points'),
@@ -91,7 +90,6 @@ final class BurndownDataView extends SprintView {
         $future = new DateTime($date->getDate()) > id(new DateTime())->setTime(0, 0);
       }
       $data[] = array(
-          $date->getDate(),
           $future ? null : $date->points_total,
           $future ? null : $date->points_remaining,
           $date->points_ideal_remaining,
@@ -99,9 +97,25 @@ final class BurndownDataView extends SprintView {
       );
 
     }
+    $data = $this->transposeArray($data);
     return $data;
-
   }
+
+  private function transposeArray($array) {
+    $transposed_array = array();
+    if ($array) {
+      foreach ($array as $row_key => $row) {
+        if (is_array($row) && !empty($row)) { //check to see if there is a second dimension
+          foreach ($row as $column_key => $element) {
+            $transposed_array[$column_key][$row_key] = $element;
+          }
+        } else {
+          $transposed_array[0][$row_key] = $row;
+        }
+      }
+     return $transposed_array;
+     }
+   }
 
   // Now loop through the events and build the data for each day
   private function buildDailyData($events, $start, $end) {
@@ -196,6 +210,39 @@ final class BurndownDataView extends SprintView {
             $xaction->getNewValue() - $xaction->getOldValue();
       }
     }
+  }
+
+  private function buildC3Chart() {
+    $this->data = $this->buildChartDataSet();
+    $totalpoints = $this->data[0];
+    $remainingpoints = $this->data[1];
+    $idealpoints = $this->data[2];
+    $pointstoday = $this->data[3];
+    $timeseries = array_keys($this->dates);
+
+    require_celerity_resource('d3');
+    require_celerity_resource('c3-css');
+    require_celerity_resource('c3');
+
+    $id = 'chart';
+    Javelin::initBehavior('c3-chart', array(
+        'hardpoint' => $id,
+        'timeseries' => $timeseries,
+        'totalpoints' => $totalpoints,
+        'remainingpoints' => $remainingpoints,
+        'idealpoints' =>   $idealpoints,
+        'pointstoday' =>   $pointstoday
+    ));
+
+    $chart= id(new PHUIObjectBoxView())
+        ->setHeaderText(pht('Burndown for ' . $this->project->getName()))
+         ->appendChild(phutil_tag('div',
+            array(
+                'id' => 'chart',
+                'style' => 'width: 100%; height:400px'
+            ), ''));
+
+    return $chart;
   }
 
   private function buildBurnDownChart() {

@@ -16,198 +16,265 @@ final class SprintReportBurndownView extends SprintView {
 
   public function render() {
 
-      $handle = null;
+    $filter = $this->BuildFilter();
+    $chart = $this->buildBurnDownChart();
+    $table = $this->buildStatsTable();
+    return array($filter, $chart, $table);
+  }
 
-      $project_phid = $this->request->getStr('project');
-      if ($project_phid) {
-        $phids = array($project_phid);
-        $handles = $this->loadViewerHandles($phids);
-        $handle = $handles[$project_phid];
-      }
+  private function getXactionData($project_phid) {
+     $query = id(new SprintQuery())
+        ->setPHID($project_phid);
+      $data = $query->getXactionData(ManiphestTransaction::TYPE_STATUS);
+    return $data;
+  }
 
-      $query = id(new SprintQuery())
+  private function buildFilter() {
+    $handle = null;
+    $project_phid = $this->request->getStr('project');
+    if ($project_phid) {
+      $phids = array($project_phid);
+      $handle = $this->getProjectHandle ($phids,$project_phid);
+    }
+    $tokens = array();
+    if ($handle) {
+      $tokens = $this->getTokens($handle);
+    }
+    $filter = parent::renderReportFilters($tokens, $has_window = false);
+    return $filter;
+  }
+
+  private function getTokens($handle) {
+    $tokens = array($handle);
+    return $tokens;
+  }
+
+  private function getProjectHandle($phids,$project_phid) {
+
+    $query = id(new SprintQuery())
         ->setPHID($project_phid);
 
-      $data = $query->getXactionData(ManiphestTransaction::TYPE_STATUS);
+    $handles = $query->getViewerHandles($this->request, $phids);
+    $handle = $handles[$project_phid];
+    return $handle;
+  }
 
-      $stats = array();
+ private function addTaskStatustoData ($data) {
+   foreach ($data as $key => $row) {
+
+     // NOTE: Hack to avoid json_decode().
+     $oldv = trim($row['oldValue'], '"');
+     $newv = trim($row['newValue'], '"');
+
+     if ($oldv == 'null') {
+       $old_is_open = false;
+     } else {
+       $old_is_open = ManiphestTaskStatus::isOpenStatus($oldv);
+     }
+
+     $new_is_open = ManiphestTaskStatus::isOpenStatus($newv);
+
+     $is_open = ($new_is_open && !$old_is_open);
+     $is_close = ($old_is_open && !$new_is_open);
+
+     $data[$key]['_is_open'] = $is_open;
+     $data[$key]['_is_close'] = $is_close;
+
+     if (!$is_open && !$is_close) {
+       // This is either some kind of bogus events, or a resolution change
+       // (e.g., resolved -> invalid). Just skip it.
+       continue;
+     }
+   }
+   return $data;
+ }
+
+  private function buildStatsfromEvents ($data) {
+
+   $stats = array();
+   $data = $this->addTaskStatustoData ($data);
+
+    foreach ($data as $key => $row) {
+
+     $day_bucket = phabricator_format_local_time(
+          $row['dateCreated'],
+          $this->user,
+          'Yz');
+
+      if (empty($stats[$day_bucket])) {
+        $stats[$day_bucket] = array(
+            'open' => 0,
+            'close' => 0,
+        );
+      }
+
+      $stats[$day_bucket][$data[$key]['_is_close'] ? 'close' : 'open']++;
+    }
+    return $stats;
+  }
+
+  private function buildDayBucketsfromEvents ($data) {
       $day_buckets = array();
-
       foreach ($data as $key => $row) {
 
-        // NOTE: Hack to avoid json_decode().
-        $oldv = trim($row['oldValue'], '"');
-        $newv = trim($row['newValue'], '"');
-
-        if ($oldv == 'null') {
-          $old_is_open = false;
-        } else {
-          $old_is_open = ManiphestTaskStatus::isOpenStatus($oldv);
-        }
-
-        $new_is_open = ManiphestTaskStatus::isOpenStatus($newv);
-
-        $is_open  = ($new_is_open && !$old_is_open);
-        $is_close = ($old_is_open && !$new_is_open);
-
-        $data[$key]['_is_open'] = $is_open;
-        $data[$key]['_is_close'] = $is_close;
-
-        if (!$is_open && !$is_close) {
-          // This is either some kind of bogus events, or a resolution change
-          // (e.g., resolved -> invalid). Just skip it.
-          continue;
-        }
-
-        $day_bucket = phabricator_format_local_time(
+       $day_bucket = phabricator_format_local_time(
             $row['dateCreated'],
             $this->user,
             'Yz');
-        $day_buckets[$day_bucket] = $row['dateCreated'];
-        if (empty($stats[$day_bucket])) {
-          $stats[$day_bucket] = array(
-              'open'  => 0,
-              'close' => 0,
-          );
+       $day_buckets[$day_bucket] = $row['dateCreated'];
+       }
+    return $day_buckets;
+  }
+
+  private function buildStatsTable() {
+
+    $handle = null;
+    $project_phid = $this->request->getStr('project');
+
+    if ($project_phid) {
+      $phids = array($project_phid);
+      $handle = $this->getProjectHandle ($phids,$project_phid);
+    }
+
+    $data = $this->getXactionData($project_phid);
+
+    $stats = $this->buildStatsfromEvents($data);
+    $day_buckets = $this->buildDayBucketsfromEvents($data);
+
+    $template = array(
+        'open' => 0,
+        'close' => 0,
+    );
+
+    $rows = array();
+    $rowc = array();
+    $last_month = null;
+    $last_month_epoch = null;
+    $last_week = null;
+    $last_week_epoch = null;
+    $week = null;
+    $month = null;
+
+    $period = $template;
+
+    foreach ($stats as $bucket => $info) {
+      $epoch = $day_buckets[$bucket];
+
+      $week_bucket = phabricator_format_local_time(
+          $epoch,
+          $this->user,
+          'YW');
+      if ($week_bucket != $last_week) {
+        if ($week) {
+          $rows[] = $this->formatBurnRow(
+              'Week of ' . phabricator_date($last_week_epoch, $this->user),
+              $week);
+          $rowc[] = 'week';
         }
-        $stats[$day_bucket][$is_close ? 'close' : 'open']++;
+        $week = $template;
+        $last_week = $week_bucket;
+        $last_week_epoch = $epoch;
       }
 
-      $template = array(
-          'open'  => 0,
-          'close' => 0,
-      );
-
-      $rows = array();
-      $rowc = array();
-      $last_month = null;
-      $last_month_epoch = null;
-      $last_week = null;
-      $last_week_epoch = null;
-      $week = null;
-      $month = null;
-
-      $period = $template;
-
-      foreach ($stats as $bucket => $info) {
-        $epoch = $day_buckets[$bucket];
-
-        $week_bucket = phabricator_format_local_time(
-            $epoch,
-            $this->user,
-            'YW');
-        if ($week_bucket != $last_week) {
-          if ($week) {
-            $rows[] = $this->formatBurnRow(
-                'Week of '.phabricator_date($last_week_epoch, $this->user),
-                $week);
-            $rowc[] = 'week';
-          }
-          $week = $template;
-          $last_week = $week_bucket;
-          $last_week_epoch = $epoch;
+      $month_bucket = phabricator_format_local_time(
+          $epoch,
+          $this->user,
+          'Ym');
+      if ($month_bucket != $last_month) {
+        if ($month) {
+          $rows[] = $this->formatBurnRow(
+              phabricator_format_local_time($last_month_epoch, $this->user, 'F, Y'),
+              $month);
+          $rowc[] = 'month';
         }
-
-        $month_bucket = phabricator_format_local_time(
-            $epoch,
-            $this->user,
-            'Ym');
-        if ($month_bucket != $last_month) {
-          if ($month) {
-            $rows[] = $this->formatBurnRow(
-                phabricator_format_local_time($last_month_epoch, $this->user, 'F, Y'),
-                $month);
-            $rowc[] = 'month';
-          }
-          $month = $template;
-          $last_month = $month_bucket;
-          $last_month_epoch = $epoch;
-        }
-
-        $rows[] = $this->formatBurnRow(phabricator_date($epoch, $this->user), $info);
-        $rowc[] = null;
-        $week['open'] += $info['open'];
-        $week['close'] += $info['close'];
-        $month['open'] += $info['open'];
-        $month['close'] += $info['close'];
-        $period['open'] += $info['open'];
-        $period['close'] += $info['close'];
+        $month = $template;
+        $last_month = $month_bucket;
+        $last_month_epoch = $epoch;
       }
 
-      if ($week) {
-        $rows[] = $this->formatBurnRow(
-            pht('Week To Date'),
-            $week);
-        $rowc[] = 'week';
-      }
+      $rows[] = $this->formatBurnRow(phabricator_date($epoch, $this->user), $info);
+      $rowc[] = null;
+      $week['open'] += $info['open'];
+      $week['close'] += $info['close'];
+      $month['open'] += $info['open'];
+      $month['close'] += $info['close'];
+      $period['open'] += $info['open'];
+      $period['close'] += $info['close'];
+    }
 
-      if ($month) {
-        $rows[] = $this->formatBurnRow(
-            pht('Month To Date'),
-            $month);
-        $rowc[] = 'month';
-      }
-
+    if ($week) {
       $rows[] = $this->formatBurnRow(
-          pht('All Time'),
-          $period);
-      $rowc[] = 'aggregate';
+          pht('Week To Date'),
+          $week);
+      $rowc[] = 'week';
+    }
 
-      $rows = array_reverse($rows);
-      $rowc = array_reverse($rowc);
+    if ($month) {
+      $rows[] = $this->formatBurnRow(
+          pht('Month To Date'),
+          $month);
+      $rowc[] = 'month';
+    }
 
-      $table = new AphrontTableView($rows);
-      $table->setRowClasses($rowc);
-      $table->setHeaders(
-          array(
-              pht('Period'),
-              pht('Opened'),
-              pht('Closed'),
-              pht('Change'),
-          ));
-      $table->setColumnClasses(
-          array(
-              'left narrow',
-              'center narrow',
-              'center narrow',
-              'center narrow',
-          ));
+    $rows[] = $this->formatBurnRow(
+        pht('All Time'),
+        $period);
+    $rowc[] = 'aggregate';
 
-      if ($handle) {
-        $inst = pht(
-            'NOTE: This table reflects tasks currently in '.
-            'the project. If a task was opened in the past but added to '.
-            'the project recently, it is counted on the day it was '.
-            'opened, not the day it was categorized. If a task was part '.
-            'of this project in the past but no longer is, it is not '.
-            'counted at all.');
-        $header = pht('Task Burn Rate for Project %s', $handle->renderLink());
-        $caption = phutil_tag('p', array(), $inst);
-      } else {
-        $header = pht('Task Burn Rate for All Tasks');
-        $caption = null;
-      }
+    $rows = array_reverse($rows);
+    $rowc = array_reverse($rowc);
 
-      if ($caption) {
-        $caption = id(new AphrontErrorView())
-            ->appendChild($caption)
-            ->setSeverity(AphrontErrorView::SEVERITY_NOTICE);
-      }
+    $table = new AphrontTableView($rows);
+    $table->setRowClasses($rowc);
+    $table->setHeaders(
+        array(
+            pht('Period'),
+            pht('Opened'),
+            pht('Closed'),
+            pht('Change'),
+        ));
+    $table->setColumnClasses(
+        array(
+            'left narrow',
+            'center narrow',
+            'center narrow',
+            'center narrow',
+        ));
 
-      $panel = new PHUIObjectBoxView();
-      $panel->setHeaderText($header);
-      if ($caption) {
-        $panel->setErrorView($caption);
-      }
-      $panel->appendChild($table);
+    if ($handle) {
+      $inst = pht(
+          'NOTE: This table reflects tasks currently in ' .
+          'the project. If a task was opened in the past but added to ' .
+          'the project recently, it is counted on the day it was ' .
+          'opened, not the day it was categorized. If a task was part ' .
+          'of this project in the past but no longer is, it is not ' .
+          'counted at all.');
+      $header = pht('Task Burn Rate for Project %s', $handle->renderLink());
+      $caption = phutil_tag('p', array(), $inst);
+    } else {
+      $header = pht('Task Burn Rate for All Tasks');
+      $caption = null;
+    }
 
-      $tokens = array();
-      if ($handle) {
-        $tokens = array($handle);
-      }
+    if ($caption) {
+      $caption = id(new AphrontErrorView())
+          ->appendChild($caption)
+          ->setSeverity(AphrontErrorView::SEVERITY_NOTICE);
+    }
 
-      $filter = parent::renderReportFilters($tokens, $has_window = false);
+    $panel = new PHUIObjectBoxView();
+    $panel->setHeaderText($header);
+    if ($caption) {
+      $panel->setErrorView($caption);
+    }
+    $panel->appendChild($table);
 
+    return $panel;
+  }
+
+  private function buildBurnDownChart() {
+    $project_phid = $this->request->getStr('project');
+    $data = $this->getXactionData($project_phid);
       $id = celerity_generate_unique_node_id();
       $chart = phutil_tag(
           'div',
@@ -238,14 +305,28 @@ final class SprintReportBurndownView extends SprintView {
           'yformat' => 'int',
       ));
 
-      return array($filter, $chart, $panel);
+      return $chart;
     }
 
-    private function buildSeries(array $data) {
-      $out = array();
+  private function buildPointSeries(array $data) {
+    $out = array();
 
+    foreach ($data as $row) {
+      $t = (int)$row['dateCreated'];
+      $newv = trim($row['newValue'], '"');
+      if ($row['newValue']) {
+            $out[$t] = $newv;
+      }
+    }
+
+    return array(array_keys($out), array_values($out));
+  }
+
+  private function buildSeries(array $data) {
+      $out = array();
+      $data = $this->addTaskStatustoData ($data);
       $counter = 0;
-      foreach ($data as $row) {
+      foreach ($data as $key => $row) {
         $t = (int)$row['dateCreated'];
         if ($row['_is_close']) {
           --$counter;
