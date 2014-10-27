@@ -53,63 +53,13 @@ final class SprintReportOpenTasksView extends SprintView {
 
     $date = phabricator_date(time(), $this->user);
 
-    switch ($this->view) {
-      case 'user':
-        $result = mgroup($tasks, 'getOwnerPHID');
-        $leftover = idx($result, '', array());
-        unset($result['']);
 
-        $result_closed = mgroup($recently_closed, 'getOwnerPHID');
-        $leftover_closed = idx($result_closed, '', array());
-        unset($result_closed['']);
-
-        $base_link = '/maniphest/?assigned=';
-        $leftover_name = phutil_tag('em', array(), pht('(Up For Grabs)'));
-        $col_header = pht('User');
-        $header = pht('Open Tasks by User and Priority (%s)', $date);
-        break;
-      case 'project':
-        $result = array();
-        $leftover = array();
-        foreach ($tasks as $task) {
-          $phids = $task->getProjectPHIDs();
-          if ($phids) {
-            foreach ($phids as $project_phid) {
-              $result[$project_phid][] = $task;
-            }
-          } else {
-            $leftover[] = $task;
-          }
-        }
-
-        $result_closed = array();
-        $leftover_closed = array();
-        foreach ($recently_closed as $task) {
-          $phids = $task->getProjectPHIDs();
-          if ($phids) {
-            foreach ($phids as $project_phid) {
-              $result_closed[$project_phid][] = $task;
-            }
-          } else {
-            $leftover_closed[] = $task;
-          }
-        }
-
-        $base_link = '/maniphest/?allProjects=';
-        $leftover_name = phutil_tag('em', array(), pht('(No Project)'));
-        $col_header = pht('Project');
-        $header = pht('Open Tasks by Project and Priority (%s)', $date);
-        break;
-      default:
-        $result = array();
-        $result_closed = array();
-        $base_link = null;
-        $leftover = array();
-        $leftover_closed = array();
-        $leftover_name = null;
-        $col_header = '';
-        $header = '';
-        break;
+    if (($this->view) == 'user') {
+       list($leftover, $leftover_closed, $base_link, $leftover_name, $col_header, $header, $result_closed, $result ) = (new UserOpenTasksView())
+          ->execute($tasks, $recently_closed, $date);
+    } elseif (($this->view) == 'project') {
+      list($leftover, $base_link, $leftover_name, $col_header, $header, $result_closed, $leftover_closed, $result ) = (new ProjectOpenTasksView())
+          ->execute($tasks, $recently_closed, $date);
     }
 
     $phids = array_keys($result);
@@ -125,93 +75,15 @@ final class SprintReportOpenTasksView extends SprintView {
     $rows = array();
 
     foreach ($handles as $handle) {
-      if ($handle) {
-        if (($project_handle) &&
-            ($project_handle->getPHID() == $handle->getPHID())) {
-          $tasks = idx($result, $handle->getPHID(), array());
-          $closed = idx($result_closed, $handle->getPHID(), array());
-        } else {
-          $tasks = idx($result, $handle->getPHID(), array());
-          $closed = idx($result_closed, $handle->getPHID(), array());
-        }
-
-        $name = phutil_tag(
-            'a',
-            array(
-                'href' => $base_link.$handle->getPHID(),
-            ),
-            $handle->getName());
-
-      } else {
-        $tasks = $leftover;
-        $name  = $leftover_name;
-        $closed = $leftover_closed;
-      }
+      list ($tasks, $name, $closed) = $this->setTaskArrays($handle, $project_handle, $result, $result_closed, $base_link, $leftover, $leftover_name, $leftover_closed);
 
       $taskv = $tasks;
       $tasks = mgroup($tasks, 'getPriority');
 
-      $row = array();
-      $row[] = $name;
-      $total = 0;
-      foreach (ManiphestTaskPriority::getTaskPriorityMap() as $pri => $label) {
-        $n = count(idx($tasks, $pri, array()));
-        if ($n == 0) {
-          $row[] = '-';
-        } else {
-          $row[] = number_format($n);
-        }
-        $total += $n;
-      }
-      $row[] = number_format($total);
+      list ($row, $total) = $this->getPriorityMap($name, $tasks);
+      list ($row, $oldest_all, $oldest_pri ) = $this->renderTaskLinks($taskv, $closed, $row);
 
-      list($link, $oldest_all) = $this->renderOldest($taskv);
-      $row[] = $link;
-
-      $normal_or_better = array();
-      foreach ($taskv as $id => $task) {
-        // TODO: This is sort of a hard-code for the default "normal" status.
-        // When reports are more powerful, this should be made more general.
-        if ($task->getPriority() < 50) {
-          continue;
-        }
-        $normal_or_better[$id] = $task;
-      }
-
-      list($link, $oldest_pri) = $this->renderOldest($normal_or_better);
-      $row[] = $link;
-
-      if ($closed) {
-        $task_ids = implode(',', mpull($closed, 'getID'));
-        $row[] = phutil_tag(
-            'a',
-            array(
-                'href' => '/maniphest/?ids='.$task_ids,
-                'target' => '_blank',
-            ),
-            number_format(count($closed)));
-      } else {
-        $row[] = '-';
-      }
-
-      switch ($order) {
-        case 'total':
-          $row['sort'] = $total;
-          break;
-        case 'oldest-all':
-          $row['sort'] = $oldest_all;
-          break;
-        case 'oldest-pri':
-          $row['sort'] = $oldest_pri;
-          break;
-        case 'closed':
-          $row['sort'] = count($closed);
-          break;
-        case 'name':
-        default:
-          $row['sort'] = $handle ? $handle->getName() : '~';
-          break;
-      }
+      $row['sort'] = $this->setSortOrder($order, $total, $oldest_all, $oldest_pri, $closed, $handle);
 
       $rows[] = $row;
     }
@@ -224,6 +96,119 @@ final class SprintReportOpenTasksView extends SprintView {
       $rows = array_reverse($rows);
     }
 
+    list ($cname, $cclass) = $this->buildTableColumns($col_header);
+    $table = $this->buildOpenTasksTable($rows, $cname, $cclass, $order, $reverse);
+    $panel = new PHUIObjectBoxView();
+    $panel->setHeaderText($header);
+    $panel->appendChild($table);
+
+    $tokens = array();
+    if ($project_handle) {
+      $tokens = array($project_handle);
+    }
+    $filter = parent::renderReportFilters($tokens, $order, $reverse);
+
+    return array($filter, $panel);
+  }
+
+  private function setSortOrder ($order, $total, $oldest_all, $oldest_pri, $closed, $handle) {
+    switch ($order) {
+      case 'total':
+        $row['sort'] = $total;
+        break;
+      case 'oldest-all':
+        $row['sort'] = $oldest_all;
+        break;
+      case 'oldest-pri':
+        $row['sort'] = $oldest_pri;
+        break;
+      case 'closed':
+        $row['sort'] = count($closed);
+        break;
+      case 'name':
+      default:
+        $row['sort'] = $handle ? $handle->getName() : '~';
+        break;
+    }
+  return $row['sort'];
+  }
+
+  private function renderTaskLinks ($taskv, $closed, $row) {
+    list($link, $oldest_all) = $this->renderOldest($taskv);
+    $row[] = $link;
+
+    $normal_or_better = array();
+    foreach ($taskv as $id => $task) {
+      // TODO: This is sort of a hard-code for the default "normal" status.
+      // When reports are more powerful, this should be made more general.
+      if ($task->getPriority() < 50) {
+        continue;
+      }
+      $normal_or_better[$id] = $task;
+    }
+
+    list($link, $oldest_pri) = $this->renderOldest($normal_or_better);
+    $row[] = $link;
+
+    if ($closed) {
+      $task_ids = implode(',', mpull($closed, 'getID'));
+      $row[] = phutil_tag(
+          'a',
+          array(
+              'href' => '/maniphest/?ids='.$task_ids,
+              'target' => '_blank',
+          ),
+          number_format(count($closed)));
+    } else {
+      $row[] = '-';
+    }
+    return array ($row, $oldest_all, $oldest_pri);
+  }
+
+  private function getPriorityMap ($name, $tasks) {
+    $row = array();
+    $row[] = $name;
+    $total = 0;
+    foreach (ManiphestTaskPriority::getTaskPriorityMap() as $pri => $label) {
+      $n = count(idx($tasks, $pri, array()));
+      if ($n == 0) {
+        $row[] = '-';
+      } else {
+        $row[] = number_format($n);
+      }
+      $total += $n;
+    }
+    $row[] = number_format($total);
+    return array ($row, $total);
+  }
+
+  private function setTaskArrays($handle, $project_handle, $result, $result_closed, $base_link, $leftover, $leftover_name, $leftover_closed) {
+    if ($handle) {
+      if (($project_handle) &&
+          ($project_handle->getPHID() == $handle->getPHID())) {
+        $tasks = idx($result, $handle->getPHID(), array());
+        $closed = idx($result_closed, $handle->getPHID(), array());
+      } else {
+        $tasks = idx($result, $handle->getPHID(), array());
+        $closed = idx($result_closed, $handle->getPHID(), array());
+      }
+
+      $name = phutil_tag(
+          'a',
+          array(
+              'href' => $base_link.$handle->getPHID(),
+          ),
+          $handle->getName());
+
+    } else {
+      $tasks = $leftover;
+      $name  = $leftover_name;
+      $closed = $leftover_closed;
+    }
+    return array ($tasks, $name, $closed);
+  }
+
+  private function buildTableColumns($col_header) {
     $cname = array($col_header);
     $cclass = array('pri left narrow');
     $pri_map = ManiphestTaskPriority::getShortNameMap();
@@ -270,7 +255,10 @@ final class SprintReportOpenTasksView extends SprintView {
         ),
         pht('Recently Closed'));
     $cclass[] = 'center narrow';
+    return array ($cname, $cclass);
+  }
 
+  private function buildOpenTasksTable($rows, $cname, $cclass, $order, $reverse) {
     $table = new AphrontTableView($rows);
     $table->setHeaders($cname);
     $table->setColumnClasses($cclass);
@@ -292,20 +280,8 @@ final class SprintReportOpenTasksView extends SprintView {
             'oldest-pri',
             'closed',
         ));
-
-    $panel = new PHUIObjectBoxView();
-    $panel->setHeaderText($header);
-    $panel->appendChild($table);
-
-    $tokens = array();
-    if ($project_handle) {
-      $tokens = array($project_handle);
-    }
-    $filter = parent::renderReportFilters($tokens);
-
-    return array($filter, $panel);
+    return $table;
   }
-
 
   /**
    * Load all the tasks that have been recently closed.

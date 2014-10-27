@@ -3,6 +3,7 @@
 final class SprintReportBurndownView extends SprintView {
 
   private $request;
+  private $timeperiod = array();
 
   public function setUser ($user) {
     $this->user = $user;
@@ -126,6 +127,15 @@ final class SprintReportBurndownView extends SprintView {
     return $day_buckets;
   }
 
+  private function buildBucket($epoch, $format)
+  {
+    $bucket = phabricator_format_local_time(
+        $epoch,
+        $this->user,
+        $format);
+    return $bucket;
+  }
+
   private function buildStatsTable() {
 
     $handle = null;
@@ -160,10 +170,8 @@ final class SprintReportBurndownView extends SprintView {
     foreach ($stats as $bucket => $info) {
       $epoch = $day_buckets[$bucket];
 
-      $week_bucket = phabricator_format_local_time(
-          $epoch,
-          $this->user,
-          'YW');
+      $week_bucket = $this->buildBucket($epoch, 'YW');
+
       if ($week_bucket != $last_week) {
         if ($week) {
           $rows[] = $this->formatBurnRow(
@@ -176,10 +184,8 @@ final class SprintReportBurndownView extends SprintView {
         $last_week_epoch = $epoch;
       }
 
-      $month_bucket = phabricator_format_local_time(
-          $epoch,
-          $this->user,
-          'Ym');
+      $month_bucket = $this->buildBucket($epoch, 'Ym');
+
       if ($month_bucket != $last_month) {
         if ($month) {
           $rows[] = $this->formatBurnRow(
@@ -224,22 +230,7 @@ final class SprintReportBurndownView extends SprintView {
     $rows = array_reverse($rows);
     $rowc = array_reverse($rowc);
 
-    $table = new AphrontTableView($rows);
-    $table->setRowClasses($rowc);
-    $table->setHeaders(
-        array(
-            pht('Period'),
-            pht('Opened'),
-            pht('Closed'),
-            pht('Change'),
-        ));
-    $table->setColumnClasses(
-        array(
-            'left narrow',
-            'center narrow',
-            'center narrow',
-            'center narrow',
-        ));
+    $table = $this->StatsTableView($rows, $rowc);
 
     if ($handle) {
       $inst = pht(
@@ -270,6 +261,27 @@ final class SprintReportBurndownView extends SprintView {
     $panel->appendChild($table);
 
     return $panel;
+  }
+
+  private function StatsTableView($rows, $rowc) {
+    $table = new AphrontTableView($rows);
+    $table->setRowClasses($rowc);
+    $table->setHeaders(
+        array(
+            pht('Period'),
+            pht('Opened'),
+            pht('Closed'),
+            pht('Change'),
+        ));
+    $table->setColumnClasses(
+        array(
+            'left narrow',
+            'center narrow',
+            'center narrow',
+            'center narrow',
+        ));
+
+    return $table;
   }
 
   private function buildBurnDownChart() {

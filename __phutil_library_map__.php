@@ -18,7 +18,8 @@ phutil_register_library_map(array(
     'BurndownException' => 'src/exception/BurndownException.php',
     'BurndownListController' => 'src/controller/BurndownListController.php',
     'BurndownTestDataGenerator' => 'src/__tests__/BurndownTestDataGenerator.php',
-    'EventMath' => 'src/view/EventMath.php',
+    'OpenTasksView' => 'src/view/OpenTasksView.php',
+    'ProjectOpenTasksView' => 'src/view/ProjectOpenTasksView.php',
     'SprintBuildStats' => 'src/storage/SprintBuildStats.php',
     'SprintConstants' => 'src/constants/SprintConstants.php',
     'SprintEndDateField' => 'src/customfield/SprintEndDateField.php',
@@ -31,6 +32,8 @@ phutil_register_library_map(array(
     'SprintTaskStoryPointsField' => 'src/customfield/SprintTaskStoryPointsField.php',
     'SprintTransaction' => 'src/storage/SprintTransaction.php',
     'SprintView' => 'src/view/SprintView.php',
+    'UserOpenTasksView' => 'src/view/UserOpenTasksView.php',
+    'ViewController' => 'src/controller/ViewController.php',
   ),
   'function' => array(),
   'xmap' => array(
@@ -42,6 +45,7 @@ phutil_register_library_map(array(
     'BurndownException' => 'Exception',
     'BurndownListController' => 'BurndownController',
     'BurndownTestDataGenerator' => 'PhabricatorTestDataGenerator',
+    'ProjectOpenTasksView' => 'OpenTasksView',
     'SprintConstants' => 'ManiphestConstants',
     'SprintStartDateField' => 'SprintProjectCustomField',
     'SprintEndDateField' => 'SprintProjectCustomField',
@@ -58,5 +62,6 @@ phutil_register_library_map(array(
     ),
     'SprintTransaction' => 'PhabricatorApplicationTransaction',
     'SprintView' => 'AphrontView',
+    'UserOpenTasksView' => 'OpenTasksView',
   ),
 ));
