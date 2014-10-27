@@ -245,60 +245,6 @@ final class BurndownDataView extends SprintView {
     return $chart;
   }
 
-  private function buildBurnDownChart() {
-
-    $this->data = $this->buildChartDataSet();
-    // Format the data for the chart
-    $data = json_encode($this->data);
-
-    // This should probably use celerity and/or javelin
-
-    $box = id(new PHUIObjectBoxView())
-        ->setHeaderText(pht('Burndown for ' . $this->project->getName()))
-        // Calling phutil_safe_html and passing in <script> tags is a potential
-        // security hole. None of this data is direct user input, so we should
-        // be fine.
-        ->appendChild(phutil_safe_html(<<<HERE
-<script type="text/javascript" src="//www.google.com/jsapi"></script>
-<script type="text/javascript">
-  google.load('visualization', '1', {packages: ['corechart']});
-</script>
-<script type="text/javascript">
-
-  function drawVisualization() {
-    // Create and populate the data table.
-    var data = google.visualization.arrayToDataTable($data);
-
-    // Create and draw the visualization.
-    var ac = new google.visualization.ComboChart(document.getElementById('visualization'));
-    ac.draw(data, {
-      height: 400,
-      vAxis: {title: "Points"},
-      hAxis: {title: "Date"},
-      seriesType: "line",
-      lineWidth: 3,
-      series: {
-        0: {color: '#f88'},
-        1: {color: '#fb0'},
-        2: {color: '#ccc', lineDashStyle: [8,4]},
-        3: {type: "bars", color: '#0c0'},
-      }
-    });
-  }
-
-  google.setOnLoadCallback(drawVisualization);
-</script>
-HERE
-        ))
-        ->appendChild(phutil_tag('div',
-            array(
-                'id' => 'visualization',
-                'style' => 'width: 100%; height:400px'
-            ), ''));
-
-    return $box;
-  }
-
   /**
    * Format the Burndown data for display on the page.
    *

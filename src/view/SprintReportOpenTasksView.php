@@ -60,6 +60,15 @@ final class SprintReportOpenTasksView extends SprintView {
     } elseif (($this->view) == 'project') {
       list($leftover, $base_link, $leftover_name, $col_header, $header, $result_closed, $leftover_closed, $result ) = (new ProjectOpenTasksView())
           ->execute($tasks, $recently_closed, $date);
+    } else {
+      $result = array();
+      $result_closed = array();
+      $base_link = null;
+      $leftover = array();
+      $leftover_closed = array();
+      $leftover_name = null;
+      $col_header = '';
+      $header = '';
     }
 
     $phids = array_keys($result);
@@ -83,7 +92,7 @@ final class SprintReportOpenTasksView extends SprintView {
       list ($row, $total) = $this->getPriorityMap($name, $tasks);
       list ($row, $oldest_all, $oldest_pri ) = $this->renderTaskLinks($taskv, $closed, $row);
 
-      $row['sort'] = $this->setSortOrder($order, $total, $oldest_all, $oldest_pri, $closed, $handle);
+      $row['sort'] = $this->setSortOrder($row, $order, $total, $oldest_all, $oldest_pri, $closed, $handle);
 
       $rows[] = $row;
     }
@@ -111,7 +120,7 @@ final class SprintReportOpenTasksView extends SprintView {
     return array($filter, $panel);
   }
 
-  private function setSortOrder ($order, $total, $oldest_all, $oldest_pri, $closed, $handle) {
+  private function setSortOrder ($row, $order, $total, $oldest_all, $oldest_pri, $closed, $handle) {
     switch ($order) {
       case 'total':
         $row['sort'] = $total;

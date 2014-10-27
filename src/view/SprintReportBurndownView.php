@@ -320,21 +320,7 @@ final class SprintReportBurndownView extends SprintView {
       return $chart;
     }
 
-  private function buildPointSeries(array $data) {
-    $out = array();
-
-    foreach ($data as $row) {
-      $t = (int)$row['dateCreated'];
-      $newv = trim($row['newValue'], '"');
-      if ($row['newValue']) {
-            $out[$t] = $newv;
-      }
-    }
-
-    return array(array_keys($out), array_values($out));
-  }
-
-  private function buildSeries(array $data) {
+   private function buildSeries(array $data) {
       $out = array();
       $data = $this->addTaskStatustoData ($data);
       $counter = 0;
