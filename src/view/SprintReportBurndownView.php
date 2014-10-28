@@ -5,7 +5,7 @@ final class SprintReportBurndownView extends SprintView {
   private $request;
   private $timeperiod = array();
 
-  public function setUser ($user) {
+  public function setUser (PhabricatorUser $user) {
     $this->user = $user;
     return $this;
   }
@@ -136,21 +136,8 @@ final class SprintReportBurndownView extends SprintView {
     return $bucket;
   }
 
-  private function buildStatsTable() {
 
-    $handle = null;
-    $project_phid = $this->request->getStr('project');
-
-    if ($project_phid) {
-      $phids = array($project_phid);
-      $handle = $this->getProjectHandle ($phids,$project_phid);
-    }
-
-    $data = $this->getXactionData($project_phid);
-
-    $stats = $this->buildStatsfromEvents($data);
-    $day_buckets = $this->buildDayBucketsfromEvents($data);
-
+  private function formatBucketRows ($stats, $day_buckets) {
     $template = array(
         'open' => 0,
         'close' => 0,
@@ -207,7 +194,24 @@ final class SprintReportBurndownView extends SprintView {
       $period['open'] += $info['open'];
       $period['close'] += $info['close'];
     }
+    return array ($rows,$rowc, $week, $month, $period);
+  }
 
+  private function renderCaption ($handle) {
+
+      $inst = pht(
+          'NOTE: This table reflects tasks currently in ' .
+          'the project. If a task was opened in the past but added to ' .
+          'the project recently, it is counted on the day it was ' .
+          'opened, not the day it was categorized. If a task was part ' .
+          'of this project in the past but no longer is, it is not ' .
+          'counted at all.');
+      $header = pht('Task Burn Rate for Project %s', $handle->renderLink());
+      $caption = phutil_tag('p', array(), $inst);
+   return array ($caption, $header);
+  }
+
+  private function formatStatsTableHeaders($week, $month, $period) {
     if ($week) {
       $rows[] = $this->formatBurnRow(
           pht('Week To Date'),
@@ -229,29 +233,37 @@ final class SprintReportBurndownView extends SprintView {
 
     $rows = array_reverse($rows);
     $rowc = array_reverse($rowc);
+  return array ($rows, $rowc);
+  }
+  private function buildStatsTable() {
 
+    $handle = null;
+    $project_phid = $this->request->getStr('project');
+
+    if ($project_phid) {
+      $phids = array($project_phid);
+      $handle = $this->getProjectHandle ($phids,$project_phid);
+    }
+
+    $data = $this->getXactionData($project_phid);
+
+    $stats = $this->buildStatsfromEvents($data);
+    $day_buckets = $this->buildDayBucketsfromEvents($data);
+
+    list ($rows,$rowc, $week, $month, $period) = $this->formatBucketRows ($stats, $day_buckets);
+    list ($rows, $rowc) = $this->formatStatsTableHeaders($week, $month, $period, $rows,$rowc);
+    
     $table = $this->StatsTableView($rows, $rowc);
 
-    if ($handle) {
-      $inst = pht(
-          'NOTE: This table reflects tasks currently in ' .
-          'the project. If a task was opened in the past but added to ' .
-          'the project recently, it is counted on the day it was ' .
-          'opened, not the day it was categorized. If a task was part ' .
-          'of this project in the past but no longer is, it is not ' .
-          'counted at all.');
-      $header = pht('Task Burn Rate for Project %s', $handle->renderLink());
-      $caption = phutil_tag('p', array(), $inst);
-    } else {
-      $header = pht('Task Burn Rate for All Tasks');
-      $caption = null;
-    }
-
-    if ($caption) {
-      $caption = id(new AphrontErrorView())
-          ->appendChild($caption)
-          ->setSeverity(AphrontErrorView::SEVERITY_NOTICE);
-    }
+  if ($handle) {
+    list ($caption, $header) = $this->renderCaption ($handle);
+    $caption = id(new AphrontErrorView())
+        ->appendChild($caption)
+        ->setSeverity(AphrontErrorView::SEVERITY_NOTICE);
+  } else {
+    $header = pht('Task Burn Rate for All Tasks');
+    $caption = null;
+  }
 
     $panel = new PHUIObjectBoxView();
     $panel->setHeaderText($header);
