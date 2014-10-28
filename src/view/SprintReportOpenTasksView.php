@@ -6,7 +6,7 @@ final class SprintReportOpenTasksView extends SprintView {
     private $request;
     private $view;
 
-  public function setUser ($user) {
+  public function setUser (PhabricatorUser $user) {
     $this->user = $user;
     return $this;
   }

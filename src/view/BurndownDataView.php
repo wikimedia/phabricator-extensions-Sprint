@@ -113,8 +113,8 @@ final class BurndownDataView extends SprintView {
           $transposed_array[0][$row_key] = $row;
         }
       }
-     return $transposed_array;
-     }
+    }
+    return $transposed_array;
    }
 
   // Now loop through the events and build the data for each day
@@ -136,81 +136,145 @@ final class BurndownDataView extends SprintView {
         $date = phabricator_format_local_time($xaction_date, $this->viewer, 'D M j');
       }
 
-      switch ($event['type']) {
-        case "create":
-          // Will be accounted for by "task-add" when the project is added
-          // Bet we still include it so it shows on the Events list
-          break;
-        case "task-add":
-          // A task was added to the sprint
-          $this->addTaskToSprint($date, $task_phid);
-          break;
-        case "task-remove":
-          // A task was removed from the sprint
-          $this->removeTaskFromSprint($date, $task_phid);
-          break;
-        case "close":
-          // A task was closed, mark it as done
-          $this->closeTask($date, $task_phid);
-          break;
-        case "reopen":
-          // A task was reopened, subtract from done
-          $this->reopenTask($date, $task_phid);
-          break;
-        case "points":
-          // Points were changed
-          $this->changePoints($date, $task_phid, $xaction);
-          break;
+        switch ($event['type']) {
+          case "create":
+            // Will be accounted for by "task-add" when the project is added
+            // But we still include it so it shows on the Events list
+            break;
+          case "task-add":
+            // A task was added to the sprint
+            $operator = "+";
+            $this->changeTasksAddedToday($date, $operator);
+            $this->changePointsAddedToday($date, $task_phid, $operator);
+            $this->changeTaskInSprint($task_phid, $operator);
+            break;
+          case "task-remove":
+            // A task was removed from the sprint
+            $operator = "-";
+            $this->changeTasksAddedToday($date, $operator);
+            $this->changePointsAddedToday($date, $task_phid, $operator);
+            $this->changeTaskInSprint($task_phid, $operator);
+            break;
+          case "close":
+            // A task was closed, mark it as done
+            $operator = "+";
+            $this->changeTasksClosedToday($date, $operator);
+            $this->changePointsClosedToday($date, $task_phid, $operator);
+            $this->changeTaskStatuses($task_phid, $operator);
+            break;
+          case "reopen":
+            // A task was reopened, subtract from done
+            $operator = "-";
+            $this->changeTasksClosedToday($date, $operator);
+            $this->changePointsClosedToday($date, $task_phid, $operator);
+            $this->changeTaskStatuses($task_phid, $operator);
+            break;
+          case "points":
+            // Points were changed
+            $this->changePoints($date, $task_phid, $xaction);
+            break;
+        }
+    }
+  }
+
+  private function changeTasksAddedToday($date, $operator) {
+    switch ($operator) {
+      case "+":
+        return
+            $this->dates[$date]->tasks_added_today += 1;
+        case "-":
+        return
+            $this->dates[$date]->tasks_added_today -= 1;
+        default:
+        return true;
+      }
+  }
+
+  private function changePointsAddedToday($date, $task_phid, $operator) {
+    if (isset($this->task_points[$task_phid]) == $task_phid) {
+      switch ($operator) {
+        case "+":
+          return
+              $this->dates[$date]->points_added_today += $this->task_points[$task_phid];
+        case "-":
+          return
+              $this->dates[$date]->points_added_today -= $this->task_points[$task_phid];
+        default:
+          return true;
       }
     }
   }
 
-  /**
-   * These handle the relevant math for adding, removing, closing, etc.
-   * @param $date
-   * @param $task_phid
-   */
-  private function addTaskToSprint($date, $task_phid) {
-    $this->dates[$date]->tasks_added_today += 1;
-    $this->dates[$date]->points_added_today += $this->task_points[$task_phid];
-    $this->task_in_sprint[$task_phid] = 1;
-  }
-
-  private function removeTaskFromSprint($date, $task_phid) {
-    $this->dates[$date]->tasks_added_today -= 1;
-    $this->dates[$date]->points_added_today -= $this->task_points[$task_phid];
-    $this->task_in_sprint[$task_phid] = 0;
-  }
-
-  private function closeTask($date, $task_phid) {
-    $this->dates[$date]->tasks_closed_today += 1;
-    $this->dates[$date]->points_closed_today += $this->task_points[$task_phid];
-    $this->task_statuses[$task_phid] = 'closed';
-  }
-
-  private function reopenTask($date, $task_phid) {
-    $this->dates[$date]->tasks_closed_today -= 1;
-    $this->dates[$date]->points_closed_today -= $this->task_points[$task_phid];
-    $this->task_statuses[$task_phid] = 'open';
-  }
-
-  private function changePoints($date, $task_phid, $xaction) {
-    $this->task_points[$task_phid] = $xaction->getNewValue();
-
-    // Only make changes if the task is in the sprint
-    if ($this->task_in_sprint[$task_phid]) {
-
-      // Adjust points for that day
-      $this->dates[$date]->points_added_today +=
-          $xaction->getNewValue() - $xaction->getOldValue();
-
-      // If the task is closed, adjust completed points as well
-      if ($this->task_statuses[$task_phid] == 'closed') {
-        $this->dates[$date]->points_closed_today +=
-            $xaction->getNewValue() - $xaction->getOldValue();
-      }
+  private function changeTaskInSprint($task_phid, $operator) {
+    switch ($operator) {
+      case "+":
+        return
+            $this->task_in_sprint[$task_phid] = 1;
+      case "-":
+        return
+            $this->task_in_sprint[$task_phid] = 0;
+      default:
+      return true;
     }
   }
+
+  private function changeTasksClosedToday($date, $operator) {
+    switch ($operator) {
+      case "+":
+        return
+            $this->dates[$date]->tasks_closed_today += 1;
+      case "-":
+        return
+            $this->dates[$date]->tasks_closed_today -= 1;
+      default:
+      return true;
+    }
+  }
+
+  private function changePointsClosedToday($date, $task_phid, $operator) {
+    switch ($operator) {
+      case "+":
+        return
+            $this->dates[$date]->points_closed_today += $this->task_points[$task_phid];
+      case "-":
+        return
+            $this->dates[$date]->points_closed_today -= $this->task_points[$task_phid];
+      default:
+      return true;
+    }
+  }
+
+  private function changeTaskStatuses($task_phid, $operator) {
+    switch ($operator) {
+      case "+":
+        return
+            $this->task_statuses[$task_phid] = 'closed';
+      case "-":
+        return
+            $this->task_statuses[$task_phid] = 'open';
+      default:
+      return true;
+    }
+  }
+
+   private function changePoints($date, $task_phid, $xaction) {
+
+     $this->task_points[$task_phid] = $xaction->getNewValue();
+
+     // Only make changes if the task is in the sprint
+     if (isset($this->task_in_sprint[$task_phid])) {
+
+         // Adjust points for that day
+         $this->dates[$date]->points_added_today +=
+             $xaction->getNewValue() - $xaction->getOldValue();
+
+         // If the task is closed, adjust completed points as well
+         if (isset($this->task_statuses[$task_phid]) && $this->task_statuses[$task_phid] == 'closed') {
+           $this->dates[$date]->points_closed_today +=
+               $xaction->getNewValue() - $xaction->getOldValue();
+         }
+       }
+     }
 
   private function buildC3Chart() {
     $this->data = $this->buildChartDataSet();
