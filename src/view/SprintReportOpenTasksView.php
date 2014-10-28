@@ -38,7 +38,6 @@ final class SprintReportOpenTasksView extends SprintView {
   }
 
   public function render() {
-
     $project_phid = $this->request->getStr('project');
     $project_handle = null;
 
@@ -296,7 +295,6 @@ final class SprintReportOpenTasksView extends SprintView {
    * Load all the tasks that have been recently closed.
    */
   private function loadRecentlyClosedTasks() {
-
     list(,, $window_epoch) = $this->getWindow();
 
     $table = new ManiphestTask();
@@ -335,14 +333,12 @@ final class SprintReportOpenTasksView extends SprintView {
   }
 
   private function getOpenTasks($user) {
-
     $query = $this->openStatusQuery($user);
     $tasks = $query->execute();
     return $tasks;
   }
 
   private function getOpenTasksforProject($user, $phids) {
-
     $query = $this->openStatusQuery($user)->withAnyProjects($phids);
     $tasks = $query->execute();
     return $tasks;
@@ -356,7 +352,6 @@ final class SprintReportOpenTasksView extends SprintView {
   }
 
   private function getWindow() {
-
     $window_str = $this->request->getStr('window', '12 AM 7 days ago');
 
     $error = null;
@@ -386,7 +381,6 @@ final class SprintReportOpenTasksView extends SprintView {
   }
 
   private function getProjectHandle($phids,$project_phid) {
-
     $handles = $this->loadViewerHandles($phids);
     $project_handle = $handles[$project_phid];
     return $project_handle;

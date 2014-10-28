@@ -16,7 +16,6 @@ final class SprintReportBurndownView extends SprintView {
   }
 
   public function render() {
-
     $filter = $this->BuildFilter();
     $chart = $this->buildBurnDownChart();
     $table = $this->buildStatsTable();
@@ -51,7 +50,6 @@ final class SprintReportBurndownView extends SprintView {
   }
 
   private function getProjectHandle($phids,$project_phid) {
-
     $query = id(new SprintQuery())
         ->setPHID($project_phid);
 
@@ -91,7 +89,6 @@ final class SprintReportBurndownView extends SprintView {
  }
 
   private function buildStatsfromEvents ($data) {
-
    $stats = array();
    $data = $this->addTaskStatustoData ($data);
 
@@ -127,8 +124,7 @@ final class SprintReportBurndownView extends SprintView {
     return $day_buckets;
   }
 
-  private function buildBucket($epoch, $format)
-  {
+  private function buildBucket($epoch, $format) {
     $bucket = phabricator_format_local_time(
         $epoch,
         $this->user,
@@ -198,7 +194,6 @@ final class SprintReportBurndownView extends SprintView {
   }
 
   private function renderCaption ($handle) {
-
       $inst = pht(
           'NOTE: This table reflects tasks currently in ' .
           'the project. If a task was opened in the past but added to ' .
@@ -211,8 +206,8 @@ final class SprintReportBurndownView extends SprintView {
    return array ($caption, $header);
   }
 
-  private function formatStatsTableHeaders($week, $month, $period) {
-    if ($week) {
+  private function formatStatsTableHeaders($week, $month, $period, $rows,$rowc) {
+     if ($week) {
       $rows[] = $this->formatBurnRow(
           pht('Week To Date'),
           $week);
@@ -235,8 +230,8 @@ final class SprintReportBurndownView extends SprintView {
     $rowc = array_reverse($rowc);
   return array ($rows, $rowc);
   }
-  private function buildStatsTable() {
 
+  private function buildStatsTable() {
     $handle = null;
     $project_phid = $this->request->getStr('project');
 
@@ -252,7 +247,7 @@ final class SprintReportBurndownView extends SprintView {
 
     list ($rows,$rowc, $week, $month, $period) = $this->formatBucketRows ($stats, $day_buckets);
     list ($rows, $rowc) = $this->formatStatsTableHeaders($week, $month, $period, $rows,$rowc);
-    
+
     $table = $this->StatsTableView($rows, $rowc);
 
   if ($handle) {

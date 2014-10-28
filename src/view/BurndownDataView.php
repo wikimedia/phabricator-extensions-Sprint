@@ -6,17 +6,6 @@
 
 final class BurndownDataView extends SprintView {
 
-  // Array of BurndownDataDates
-  // There are two special keys, 'before' and 'after'
-  //
-  // Looks like: array(
-  //   'before' => BurndownDataDate
-  //   'Tue Jun 3' => BurndownDataDate
-  //   'Wed Jun 4' => BurndownDataDate
-  //   ...
-  //   'after' => BurndownDataDate
-  // )
-
   private $dates;
   private $data;
    // Project associated with this burndown.
@@ -39,7 +28,6 @@ final class BurndownDataView extends SprintView {
   }
 
   public function render() {
-
     $chart = $this->buildC3Chart();
     $tasks_table = $this->buildTasksTable();
     $burndown_table = $this->buildBurnDownTable();
@@ -48,7 +36,6 @@ final class BurndownDataView extends SprintView {
   }
 
   private function buildChartDataSet() {
-
     $query = id(new SprintQuery())
          ->setProject($this->project)
          ->setViewer($this->viewer);
@@ -119,7 +106,6 @@ final class BurndownDataView extends SprintView {
 
   // Now loop through the events and build the data for each day
   private function buildDailyData($events, $start, $end) {
-
     foreach ($events as $event) {
 
       $xaction = $this->xactions[$event['transactionPHID']];
@@ -240,7 +226,6 @@ final class BurndownDataView extends SprintView {
   }
 
    private function changePoints($date, $task_phid, $xaction) {
-
      $this->task_points[$task_phid] = $xaction->getNewValue();
 
      // Only make changes if the task is in the sprint
@@ -296,7 +281,7 @@ final class BurndownDataView extends SprintView {
    *
    * @returns PHUIObjectBoxView
    */
-  public function buildBurnDownTable() {
+  private function buildBurnDownTable() {
     $data = array();
     $stats = id(new SprintBuildStats());
     $stats->sumSprintStats($this->dates);
@@ -337,8 +322,7 @@ final class BurndownDataView extends SprintView {
    *
    * @returns PHUIObjectBoxView
    */
-  public function buildTasksTable() {
-
+  private function buildTasksTable() {
     $rows = $this->buildTasksTree();
 
     $table = id(new AphrontTableView($rows))
@@ -481,7 +465,7 @@ final class BurndownDataView extends SprintView {
    *
    * @returns PHUIObjectBoxView
    */
-  public function buildEventTable() {
+  private function buildEventTable() {
     $query = id(new SprintQuery())
         ->setProject($this->project)
         ->setViewer($this->viewer);
