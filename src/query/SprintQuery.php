@@ -123,6 +123,81 @@ final class SprintQuery  {
     return $events;
   }
 
+  private function setXActionEventType ($xaction, $old, $new, $scope_phids) {
+    switch ($xaction->getTransactionType()) {
+      case ManiphestTransaction::TYPE_STATUS:
+        $old_is_closed = ($old === null) ||
+            ManiphestTaskStatus::isClosedStatus($old);
+        $new_is_closed = ManiphestTaskStatus::isClosedStatus($new);
+
+        if ($old_is_closed == $new_is_closed) {
+          // This was just a status change from one open status to another,
+          // or from one closed status to another, so it's not an events we
+          // care about.
+          break;
+        }
+        if ($old === null) {
+          // This would show as "reopened" even though it's when the task was
+          // created so we skip it. Instead we will use the title for created
+          // events
+          break;
+        }
+
+        if ($new_is_closed) {
+          return $event_type = 'close';
+        } else {
+          return $event_type = 'reopen';
+        }
+        break;
+
+      case ManiphestTransaction::TYPE_TITLE:
+        if ($old === null)
+        {
+          return $event_type = 'create';
+        }
+        break;
+
+      // Project changes are "core:edge" transactions
+      case PhabricatorTransactions::TYPE_EDGE:
+
+        // We only care about ProjectEdgeType
+        if (idx($xaction->getMetadata(), 'edge:type') !==
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST)
+          break;
+
+        $old = ipull($old, 'dst');
+        $new = ipull($new, 'dst');
+
+        $in_old_scope = array_intersect_key($scope_phids, $old);
+        $in_new_scope = array_intersect_key($scope_phids, $new);
+
+        if ($in_new_scope && !$in_old_scope) {
+          return $event_type = 'task-add';
+        } else if ($in_old_scope && !$in_new_scope) {
+          // NOTE: We will miss some of these events, becuase we are only
+          // examining tasks that are currently in the project. If a task
+          // is removed from the project and not added again later, it will
+          // just vanish from the chart completely, not show up as a
+          // scope contraction. We can't do better until the Facts application
+          // is available without examining *every* task.
+          return $event_type = 'task-remove';
+        }
+        break;
+
+      case PhabricatorTransactions::TYPE_CUSTOMFIELD:
+        if ($xaction->getMetadataValue('customfield:key') == 'isdc:sprint:storypoints') {
+          // POINTS!
+          return $event_type = 'points';
+        }
+        break;
+
+      default:
+        // This is something else (comment, subscription change, etc) that
+        // we don't care about for now.
+        break;
+    }
+  }
+
   public function extractEvents($xactions, array $scope_phids) {
     assert_instances_of($xactions, 'ManiphestTransaction');
 
@@ -134,78 +209,7 @@ final class SprintQuery  {
       $new = $xaction->getNewValue();
 
       $event_type = null;
-      switch ($xaction->getTransactionType()) {
-        case ManiphestTransaction::TYPE_STATUS:
-          $old_is_closed = ($old === null) ||
-              ManiphestTaskStatus::isClosedStatus($old);
-          $new_is_closed = ManiphestTaskStatus::isClosedStatus($new);
-
-          if ($old_is_closed == $new_is_closed) {
-            // This was just a status change from one open status to another,
-            // or from one closed status to another, so it's not an events we
-            // care about.
-            break;
-          }
-          if ($old === null) {
-            // This would show as "reopened" even though it's when the task was
-            // created so we skip it. Instead we will use the title for created
-            // events
-            break;
-          }
-
-          if ($new_is_closed) {
-            $event_type = 'close';
-          } else {
-            $event_type = 'reopen';
-          }
-          break;
-
-        case ManiphestTransaction::TYPE_TITLE:
-          if ($old === null)
-          {
-            $event_type = 'create';
-          }
-          break;
-
-        // Project changes are "core:edge" transactions
-        case PhabricatorTransactions::TYPE_EDGE:
-
-          // We only care about ProjectEdgeType
-          if (idx($xaction->getMetadata(), 'edge:type') !==
-              PhabricatorProjectObjectHasProjectEdgeType::EDGECONST)
-            break;
-
-          $old = ipull($old, 'dst');
-          $new = ipull($new, 'dst');
-
-          $in_old_scope = array_intersect_key($scope_phids, $old);
-          $in_new_scope = array_intersect_key($scope_phids, $new);
-
-          if ($in_new_scope && !$in_old_scope) {
-            $event_type = 'task-add';
-          } else if ($in_old_scope && !$in_new_scope) {
-            // NOTE: We will miss some of these events, becuase we are only
-            // examining tasks that are currently in the project. If a task
-            // is removed from the project and not added again later, it will
-            // just vanish from the chart completely, not show up as a
-            // scope contraction. We can't do better until the Facts application
-            // is avialable without examining *every* task.
-            $event_type = 'task-remove';
-          }
-          break;
-
-        case PhabricatorTransactions::TYPE_CUSTOMFIELD:
-          if ($xaction->getMetadataValue('customfield:key') == 'isdc:sprint:storypoints') {
-            // POINTS!
-            $event_type = 'points';
-          }
-          break;
-
-        default:
-          // This is something else (comment, subscription change, etc) that
-          // we don't care about for now.
-          break;
-      }
+      $event_type = $this->setXActionEventType ($xaction, $old, $new, $scope_phids);
 
       // If we found some kind of events that we care about, stick it in the
       // list of events.

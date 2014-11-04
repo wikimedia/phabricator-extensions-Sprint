@@ -9,51 +9,28 @@ final class BurndownListController extends BurndownController {
   private $view;
 
   public function processRequest() {
-
     $request = $this->getRequest();
     $viewer = $request->getUser();
 
     $nav = $this->buildNavMenu();
     $projects = $this->loadAllProjects($viewer);
     $this->view = $nav->selectFilter($this->view, 'list');
+
     $order = $request->getStr('order', 'name');
     list($order, $reverse) = AphrontTableView::parseSort($order);
 
     $rows = array();
     foreach ($projects as $project) {
 
-      $aux_fields = $this->getAuxFields($project, $viewer);
-      $start = $this->getStartDate($aux_fields);
-      $end = $this->getEndDate($aux_fields);
+      $query = id(new SprintQuery())
+          ->setProject($project)
+          ->setViewer($viewer);
 
-      $row = array();
-      $row[] =  phutil_tag(
-          'a',
-          array(
-            'href'  => '/sprint/view/'.$project->getId(),
-            'style' => 'font-weight:bold',
-          ),
-          $project->getName());
-      $row[] = phabricator_datetime($start, $viewer);
-      $row[] = phabricator_datetime($end, $viewer);
+      $aux_fields = $query->getAuxFields();
+      $start = $query->getStartDate($aux_fields);
+      $end = $query->getEndDate($aux_fields);
 
-      switch ($order) {
-        case 'Name':
-          $row['sort'] = $project->getName();
-          break;
-        case 'Start':
-          $row['sort'] = $start;
-          break;
-        case 'End':
-          $row['sort'] = $end;
-          break;
-        case 'name':
-        default:
-          $row['sort'] = $project->getName();
-          break;
-      }
-
-    $rows[] = $row;
+     $rows[] = $this->buildRowSet($project, $start, $viewer, $end, $order);
     }
 
     $rows = isort($rows, 'sort');
@@ -64,6 +41,48 @@ final class BurndownListController extends BurndownController {
       $rows = array_reverse($rows);
     }
 
+    $nav = $this->buildProjectsTable($rows, $request, $order, $reverse, $nav);
+    return $this->buildApplicationPage(
+      array(
+        $nav,
+      ),
+      array(
+        'title' => array(pht('Sprint List')),
+        'device' => true,
+      ));
+  }
+
+  private function buildRowSet($project, $start, $viewer, $end, $order) {
+    $row = array();
+    $row[] =  phutil_tag(
+        'a',
+        array(
+            'href'  => '/sprint/view/'.$project->getId(),
+            'style' => 'font-weight:bold',
+        ),
+        $project->getName());
+    $row[] = phabricator_datetime($start, $viewer);
+    $row[] = phabricator_datetime($end, $viewer);
+
+    switch ($order) {
+      case 'Name':
+        $row['sort'] = $project->getName();
+        break;
+      case 'Start':
+        $row['sort'] = $start;
+        break;
+      case 'End':
+        $row['sort'] = $end;
+        break;
+      case 'name':
+      default:
+        $row['sort'] = $project->getName();
+        break;
+    }
+    return $rows[] = $row;
+  }
+
+  private function buildProjectsTable ($rows, $request, $order, $reverse, $nav) {
     $projects_table = id(new AphrontTableView($rows))
         ->setHeaders(
             array(
@@ -79,7 +98,7 @@ final class BurndownListController extends BurndownController {
             ))
         ->makeSortable(
             $request->getRequestURI(),
-                'order',
+            'order',
             $order,
             $reverse,
             array(
@@ -94,15 +113,15 @@ final class BurndownListController extends BurndownController {
 
 
     $help = id(new PHUIBoxView())
-      ->appendChild(phutil_tag('p', array(),
-          "To have a project show up in this list, make sure it's name includes"
-          ."\"§\" and then edit it to set the start and end date."
-      ))
-      ->addMargin(PHUI::MARGIN_LARGE);
+        ->appendChild(phutil_tag('p', array(),
+            "To have a project show up in this list, make sure it's name includes"
+            ."\"§\" and then edit it to set the start and end date."
+        ))
+        ->addMargin(PHUI::MARGIN_LARGE);
 
     $box= id(new PHUIBoxView())
-      ->appendChild($projects_table)
-      ->addMargin(PHUI::MARGIN_LARGE);
+        ->appendChild($projects_table)
+        ->addMargin(PHUI::MARGIN_LARGE);
 
     $nav->appendChild(
         array(
@@ -110,16 +129,7 @@ final class BurndownListController extends BurndownController {
             $help,
             $box,
         ));
-
-    return $this->buildApplicationPage(
-
-      array(
-        $nav,
-      ),
-      array(
-        'title' => array(pht('Sprint List')),
-        'device' => true,
-      ));
+    return $nav;
   }
 
   // Load all projects with "§" in the name.
@@ -129,17 +139,5 @@ final class BurndownListController extends BurndownController {
       ->withDatasourceQuery(SprintConstants::MAGIC_WORD)
       ->execute();
     return $projects;
-  }
-
-  private function getStartDate($aux_fields) {
-    $start = idx($aux_fields, 'isdc:sprint:startdate')
-        ->getProxy()->getFieldValue();
-    return $start;
-  }
-
-  private function getEndDate($aux_fields) {
-    $end = idx($aux_fields, 'isdc:sprint:enddate')
-        ->getProxy()->getFieldValue();
-    return $end;
   }
 }
