@@ -1,7 +1,7 @@
 phabricator-sprint
 ==================
 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/ChristopherHJohnson/phabricator-extensions-Sprint/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/ChristopherHJohnson/phabricator-extensions-Sprint/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/ChristopherHJohnson/phabricator-extensions-Sprint/?branch=master)
 
 Copyright (C) 2014 Michael Peters
 Licensed under GNU GPL v3. See LICENSE for full details
