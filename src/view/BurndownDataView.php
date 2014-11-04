@@ -6,9 +6,8 @@
 
 final class BurndownDataView extends SprintView {
 
-  private $dates;
-  private $data;
-   // Project associated with this burndown.
+  private $timeseries;
+  private $sprint_data;
   private $project;
   private $viewer;
   private $tasks;
@@ -16,6 +15,7 @@ final class BurndownDataView extends SprintView {
   private $task_points = array();
   private $task_statuses = array();
   private $task_in_sprint = array();
+
 
   public function setProject ($project) {
     $this->project = $project;
@@ -25,6 +25,11 @@ final class BurndownDataView extends SprintView {
   public function setViewer ($viewer) {
     $this->viewer = $viewer;
     return $this;
+  }
+
+  public function setTimeZone ($viewer) {
+    $timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
+    return $timezone;
   }
 
   public function render() {
@@ -42,51 +47,32 @@ final class BurndownDataView extends SprintView {
     $aux_fields = $query->getAuxFields();
     $start = $query->getStartDate($aux_fields);
     $end = $query->getEndDate($aux_fields);
+    $stats = id(new SprintBuildStats());
+    $dates = $stats->buildDateArray($start, $end, $this->setTimeZone($this->viewer));
+    $this->timeseries = $stats->buildTimeSeries($start, $end, $this->setTimeZone($this->viewer));
 
     $tasks = $query->getTasks();
-
     $query->checkNull($start, $end, $tasks);
-
     $xactions = $query->getXactions($tasks);
-
-    $stats = id(new SprintBuildStats());
-    $this->dates = $stats->buildDateArray($start, $end);
-
     $events = $query->getEvents($xactions, $tasks);
 
     $this->xactions = mpull($xactions, null, 'getPHID');
     $this->tasks = mpull($tasks, null, 'getPHID');
 
-    $this->buildDailyData($events, $start, $end);
+    $dates = $this->buildDailyData($events, $start, $end, $dates);
 
-
-    $stats->sumSprintStats($this->dates);
-    $stats->computeIdealPoints($this->dates);
-
-
-    $data = array(array(
-        pht('Total Points'),
-        pht('Remaining Points'),
-        pht('Ideal Points'),
-        pht('Points Today'),
-    ));
-
-    $future = false;
-    foreach ($this->dates as $key => $date) {
-      if ($key != 'before' AND $key != 'after') {
-        $future = new DateTime($date->getDate()) > id(new DateTime())->setTime(0, 0);
-      }
-      $data[] = array(
-          $future ? null : $date->points_total,
-          $future ? null : $date->points_remaining,
-          $date->points_ideal_remaining,
-          $future ? null : $date->points_closed_today,
-      );
-
-    }
+    $this->sprint_data = $this->setSprintData($dates);
+    $data = $stats->buildDataSet($this->sprint_data);
     $data = $this->transposeArray($data);
     return $data;
   }
+
+  private function setSprintData($dates) {
+    $stats = id(new SprintBuildStats());
+    $dates = $stats->sumSprintStats($dates);
+    $sprint_data = $stats->computeIdealPoints($dates);
+    return $sprint_data;
+}
 
   private function transposeArray($array) {
     $transposed_array = array();
@@ -104,10 +90,9 @@ final class BurndownDataView extends SprintView {
     return $transposed_array;
    }
 
-  // Now loop through the events and build the data for each day
-  private function buildDailyData($events, $start, $end) {
-    foreach ($events as $event) {
+  private function buildDailyData($events, $start, $end, $dates) {
 
+    foreach ($events as $event) {
       $xaction = $this->xactions[$event['transactionPHID']];
       $xaction_date = $xaction->getDateCreated();
       $task_phid = $xaction->getObjectPHID();
@@ -129,131 +114,127 @@ final class BurndownDataView extends SprintView {
             break;
           case "task-add":
             // A task was added to the sprint
-            $operator = "+";
-            $stat = "tasks_added_today";
-            $pstat = "points_added_today";
-            $this->changeTasksToday($date, $operator, $stat);
-            $this->changePointsToday($date, $task_phid, $operator, $pstat);
-            $this->changeTaskInSprint($task_phid, $operator);
+            $this->AddTasksToday($date, $dates);
+            $this->AddPointsToday($date, $task_phid, $dates);
+            $this->AddTaskInSprint($task_phid);
             break;
           case "task-remove":
             // A task was removed from the sprint
-            $operator = "-";
-            $stat = "tasks_closed_today";
-            $pstat = "points_closed_today";
-            $this->changeTasksToday($date, $operator, $stat);
-            $this->changePointsToday($date, $task_phid, $operator, $pstat);
-            $this->changeTaskInSprint($task_phid, $operator);
+            $this->RemoveTasksToday($date, $dates);
+            $this->RemovePointsToday($date, $task_phid, $dates);
+            $this->RemoveTaskInSprint($task_phid);
             break;
           case "close":
             // A task was closed, mark it as done
-            $operator = "+";
-            $stat = "tasks_closed_today";
-            $pstat = "points_closed_today";
-            $this->changeTasksToday($date, $operator, $stat);
-            $this->changePointsToday($date, $task_phid, $operator, $pstat);
-            $this->changeTaskStatuses($task_phid, $operator);
+            $this->CloseTasksToday($date, $dates);
+            $this->ClosePointsToday($date, $task_phid, $dates);
+            $this->CloseTaskStatus($task_phid);
             break;
           case "reopen":
             // A task was reopened, subtract from done
-            $operator = "-";
-            $stat = "tasks_added_today";
-            $pstat = "points_closed_today";
-            $this->changeTasksToday($date, $operator, $stat);
-            $this->changePointsToday($date, $task_phid, $operator, $pstat);
-            $this->changeTaskStatuses($task_phid, $operator);
+            $this->ReopenedTasksToday($date, $dates);
+            $this->ReopenedPointsToday($date, $task_phid, $dates);
+            $this->OpenTaskStatus($task_phid);
             break;
           case "points":
             // Points were changed
-            $this->changePoints($date, $task_phid, $xaction);
+            $this->changePoints($date, $task_phid, $xaction, $dates);
             break;
         }
     }
+    return $dates;
   }
 
-  private function changeTasksToday($date, $operator, $stat) {
-    switch ($operator) {
-      case "+":
-        return
-            $this->dates[$date]->$stat += 1;
-        case "-":
-        return
-            $this->dates[$date]->$stat -= 1;
-        default:
-        return true;
-      }
+  private function AddTasksToday($date, $dates) {
+     $dates[$date]->setTasksAddedToday();
+    return $dates;
   }
 
-  private function changePointsToday($date, $task_phid, $operator, $pstat) {
-    if (isset($this->task_points[$task_phid]) == $task_phid) {
-      switch ($operator) {
-        case "+":
-          return
-              $this->dates[$date]->$pstat += $this->task_points[$task_phid];
-        case "-":
-          return
-              $this->dates[$date]->$pstat -= $this->task_points[$task_phid];
-        default:
-          return true;
-      }
-    }
+  private function RemoveTasksToday($date, $dates) {
+    $dates[$date]->setTasksRemovedToday();
+    return $dates;
   }
 
-  private function changeTaskInSprint($task_phid, $operator) {
-    switch ($operator) {
-      case "+":
-        return
-            $this->task_in_sprint[$task_phid] = 1;
-      case "-":
-        return
-            $this->task_in_sprint[$task_phid] = 0;
-      default:
-      return true;
-    }
+  private function CloseTasksToday($date, $dates) {
+    $dates[$date]->setTasksClosedToday();
+    return $dates;
   }
 
-  private function changeTaskStatuses($task_phid, $operator) {
-    switch ($operator) {
-      case "+":
-        return
-            $this->task_statuses[$task_phid] = 'closed';
-      case "-":
-        return
-            $this->task_statuses[$task_phid] = 'open';
-      default:
-      return true;
-    }
+  private function ReopenedTasksToday($date, $dates) {
+    $dates[$date]->setTasksReopenedToday();
+    return $dates;
   }
 
-   private function changePoints($date, $task_phid, $xaction) {
+  private function AddPointsToday($date, $task_phid, $dates) {
+    $dates[$date]->setPointsAddedToday($this->task_points[$task_phid]);
+    return $dates;
+  }
+
+  private function RemovePointsToday($date, $task_phid, $dates) {
+    $dates[$date]->setPointsRemovedToday($this->task_points[$task_phid]);
+    return $dates;
+  }
+
+  private function ClosePointsToday($date, $task_phid, $dates) {
+    $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
+    return $dates;
+  }
+
+  private function ReopenedPointsToday($date, $task_phid, $dates) {
+    $dates[$date]->setPointsReopenedToday($this->task_points[$task_phid]);
+    return $dates;
+  }
+
+  private function AddTaskInSprint($task_phid) {
+    $this->task_in_sprint[$task_phid] = 1;
+    return $this->task_in_sprint[$task_phid];
+  }
+
+  private function RemoveTaskInSprint($task_phid) {
+    $this->task_in_sprint[$task_phid] = 0;
+    return $this->task_in_sprint[$task_phid];
+  }
+
+  private function CloseTaskStatus($task_phid) {
+    $this->task_statuses[$task_phid] = 'closed';
+    return $this->task_statuses[$task_phid];
+  }
+
+  private function OpenTaskStatus($task_phid) {
+    $this->task_statuses[$task_phid] = 'open';
+    return $this->task_statuses[$task_phid];
+  }
+
+  private function changePoints($date, $task_phid, $xaction, $dates) {
      $this->task_points[$task_phid] = $xaction->getNewValue();
 
      // Only make changes if the task is in the sprint
      if (isset($this->task_in_sprint[$task_phid])) {
 
          // Adjust points for that day
-         $this->dates[$date]->points_added_today +=
-             $xaction->getNewValue() - $xaction->getOldValue();
+       $task_points = $xaction->getNewValue() - $xaction->getOldValue();
+       $dates[$date]->setPointsAddedToday($task_points);
 
          // If the task is closed, adjust completed points as well
          if (isset($this->task_statuses[$task_phid]) && $this->task_statuses[$task_phid] == 'closed') {
-           $this->dates[$date]->points_closed_today +=
-               $xaction->getNewValue() - $xaction->getOldValue();
+           $task_points = $xaction->getNewValue() - $xaction->getOldValue();
+           $dates[$date]->setPointsClosedToday($task_points);
          }
        }
-     }
+    return $dates;
+  }
 
   private function buildC3Chart() {
-    $this->data = $this->buildChartDataSet();
-    $totalpoints = $this->data[0];
-    $remainingpoints = $this->data[1];
-    $idealpoints = $this->data[2];
-    $pointstoday = $this->data[3];
-    $timeseries = array_keys($this->dates);
+    $data = $this->buildChartDataSet();
+    $totalpoints = $data[0];
+    $remainingpoints = $data[1];
+    $idealpoints = $data[2];
+    $pointstoday = $data[3];
+    $timeseries = $this->timeseries;
 
-    require_celerity_resource('d3');
-    require_celerity_resource('c3-css');
-    require_celerity_resource('c3');
+    require_celerity_resource('d3','sprint');
+    require_celerity_resource('c3-css','sprint');
+    require_celerity_resource('c3','sprint');
 
     $id = 'chart';
     Javelin::initBehavior('c3-chart', array(
@@ -263,7 +244,7 @@ final class BurndownDataView extends SprintView {
         'remainingpoints' => $remainingpoints,
         'idealpoints' =>   $idealpoints,
         'pointstoday' =>   $pointstoday
-    ));
+    ), 'sprint');
 
     $chart= id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Burndown for ' . $this->project->getName()))
@@ -283,18 +264,16 @@ final class BurndownDataView extends SprintView {
    */
   private function buildBurnDownTable() {
     $data = array();
-    $stats = id(new SprintBuildStats());
-    $stats->sumSprintStats($this->dates);
-    $stats->computeIdealPoints($this->dates);
-    foreach ($this->dates as $date) {
+
+    foreach ($this->sprint_data as $date) {
       $data[] = array(
           $date->getDate(),
-          $date->tasks_total,
-          $date->tasks_remaining,
-          $date->points_total,
-          $date->points_remaining,
-          $date->points_ideal_remaining,
-          $date->points_closed_today,
+          $date->getTasksTotal(),
+          $date->getTasksRemaining(),
+          $date->getPointsTotal(),
+          $date->getPointsRemaining(),
+          $date->getPointsIdealRemaining(),
+          $date->getPointsClosedToday(),
       );
     }
 

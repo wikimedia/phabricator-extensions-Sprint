@@ -1,3 +1,3 @@
 <?php
 
-phutil_register_library('burndown', __FILE__);
+phutil_register_library('sprint', __FILE__);

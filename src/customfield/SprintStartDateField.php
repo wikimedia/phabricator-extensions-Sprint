@@ -6,16 +6,20 @@
 
 final class SprintStartDateField extends SprintProjectCustomField {
 
+  private $obj;
+  private $proxy;
+
   public function __construct() {
-    $proxy = id(new PhabricatorStandardCustomFieldDate())
+    $this->obj = clone $this;
+    $this->proxy = id(new PhabricatorStandardCustomFieldDate())
       ->setFieldKey($this->getFieldKey())
-      ->setApplicationField($this)
+      ->setApplicationField($this->obj)
       ->setFieldConfig(array(
         'name' => $this->getFieldName(),
         'description' => $this->getFieldDescription(),
       ));
 
-    $this->setProxy($proxy);
+    $this->setProxy($this->proxy);
   }
 
   // == General field identity stuff
@@ -45,8 +49,7 @@ final class SprintStartDateField extends SprintProjectCustomField {
   }
 
   // == Search
-  public function shouldAppearInApplicationSearch()
-  {
+  public function shouldAppearInApplicationSearch() {
     return true;
   }
 

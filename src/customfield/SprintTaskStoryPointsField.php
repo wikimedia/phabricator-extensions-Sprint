@@ -7,17 +7,20 @@
 final class SprintTaskStoryPointsField extends ManiphestCustomField
   implements PhabricatorStandardCustomFieldInterface {
 
-  // == General field identity stuff
+  private $obj;
+  private $proxy;
+
   public function __construct() {
-    $proxy = id(new PhabricatorStandardCustomFieldText())
+    $this->obj = clone $this;
+    $this->proxy = id(new PhabricatorStandardCustomFieldText())
       ->setFieldKey($this->getFieldKey())
-      ->setApplicationField($this)
+      ->setApplicationField($this->obj)
       ->setFieldConfig(array(
         'name' => $this->getFieldName(),
         'description' => $this->getFieldDescription(),
       ));
 
-    $this->setProxy($proxy);
+    $this->setProxy($this->proxy);
   }
 
   public function canSetProxy() {

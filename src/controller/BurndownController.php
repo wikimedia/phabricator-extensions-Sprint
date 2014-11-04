@@ -57,16 +57,6 @@ abstract class BurndownController extends PhabricatorController {
     return $nav;
   }
 
-  public function getAuxFields($project, $viewer) {
-    $field_list = PhabricatorCustomField::getObjectFields(
-        $project,
-        PhabricatorCustomField::ROLE_EDIT);
-    $field_list->setViewer($viewer);
-    $field_list->readFieldsFromStorage($project);
-    $aux_fields = $field_list->getFields();
-    return $aux_fields;
-  }
-
   protected function buildApplicationCrumbs() {
     $crumbs = parent::buildApplicationCrumbs();
 

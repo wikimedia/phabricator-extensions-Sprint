@@ -3,7 +3,6 @@
 final class SprintReportBurndownView extends SprintView {
 
   private $request;
-  private $timeperiod = array();
 
   public function setUser (PhabricatorUser $user) {
     $this->user = $user;
