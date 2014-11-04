@@ -124,7 +124,6 @@ final class SprintQuery  {
   }
 
   private function setXActionEventType ($xaction, $old, $new, $scope_phids) {
-    $event_type = null;
     switch ($xaction->getTransactionType()) {
       case ManiphestTransaction::TYPE_STATUS:
         $old_is_closed = ($old === null) ||
@@ -145,16 +144,16 @@ final class SprintQuery  {
         }
 
         if ($new_is_closed) {
-          return $event_type = 'close';
+          return 'close';
         } else {
-          return $event_type = 'reopen';
+          return 'reopen';
         }
         break;
 
       case ManiphestTransaction::TYPE_TITLE:
         if ($old === null)
         {
-          return $event_type = 'create';
+          return 'create';
         }
         break;
 
@@ -173,7 +172,7 @@ final class SprintQuery  {
         $in_new_scope = array_intersect_key($scope_phids, $new);
 
         if ($in_new_scope && !$in_old_scope) {
-          return $event_type = 'task-add';
+          return 'task-add';
         } else if ($in_old_scope && !$in_new_scope) {
           // NOTE: We will miss some of these events, becuase we are only
           // examining tasks that are currently in the project. If a task
@@ -181,14 +180,14 @@ final class SprintQuery  {
           // just vanish from the chart completely, not show up as a
           // scope contraction. We can't do better until the Facts application
           // is available without examining *every* task.
-          return $event_type = 'task-remove';
+          return 'task-remove';
         }
         break;
 
       case PhabricatorTransactions::TYPE_CUSTOMFIELD:
         if ($xaction->getMetadataValue('customfield:key') == 'isdc:sprint:storypoints') {
           // POINTS!
-          return $event_type = 'points';
+          return 'points';
         }
         break;
 
