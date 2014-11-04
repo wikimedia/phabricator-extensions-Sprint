@@ -19,7 +19,7 @@ final class BurndownListController extends BurndownController {
     $order = $request->getStr('order', 'name');
     list($order, $reverse) = AphrontTableView::parseSort($order);
 
-    $rows = array();
+
     foreach ($projects as $project) {
 
       $query = id(new SprintQuery())
@@ -53,6 +53,7 @@ final class BurndownListController extends BurndownController {
   }
 
   private function buildRowSet($project, $start, $viewer, $end, $order) {
+    $rows = array();
     $row = array();
     $row[] =  phutil_tag(
         'a',

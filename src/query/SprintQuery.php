@@ -124,6 +124,7 @@ final class SprintQuery  {
   }
 
   private function setXActionEventType ($xaction, $old, $new, $scope_phids) {
+    $event_type = null;
     switch ($xaction->getTransactionType()) {
       case ManiphestTransaction::TYPE_STATUS:
         $old_is_closed = ($old === null) ||
@@ -208,7 +209,7 @@ final class SprintQuery  {
       $old = $xaction->getOldValue();
       $new = $xaction->getNewValue();
 
-      $event_type = null;
+
       $event_type = $this->setXActionEventType ($xaction, $old, $new, $scope_phids);
 
       // If we found some kind of events that we care about, stick it in the
