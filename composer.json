@@ -1,0 +1,32 @@
+{
+    "name": "phabricator-sprint",
+    "description": "Sprints and burndowns in Phabricator",
+    "keywords": ["phabricator", "sprint"],
+    "homepage": "https://secure.phabricator.com/",
+    "authors": [
+        {
+            "name": "Michael Peters"
+        },
+        {
+            "name": "Christopher Johnson"
+        }
+    ],
+    "license": "GPL-3.0",
+    "support": {
+        "issues": "https://phabricator.wikimedia.org/"
+    },
+    "require": {
+        "php": ">=5.5.9",
+        "wikimedia/phabricator-phabricator": "*"
+    },
+    "require-dev": {
+        "wikimedia/phabricator-phabricator": "*"
+    },
+    "repositories": [
+    {
+        "packagist": false,
+        "type": "vcs",
+        "url": "https://github.com/wikimedia/phabricator-phabricator.git"
+    }
+      ]
+}

@@ -147,8 +147,8 @@ final class SprintQuery  {
           return 'close';
         } else {
           return 'reopen';
+          break;
         }
-        break;
 
       case ManiphestTransaction::TYPE_TITLE:
         if ($old === null)
