@@ -7,11 +7,11 @@
 final class SprintStartDateField extends SprintProjectCustomField {
 
   private $obj;
-  private $proxy;
+  private $date_proxy;
 
   public function __construct() {
     $this->obj = clone $this;
-    $this->proxy = id(new PhabricatorStandardCustomFieldDate())
+    $this->date_proxy = id(new PhabricatorStandardCustomFieldDate())
       ->setFieldKey($this->getFieldKey())
       ->setApplicationField($this->obj)
       ->setFieldConfig(array(
@@ -19,7 +19,7 @@ final class SprintStartDateField extends SprintProjectCustomField {
         'description' => $this->getFieldDescription(),
       ));
 
-    $this->setProxy($this->proxy);
+    $this->setProxy($this->date_proxy);
   }
 
   // == General field identity stuff
@@ -40,7 +40,7 @@ final class SprintStartDateField extends SprintProjectCustomField {
       return null;
     }
 
-    if ($this->proxy->getFieldValue())
+    if ($this->date_proxy->getFieldValue())
     {
       return parent::renderPropertyViewValue($handles);
     }
@@ -51,8 +51,8 @@ final class SprintStartDateField extends SprintProjectCustomField {
     if (!$this->shouldShowSprintFields()) {
       return null;
     }
-    if ($this->proxy) {
-      return $this->newDateControl('start-of-business', $this->proxy);
+    if ($this->date_proxy) {
+      return $this->newDateControl('start-of-business', $this->date_proxy);
     }
   }
 

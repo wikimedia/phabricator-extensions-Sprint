@@ -147,7 +147,6 @@ final class SprintQuery  {
           return 'close';
         } else {
           return 'reopen';
-          break;
         }
 
       case ManiphestTransaction::TYPE_TITLE:

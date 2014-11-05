@@ -22,7 +22,9 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
    */
   protected function shouldShowSprintFields()
   {
-    return (strpos($this->getObject()->getName(),SprintConstants::MAGIC_WORD) !== FALSE);
+    if ($this->getObject() instanceof PhabricatorProject) {
+      return (strpos($this->getObject()->getName(), SprintConstants::MAGIC_WORD) !== FALSE);
+    }
   }
 
   /**
@@ -31,6 +33,14 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
    */
   public function getStandardCustomFieldNamespace() {
     return 'project';
+  }
+
+  /**
+   * As nearly as I can tell, this is never actually used, but is required in order to
+   * implement PhabricatorStandardCustomFieldInterface
+   */
+  public function getNamefromObject() {
+    return $this->readValueFromObject($this->getObject()->getName());
   }
 
   /**

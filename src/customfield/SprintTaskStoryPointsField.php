@@ -8,11 +8,11 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
   implements PhabricatorStandardCustomFieldInterface {
 
   private $obj;
-  private $proxy;
+  private $text_proxy;
 
   public function __construct() {
     $this->obj = clone $this;
-    $this->proxy = id(new PhabricatorStandardCustomFieldText())
+    $this->text_proxy = id(new PhabricatorStandardCustomFieldText())
       ->setFieldKey($this->getFieldKey())
       ->setApplicationField($this->obj)
       ->setFieldConfig(array(
@@ -20,7 +20,7 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
         'description' => $this->getFieldDescription(),
       ));
 
-    $this->setProxy($this->proxy);
+    $this->setProxy($this->text_proxy);
   }
 
   public function canSetProxy() {
@@ -46,17 +46,20 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
   public function showField() {
     static $show = null;
 
-    if ($show == null)
-    {
-      $toTest = $this->getObject()->getProjectPHIDs();
-      if (empty($toTest)) {
+    if ($show == null) {
+
+     if ($this->getObject() instanceof ManiphestTask) {
+        $project_phids = $this->getObject()->getProjectPHIDs();
+     }
+
+      if (empty($project_phids)) {
         return $show = false;
       }
       // Fetch the names from all the Projects associated with this task
       $projects = id(new PhabricatorProject())
         ->loadAllWhere(
         'phid IN (%Ls)',
-        $this->getObject()->getProjectPHIDs());
+        $project_phids);
       $names = mpull($projects, 'getName');
 
       // Set show to true if one of the Projects contains "Sprint"
@@ -76,8 +79,8 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
       return null;
     }
 
-    if ($this->getProxy()) {
-      return $this->getProxy()->renderPropertyViewLabel();
+    if ($this->text_proxy) {
+      return $this->text_proxy->renderPropertyViewLabel();
     }
     return $this->getFieldName();
   }
@@ -87,8 +90,8 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
       return null;
     }
 
-    if ($this->getProxy()) {
-      return $this->getProxy()->renderPropertyViewValue($handles);
+    if ($this->text_proxy) {
+      return $this->text_proxy->renderPropertyViewValue($handles);
     }
     throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
@@ -102,8 +105,8 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
       return null;
     }
 
-    if ($this->getProxy()) {
-      return $this->getProxy()->renderEditControl($handles);
+    if ($this->text_proxy) {
+      return $this->text_proxy->renderEditControl($handles);
     }
     throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
