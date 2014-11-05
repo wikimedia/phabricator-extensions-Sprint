@@ -28,24 +28,45 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   }
 
   /**
-   * As nearly as I can tell, this is never actually used, but is required in order to
-   * implement PhabricatorStandardCustomFieldInterface
+   * Required in order to implement PhabricatorStandardCustomFieldInterface
    */
   public function getStandardCustomFieldNamespace() {
     return 'project';
   }
 
-  /**
-   * As nearly as I can tell, this is never actually used, but is required in order to
-   * implement PhabricatorStandardCustomFieldInterface
-   */
-  public function getNamefromObject() {
-    return $this->readValueFromObject($this->getObject()->getName());
+  public function getDateFieldProxy($date_field, $name, $description) {
+    $obj = clone $date_field;
+    $date_proxy = id(new PhabricatorStandardCustomFieldDate())
+        ->setFieldKey($this->getFieldKey())
+        ->setApplicationField($obj)
+        ->setFieldConfig(array(
+            'name' => $name,
+            'description' => $description
+        ));
+    $this->setProxy($date_proxy);
+    return $date_proxy;
   }
 
-  /**
-   * Each subclass must either declare a proxy or implement this method
-   */
+  public function renderChildPropertyViewValue($date_proxy, $handles) {
+    if (!$this->shouldShowSprintFields()) {
+      return null;
+    }
+    if ($date_proxy->getFieldValue())
+    {
+      return $date_proxy->renderPropertyViewValue($handles);
+    }
+    return null;
+  }
+
+  public function renderChildEditControl($date_proxy, $time) {
+    if (!$this->shouldShowSprintFields()) {
+      return null;
+    }
+    if ($date_proxy) {
+      return $this->newDateControl($date_proxy, $time);
+    }
+   }
+
   public function renderPropertyViewLabel() {
     if ($this->getProxy()) {
       return $this->getProxy()->renderPropertyViewLabel();
@@ -54,12 +75,6 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
 
   }
 
-  /**
-   * Each subclass must either declare a proxy and implement this method
-   * @param array $handles
-   * @throws PhabricatorCustomFieldImplementationIncompleteException
-   * @return
-   */
   public function renderPropertyViewValue(array $handles) {
     if ($this->getProxy()) {
       return $this->getProxy()->renderPropertyViewValue($handles);
@@ -72,12 +87,6 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
     return true;
   }
 
-  /**
-   * Each subclass must either declare a proxy and implement this method
-   * @param array $handles
-   * @throws PhabricatorCustomFieldImplementationIncompleteException
-   * @return
-   */
   public function renderEditControl(array $handles) {
     if ($this->getProxy()) {
       return $this->getProxy()->renderEditControl($handles);
@@ -85,7 +94,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
     throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
 
-  public function newDateControl($time, $proxy) {
+  public function newDateControl($proxy, $time) {
     $control = id(new AphrontFormDateControl())
         ->setLabel($proxy->getFieldName())
         ->setName($proxy->getFieldKey())
