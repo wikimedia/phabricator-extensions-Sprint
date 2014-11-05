@@ -37,10 +37,6 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
    * Each subclass must either declare a proxy or implement this method
    */
   public function renderPropertyViewLabel() {
-    if (!$this->shouldShowSprintFields()) {
-      return null;
-    }
-
     if ($this->getProxy()) {
       return $this->getProxy()->renderPropertyViewLabel();
     }
@@ -49,16 +45,12 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   }
 
   /**
-   * Each subclass must either declare a proxy or implement this method
+   * Each subclass must either declare a proxy and implement this method
    * @param array $handles
    * @throws PhabricatorCustomFieldImplementationIncompleteException
    * @return
    */
   public function renderPropertyViewValue(array $handles) {
-    if (!$this->shouldShowSprintFields()) {
-      return null;
-    }
-
     if ($this->getProxy()) {
       return $this->getProxy()->renderPropertyViewValue($handles);
     }
@@ -71,19 +63,34 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   }
 
   /**
-   * Each subclass must either declare a proxy or implement this method
+   * Each subclass must either declare a proxy and implement this method
    * @param array $handles
    * @throws PhabricatorCustomFieldImplementationIncompleteException
    * @return
    */
   public function renderEditControl(array $handles) {
-    if (!$this->shouldShowSprintFields()) {
-      return null;
-    }
-
     if ($this->getProxy()) {
       return $this->getProxy()->renderEditControl($handles);
     }
     throw new PhabricatorCustomFieldImplementationIncompleteException($this);
+  }
+
+  public function newDateControl($time, $proxy) {
+    $control = id(new AphrontFormDateControl())
+        ->setLabel($proxy->getFieldName())
+        ->setName($proxy->getFieldKey())
+        ->setUser($proxy->getViewer())
+        ->setCaption($proxy->getCaption())
+        ->setAllowNull(!$proxy->getRequired())
+        ->setInitialTime($time);
+
+    $value = $proxy->getFieldValue();
+    if (!ctype_digit($value)) {
+      $value = PhabricatorTime::parseLocalTime($value, $proxy->getViewer());
+    }
+
+    $control->setValue(nonempty($value, null));
+
+    return $control;
   }
 }

@@ -40,17 +40,24 @@ final class SprintStartDateField extends SprintProjectCustomField {
       return null;
     }
 
-    if ($this->getProxy()->getFieldValue())
+    if ($this->proxy->getFieldValue())
     {
       return parent::renderPropertyViewValue($handles);
     }
-
     return null;
+  }
+
+  public function renderEditControl(array $handles) {
+    if (!$this->shouldShowSprintFields()) {
+      return null;
+    }
+    if ($this->proxy) {
+      return $this->newDateControl('start-of-business', $this->proxy);
+    }
   }
 
   // == Search
   public function shouldAppearInApplicationSearch() {
     return true;
   }
-
 }

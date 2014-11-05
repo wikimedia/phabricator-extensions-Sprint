@@ -16,7 +16,7 @@ final class SprintEndDateField extends SprintProjectCustomField {
       ->setApplicationField($this->obj)
       ->setFieldConfig(array(
         'name' => $this->getFieldName(),
-        'description' => $this->getFieldDescription(),
+        'description' => $this->getFieldDescription()
       ));
 
     $this->setProxy($this->proxy);
@@ -40,12 +40,20 @@ final class SprintEndDateField extends SprintProjectCustomField {
       return null;
     }
 
-    if ($this->getProxy()->getFieldValue())
+    if ($this->proxy->getFieldValue())
     {
       return parent::renderPropertyViewValue($handles);
     }
-
     return null;
+  }
+
+  public function renderEditControl(array $handles) {
+    if (!$this->shouldShowSprintFields()) {
+      return null;
+    }
+    if ($this->proxy) {
+      return $this->newDateControl('end-of-business', $this->proxy);
+    }
   }
 
   // == Search
@@ -53,5 +61,4 @@ final class SprintEndDateField extends SprintProjectCustomField {
   {
     return true;
   }
-
 }
