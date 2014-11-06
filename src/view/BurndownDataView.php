@@ -1,7 +1,7 @@
 <?php
 /**
- * Copyright (C) 2014 Michael Peters
- * Licensed under GNU GPL v3. See LICENSE for full details
+ * @author Michael Peters
+ * @license GPL version 3
  */
 
 final class BurndownDataView extends SprintView {
@@ -57,6 +57,7 @@ final class BurndownDataView extends SprintView {
 
     $sprint_xaction = id(new SprintTransaction())
         ->setViewer($this->viewer);
+    $sprint_xaction->buildStatArrays($tasks);
     $dates = $sprint_xaction->buildDailyData($events, $start, $end, $dates, $this->xactions);
 
     $this->sprint_data = $this->setSprintData($dates);

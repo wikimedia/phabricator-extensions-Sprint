@@ -2,11 +2,6 @@
 
 final class SprintBuildStats {
 
-  private $tasks;
-  private $task_points = array();
-  private $task_statuses = array();
-  private $task_in_sprint = array();
-
   public function buildDateArray($start, $end, $timezone) {
 
     $period = new DatePeriod(
@@ -53,19 +48,6 @@ final class SprintBuildStats {
       $previous = $current;
     }
     return $dates;
-  }
-
-  // Build arrays to store current point and closed status of tasks as we
-  // progress through time, so that these changes reflect on the graph
-  public function buildTaskArrays() {
-    $this->task_points = array();
-    $this->task_statuses = array();
-    foreach ($this->tasks as $task) {
-      $this->task_points[$task->getPHID()] = 0;
-      $this->task_statuses[$task->getPHID()] = null;
-      $this->task_in_sprint[$task->getPHID()] = 0;
-    }
-    return;
   }
 
   public function computeIdealPoints($dates) {

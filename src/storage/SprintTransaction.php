@@ -12,7 +12,6 @@ final class SprintTransaction  {
     return $this;
   }
 
-
   public function buildDailyData($events, $start, $end, $dates, $xactions) {
 
     foreach ($events as $event) {
@@ -66,6 +65,16 @@ final class SprintTransaction  {
       }
     }
     return $dates;
+  }
+
+
+  public function buildStatArrays($tasks) {
+    foreach ($tasks as $task) {
+      $this->task_points[$task->getPHID()] = 0;
+      $this->task_statuses[$task->getPHID()] = null;
+      $this->task_in_sprint[$task->getPHID()] = 0;
+    }
+    return;
   }
 
   private function AddTasksToday($date, $dates) {

@@ -1,7 +1,7 @@
 <?php
 /**
- * Copyright (C) 2014 Michael Peters
- * Licensed under GNU GPL v3. See LICENSE for full details
+ * @author Michael Peters
+ * @license GPL version 3
  */
 
 final class BurndownActionMenuEventListener extends PhabricatorEventListener {

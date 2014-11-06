@@ -1,7 +1,7 @@
 <?php
 /**
- * Copyright (C) 2014 Michael Peters
- * Licensed under GNU GPL v3. See LICENSE for full details
+ * @author Michael Peters
+ * @license GPL version 3
  */
 
 abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
@@ -47,7 +47,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
     return $date_proxy;
   }
 
-  public function renderChildPropertyViewValue($date_proxy, $handles) {
+  public function renderDateProxyPropertyViewValue($date_proxy, $handles) {
     if (!$this->shouldShowSprintFields()) {
       return null;
     }
@@ -58,7 +58,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
     return null;
   }
 
-  public function renderChildEditControl($date_proxy, $time) {
+  public function renderDateProxyEditControl($date_proxy, $time) {
     if (!$this->shouldShowSprintFields()) {
       return null;
     }

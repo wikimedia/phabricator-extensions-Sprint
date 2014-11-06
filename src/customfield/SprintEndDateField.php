@@ -1,7 +1,7 @@
 <?php
 /**
- * Copyright (C) 2014 Michael Peters
- * Licensed under GNU GPL v3. See LICENSE for full details
+ * @author Michael Peters
+ * @license GPL version 3
  */
 
 final class SprintEndDateField extends SprintProjectCustomField {
@@ -26,11 +26,11 @@ final class SprintEndDateField extends SprintProjectCustomField {
   }
 
   public function renderPropertyViewValue(array $handles) {
-    return $this->renderChildPropertyViewValue($this->date_proxy, $handles);
+    return $this->renderDateProxyPropertyViewValue($this->date_proxy, $handles);
   }
 
   public function renderEditControl(array $handles) {
-    return $this->renderChildEditControl($this->date_proxy,'end-of-business');
+    return $this->renderDateProxyEditControl($this->date_proxy,'end-of-business');
   }
 
   // == Search
