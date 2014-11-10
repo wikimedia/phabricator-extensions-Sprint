@@ -4,7 +4,7 @@
  * @license GPL version 3
  */
 
-final class SprintStartDateField extends SprintProjectCustomField {
+final class SprintBeginDateField extends SprintProjectCustomField {
 
   private $date_proxy;
 

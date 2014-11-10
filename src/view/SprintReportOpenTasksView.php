@@ -54,11 +54,15 @@ final class SprintReportOpenTasksView extends SprintView {
 
 
     if (($this->view) == 'user') {
-       list($leftover, $leftover_closed, $base_link, $leftover_name, $col_header, $header, $result_closed, $result ) = (new UserOpenTasksView())
-          ->execute($tasks, $recently_closed, $date);
+       list($leftover, $leftover_closed, $base_link, $leftover_name,
+           $col_header, $header, $result_closed, $result ) =
+           (new UserOpenTasksView())
+               ->execute($tasks, $recently_closed, $date);
     } elseif (($this->view) == 'project') {
-      list($leftover, $base_link, $leftover_name, $col_header, $header, $result_closed, $leftover_closed, $result ) = (new ProjectOpenTasksView())
-          ->execute($tasks, $recently_closed, $date);
+        list($leftover, $base_link, $leftover_name, $col_header, $header,
+            $result_closed, $leftover_closed, $result ) =
+           (new ProjectOpenTasksView())
+                ->execute($tasks, $recently_closed, $date);
     } else {
       $result = array();
       $result_closed = array();
@@ -70,42 +74,19 @@ final class SprintReportOpenTasksView extends SprintView {
       $header = '';
     }
 
-    $phids = array_keys($result);
-    $handles = $this->loadViewerHandles($phids);
-    $handles = msort($handles, 'getName');
-
     $order = $this->request->getStr('order', 'name');
     list($order, $reverse) = AphrontTableView::parseSort($order);
 
     require_celerity_resource('aphront-tooltip-css');
     Javelin::initBehavior('phabricator-tooltips', array());
 
-    $rows = array();
-
-    foreach ($handles as $handle) {
-      list ($tasks, $name, $closed) = $this->setTaskArrays($handle, $project_handle, $result, $result_closed, $base_link, $leftover, $leftover_name, $leftover_closed);
-
-      $taskv = $tasks;
-      $tasks = mgroup($tasks, 'getPriority');
-
-      list ($row, $total) = $this->getPriorityMap($name, $tasks);
-      list ($row, $oldest_all, $oldest_pri ) = $this->renderTaskLinks($taskv, $closed, $row);
-
-      $row['sort'] = $this->setSortOrder($row, $order, $total, $oldest_all, $oldest_pri, $closed, $handle);
-
-      $rows[] = $row;
-    }
-
-    $rows = isort($rows, 'sort');
-    foreach ($rows as $k => $row) {
-      unset($rows[$k]['sort']);
-    }
-    if ($reverse) {
-      $rows = array_reverse($rows);
-    }
+    $rows = $this->buildRowsfromResult($project_handle, $result, $result_closed,
+        $base_link, $leftover, $leftover_name, $leftover_closed, $order,
+        $reverse);
 
     list ($cname, $cclass) = $this->buildTableColumns($col_header);
-    $table = $this->buildOpenTasksTable($rows, $cname, $cclass, $order, $reverse);
+    $table = $this->buildOpenTasksTable($rows, $cname, $cclass, $order,
+        $reverse);
     $panel = new PHUIObjectBoxView();
     $panel->setHeaderText($header);
     $panel->appendChild($table);
@@ -119,7 +100,8 @@ final class SprintReportOpenTasksView extends SprintView {
     return array($filter, $panel);
   }
 
-  private function setSortOrder ($row, $order, $total, $oldest_all, $oldest_pri, $closed, $handle) {
+  private function setSortOrder ($row, $order, $total, $oldest_all, $oldest_pri,
+                                 $closed, $handle) {
     switch ($order) {
       case 'total':
         $row['sort'] = $total;
@@ -139,6 +121,45 @@ final class SprintReportOpenTasksView extends SprintView {
         break;
     }
   return $row['sort'];
+  }
+
+  private function buildRowsfromResult ($project_handle, $result,
+                                        $result_closed, $base_link, $leftover,
+                                        $leftover_name, $leftover_closed,
+                                        $order, $reverse) {
+    $phids = array_keys($result);
+    $handles = $this->loadViewerHandles($phids);
+    $handles = msort($handles, 'getName');
+
+    $rows = array();
+
+    foreach ($handles as $handle) {
+      list ($tasks, $name, $closed) = $this->setTaskArrays($handle,
+          $project_handle, $result, $result_closed, $base_link, $leftover,
+          $leftover_name, $leftover_closed);
+
+      $taskv = $tasks;
+      $tasks = mgroup($tasks, 'getPriority');
+
+      list ($row, $total) = $this->getPriorityMap($name, $tasks);
+      list ($row, $oldest_all, $oldest_pri ) = $this->renderTaskLinks($taskv,
+          $closed, $row);
+
+      $row['sort'] = $this->setSortOrder($row, $order, $total, $oldest_all,
+          $oldest_pri, $closed, $handle);
+
+      $rows[] = $row;
+    }
+    $rows = isort($rows, 'sort');
+
+    foreach ($rows as $k => $row) {
+      unset($rows[$k]['sort']);
+    }
+
+    if ($reverse) {
+      $rows = array_reverse($rows);
+    }
+    return $rows;
   }
 
   private function renderTaskLinks ($taskv, $closed, $row) {
@@ -190,7 +211,9 @@ final class SprintReportOpenTasksView extends SprintView {
     return array ($row, $total);
   }
 
-  private function setTaskArrays($handle, $project_handle, $result, $result_closed, $base_link, $leftover, $leftover_name, $leftover_closed) {
+  private function setTaskArrays($handle, $project_handle, $result,
+                                 $result_closed, $base_link, $leftover,
+                                 $leftover_name, $leftover_closed) {
     if ($handle) {
       if (($project_handle) &&
           ($project_handle->getPHID() == $handle->getPHID())) {
@@ -266,7 +289,8 @@ final class SprintReportOpenTasksView extends SprintView {
     return array ($cname, $cclass);
   }
 
-  private function buildOpenTasksTable($rows, $cname, $cclass, $order, $reverse) {
+  private function buildOpenTasksTable($rows, $cname, $cclass, $order,
+                                       $reverse) {
     $table = new AphrontTableView($rows);
     $table->setHeaders($cname);
     $table->setColumnClasses($cclass);

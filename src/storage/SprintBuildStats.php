@@ -2,7 +2,10 @@
 
 final class SprintBuildStats {
 
-  public function buildDateArray($start, $end, $timezone) {
+  private $task_open_status_sum;
+  private $task_closed_status_sum;
+
+    public function buildDateArray($start, $end, $timezone) {
 
     $period = new DatePeriod(
         id(new DateTime("@" . $start, $timezone))->setTime(8, 0),
@@ -104,5 +107,15 @@ final class SprintBuildStats {
 
     }
     return $data;
+  }
+
+  public function setTaskOpenStatusSum ($task_open_status_sum, $points) {
+    $task_open_status_sum += $points;
+    return $task_open_status_sum;
+  }
+
+  public function setTaskClosedStatusSum ($task_closed_status_sum, $points) {
+    $task_closed_status_sum += $points;
+    return $task_closed_status_sum;
   }
 }

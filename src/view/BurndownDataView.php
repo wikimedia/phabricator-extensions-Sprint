@@ -12,6 +12,8 @@ final class BurndownDataView extends SprintView {
   private $viewer;
   private $tasks;
   private $xactions;
+  private $task_open_status_sum;
+  private $task_closed_status_sum;
 
   public function setProject ($project) {
     $this->project = $project;
@@ -31,9 +33,10 @@ final class BurndownDataView extends SprintView {
   public function render() {
     $chart = $this->buildC3Chart();
     $tasks_table = $this->buildTasksTable();
+    $pie = $this->buildC3Pie();
     $burndown_table = $this->buildBurnDownTable();
     $event_table = $this->buildEventTable();
-    return array ($chart, $tasks_table, $burndown_table, $event_table);
+    return array ($chart, $pie, $tasks_table, $burndown_table, $event_table);
   }
 
   private function buildChartDataSet() {
@@ -120,6 +123,32 @@ final class BurndownDataView extends SprintView {
             ), ''));
 
     return $chart;
+  }
+
+  private function buildC3Pie() {
+    $task_open_status_sum = $this->task_open_status_sum;
+    $task_closed_status_sum = $this->task_closed_status_sum;
+
+    require_celerity_resource('d3','sprint');
+    require_celerity_resource('c3-css','sprint');
+    require_celerity_resource('c3','sprint');
+
+    $id = 'pie';
+    Javelin::initBehavior('c3-pie', array(
+        'hardpoint' => $id,
+        'open' => $task_open_status_sum,
+        'resolved' => $task_closed_status_sum,
+    ), 'sprint');
+
+    $pie= id(new PHUIObjectBoxView())
+        ->setHeaderText(pht('Task Status Report for ' . $this->project->getName()))
+        ->appendChild(phutil_tag('div',
+            array(
+                'id' => 'pie',
+                'style' => 'width: 100%; height:200px'
+            ), ''));
+
+    return $pie;
   }
 
   /**
@@ -271,6 +300,8 @@ final class BurndownDataView extends SprintView {
     $points = trim($points, '"');
 
     $priority_name = new ManiphestTaskPriority();
+    $status = $this->setTaskStatus($task);
+    $this->sumPointsbyStatus($status, $points);
     $depth_indent = '';
     for ($i = 0; $i < $depth; $i++) {
       $depth_indent .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -292,7 +323,7 @@ final class BurndownDataView extends SprintView {
         $task->getOwnerPHID() ? $owner->renderLink() : 'none assigned',
         $priority_name->getTaskPriorityName($task->getPriority()),
         $points,
-        $task->getStatus(),
+        $status,
     );
     $included[$task->getPHID()] = $task->getPHID();
 
@@ -372,4 +403,18 @@ final class BurndownDataView extends SprintView {
        }
     return $storypoints;
   }
+
+  private function setTaskStatus($task) {
+    $status = $task->getStatus();
+   return $status;
+  }
+
+  private function sumPointsbyStatus ($status, $points) {
+    $stats = id(new SprintBuildStats());
+    if ($status == 'open') {
+      $this->task_open_status_sum = $stats->setTaskOpenStatusSum($this->task_open_status_sum, $points);
+    } elseif ($status == 'resolved') {
+      $this->task_closed_status_sum = $stats->setTaskClosedStatusSum($this->task_closed_status_sum, $points);
+    }
+   }
 }
