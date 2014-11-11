@@ -118,12 +118,12 @@ final class SprintQuery  {
  }
 
   public function getEdges ($tasks) {
-
     // Load all edges of depends and depended on tasks
     $edges = id(new PhabricatorEdgeQuery())
         ->withSourcePHIDs(array_keys($tasks))
         ->withEdgeTypes(array(PhabricatorEdgeConfig::TYPE_TASK_DEPENDS_ON_TASK, PhabricatorEdgeConfig::TYPE_TASK_DEPENDED_ON_BY_TASK))
         ->execute();
+    return $edges;
   }
 
   public function getEvents($xactions) {

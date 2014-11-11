@@ -31,11 +31,6 @@ final class BurndownDataView extends SprintView {
     return $this;
   }
 
-  public function setTimeZone ($viewer) {
-    $timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
-    return $timezone;
-  }
-
   public function render() {
     $chart = $this->buildC3Chart();
     $tasks_table = $this->buildTasksTable();
@@ -53,8 +48,9 @@ final class BurndownDataView extends SprintView {
     $start = $query->getStartDate($aux_fields);
     $end = $query->getEndDate($aux_fields);
     $stats = id(new SprintBuildStats());
-    $dates = $stats->buildDateArray($start, $end, $this->setTimeZone($this->viewer));
-    $this->timeseries = $stats->buildTimeSeries($start, $end, $this->setTimeZone($this->viewer));
+    $timezone = $stats->setTimezone($this->viewer);
+    $dates = $stats->buildDateArray($start, $end, $timezone);
+    $this->timeseries = $stats->buildTimeSeries($start, $end);
 
     $tasks = $query->getTasks();
     $query->checkNull($start, $end, $tasks);

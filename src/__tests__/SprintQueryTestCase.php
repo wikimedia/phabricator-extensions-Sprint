@@ -27,14 +27,14 @@ final class SprintQueryTestCase extends SprintTestCase {
   /**
    * @depends testRequestSetUser
    */
-  public function testGetViewerHandles()
-  {
-    $r = new AphrontRequest('example.com', '/');
-    $r->setUser($this->generateNewTestUser());
-    $q = new SprintQuery();
-    $phids = $this->PHIDProvider();
-    $handle = $q->getViewerHandles($r, $phids);
-    $this->assertInstanceof('PhabricatorObjectHandle', $handle);
-  }
+//  public function testGetViewerHandles()
+//  {
+//    $r = new AphrontRequest('example.com', '/');
+//    $r->setUser($this->generateNewTestUser());
+//    $q = new SprintQuery();
+//    $phids = $this->PHIDProvider();
+//    $handle = $q->getViewerHandles($r, $phids);
+//    $this->assertInstanceof('PhabricatorObjectHandle', $handle);
+//  }
 
 }

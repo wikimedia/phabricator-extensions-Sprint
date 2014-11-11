@@ -37,7 +37,7 @@ final class SprintTransaction  {
         case "task-add":
           // A task was added to the sprint
           $this->AddTasksToday($date, $dates);
-          $this->AddPointsToday($date, $task_phid, $dates);
+//          $this->AddPointsToday($date, $task_phid, $dates);
           $this->AddTaskInSprint($task_phid);
           break;
         case "task-remove":
@@ -108,7 +108,7 @@ final class SprintTransaction  {
   }
 
   private function ClosePointsToday($date, $task_phid, $dates) {
-    $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
+   $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
     return $dates;
   }
 
@@ -144,13 +144,13 @@ final class SprintTransaction  {
     if (isset($this->task_in_sprint[$task_phid])) {
 
       // Adjust points for that day
-      $task_points = $xaction->getNewValue() - $xaction->getOldValue();
-      $dates[$date]->setPointsAddedToday($task_points);
+      $this->task_points[$task_phid] = $xaction->getNewValue() - $xaction->getOldValue();
+      $dates[$date]->setPointsAddedToday($this->task_points[$task_phid]);
 
       // If the task is closed, adjust completed points as well
       if (isset($this->task_statuses[$task_phid]) && $this->task_statuses[$task_phid] == 'closed') {
-        $task_points = $xaction->getNewValue() - $xaction->getOldValue();
-        $dates[$date]->setPointsClosedToday($task_points);
+        $this->task_points[$task_phid] = $xaction->getNewValue() - $xaction->getOldValue();
+        $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
       }
     }
     return $dates;

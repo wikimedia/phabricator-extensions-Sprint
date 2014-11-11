@@ -1,16 +1,19 @@
 <?php
 
 final class SprintBuildStats {
+  private $timezone;
 
-  private $task_open_status_sum;
-  private $task_closed_status_sum;
+  public function setTimezone ($viewer) {
+    $this->timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
+    return $this->timezone;
+  }
 
-    public function buildDateArray($start, $end, $timezone) {
+  public function buildDateArray($start, $end, $timezone) {
 
     $period = new DatePeriod(
-        id(new DateTime("@" . $start, $timezone))->setTime(8, 0),
+        id(new DateTime("@" . $start))->setTime(2, 0)->setTimezone($timezone),
         new DateInterval('P1D'), // 1 day interval
-        id(new DateTime("@" . $end, $timezone))->modify('+1 day')->setTime(17, 0));
+        id(new DateTime("@" . $end))->modify('+1 day')->setTime(17, 0)->setTimezone($timezone));
 
 
     $dates = array('before' =>$this->getBurndownDate('Before Sprint'));
@@ -23,8 +26,8 @@ final class SprintBuildStats {
     return $dates;
   }
 
-  public function buildTimeSeries($start, $end, $timezone) {
-    $timeseries = array_keys($this->buildDateArray ($start, $end, $timezone));
+  public function buildTimeSeries($start, $end) {
+    $timeseries = array_keys($this->buildDateArray ($start, $end, $this->timezone));
     return $timeseries;
   }
 
@@ -40,8 +43,8 @@ final class SprintBuildStats {
     foreach ($dates as $current) {
       $current->setTasksTotal($current->getTasksAddedToday());
       $current->setPointsTotal($current->getPointsAddedToday());
-      $current->setTasksRemaining($current->getTasksAddedToday());
-      $current->setPointsRemaining($current->getPointsAddedToday());
+      $current->setTasksRemaining($current->getTasksAddedToday()-$current->getTasksClosedToday());
+      $current->setPointsRemaining($current->getPointsAddedToday()-$current->getPointsClosedToday());
       if ($previous) {
         $current->sumTasksTotal($current, $previous);
         $current->sumPointsTotal($current, $previous);
@@ -96,7 +99,8 @@ final class SprintBuildStats {
     $future = false;
     foreach ($dates as $key => $date) {
       if ($key != 'before' AND $key != 'after') {
-        $future = new DateTime($date->getDate()) > id(new DateTime())->setTime(0, 0);
+        $now = id(new DateTime('now', $this->timezone));
+        $future = new DateTime($date->getDate(), $this->timezone) > $now;
       }
       $data[] = array(
           $future ? null : $date->getPointsTotal(),
