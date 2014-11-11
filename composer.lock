@@ -4,11 +4,11 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "cd5c9578b0672de3e1952a437b4b2254",
+    "hash": "9eaa8d2d9f9be5ad7d29aeac55e6e399",
     "packages": [
         {
             "name": "phabricator/phabricator",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/christopher-johnson/phabricator.git",
