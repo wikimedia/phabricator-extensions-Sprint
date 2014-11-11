@@ -29,7 +29,8 @@ final class BurndownDataViewController extends BurndownController {
     try {
       $burndown_view = id(new BurndownDataView())
           ->setProject($project)
-          ->setViewer($viewer);
+          ->setViewer($viewer)
+          ->setRequest($request);
       } catch (BurndownException $e) {
       $error_box = id(new AphrontErrorView())
           ->setTitle(pht('Burndown could not be rendered for this project'))

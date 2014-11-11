@@ -6,6 +6,7 @@
 
 final class BurndownDataView extends SprintView {
 
+  private $request;
   private $timeseries;
   private $sprint_data;
   private $project;
@@ -25,6 +26,11 @@ final class BurndownDataView extends SprintView {
     return $this;
   }
 
+  public function setRequest ($request) {
+    $this->request =  $request;
+    return $this;
+  }
+
   public function setTimeZone ($viewer) {
     $timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
     return $timezone;
@@ -36,7 +42,7 @@ final class BurndownDataView extends SprintView {
     $pie = $this->buildC3Pie();
     $burndown_table = $this->buildBurnDownTable();
     $event_table = $this->buildEventTable();
-    return array ($chart, $pie, $tasks_table, $burndown_table, $event_table);
+    return array ($chart, $tasks_table, $pie, $burndown_table, $event_table);
   }
 
   private function buildChartDataSet() {
@@ -196,8 +202,9 @@ final class BurndownDataView extends SprintView {
    * @returns PHUIObjectBoxView
    */
   private function buildTasksTable() {
-    $rows = $this->buildTasksTree();
-
+    $order = $this->request->getStr('order', 'name');
+    list($order, $reverse) = AphrontTableView::parseSort($order);
+    $rows = $this->buildTasksTree($order, $reverse);
     $table = id(new AphrontTableView($rows))
         ->setHeaders(
             array(
@@ -207,12 +214,74 @@ final class BurndownDataView extends SprintView {
                 pht('Points'),
                 pht('Status'),
             ));
+    $table->makeSortable(
+        $this->request->getRequestURI(),
+        'order',
+        $order,
+        $reverse,
+        array(
+            'Task',
+            'Assigned to',
+            'Priority',
+            'Points',
+            'Status'
+         )
+    );
 
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Tasks in this Sprint'))
         ->appendChild($table);
 
     return $box;
+  }
+
+  private function setSortOrder ($row, $order, $task, $assigned_to, $priority,
+                                 $points, $status) {
+    switch ($order) {
+      case 'Task':
+        $row['sort'] = $task;
+        break;
+      case 'Assigned to':
+        $row['sort'] = $assigned_to;
+        break;
+      case 'Priority':
+        $row['sort'] = $priority;
+        break;
+      case 'Points':
+        $row['sort'] = $points;
+        break;
+      case 'Status':
+      default:
+        $row['sort'] = $status;
+        break;
+    }
+    return $row['sort'];
+  }
+
+
+  private function buildTaskMap ($tasks, $edges) {
+    $map = array();
+    foreach ($this->tasks as $task) {
+      if ($parents =
+          $edges[$task->getPHID()][PhabricatorEdgeConfig::TYPE_TASK_DEPENDED_ON_BY_TASK]) {
+        foreach ($parents as $parent) {
+          // Make sure this task is in this sprint.
+          if (isset($this->tasks[$parent['dst']]))
+            $map[$task->getPHID()]['parents'][] = $parent['dst'];
+        }
+      }
+
+      if ($children =
+          $edges[$task->getPHID()][PhabricatorEdgeConfig::TYPE_TASK_DEPENDS_ON_TASK]) {
+        foreach ($children as $child) {
+          // Make sure this task is in this sprint.
+          if (isset($this->tasks[$child['dst']])) {
+            $map[$task->getPHID()]['children'][] = $child['dst'];
+          }
+        }
+      }
+    }
+    return $map;
   }
 
   /**
@@ -223,38 +292,10 @@ final class BurndownDataView extends SprintView {
    *
    * @return array
    */
-  private function buildTasksTree() {
-    // Shorter constants
-    $DEPENDS_ON = PhabricatorEdgeConfig::TYPE_TASK_DEPENDS_ON_TASK;
-    $DEPENDED_ON = PhabricatorEdgeConfig::TYPE_TASK_DEPENDED_ON_BY_TASK;
-
-    // Load all edges of depends and depended on tasks
-    $edges = id(new PhabricatorEdgeQuery())
-        ->withSourcePHIDs(array_keys($this->tasks))
-        ->withEdgeTypes(array($DEPENDS_ON, $DEPENDED_ON))
-        ->execute();
-
-    // First we build a flat map. Each task is in the map at the root level,
-    // and lists it's parents and children.
-    $map = array();
-    foreach ($this->tasks as $task) {
-      if ($parents = $edges[$task->getPHID()][$DEPENDED_ON]) {
-        foreach ($parents as $parent) {
-          // Make sure this task is in this sprint.
-          if (isset($this->tasks[$parent['dst']]))
-            $map[$task->getPHID()]['parents'][] = $parent['dst'];
-        }
-      }
-
-      if ($children = $edges[$task->getPHID()][$DEPENDS_ON]) {
-        foreach ($children as $child) {
-          // Make sure this task is in this sprint.
-          if (isset($this->tasks[$child['dst']])) {
-            $map[$task->getPHID()]['children'][] = $child['dst'];
-          }
-        }
-      }
-    }
+  private function buildTasksTree($order, $reverse) {
+    $query = id(new SprintQuery());
+    $edges = $query->getEdges($this->tasks);
+    $map = $this->buildTaskMap($this->tasks, $edges);
 
     // We also collect the phids we need to fetch owner information
     $handle_phids = array();
@@ -262,11 +303,7 @@ final class BurndownDataView extends SprintView {
       // Get the owner (assigned to) phid
       $handle_phids[$task->getOwnerPHID()] = $task->getOwnerPHID();
     }
-
-    $handles = id(new PhabricatorHandleQuery())
-        ->setViewer($this->viewer)
-        ->withPHIDs($handle_phids)
-        ->execute();
+    $handles = $query->getViewerHandles($this->request, $handle_phids);
 
     // Now we loop through the tasks, and add them to the output
     $output = array();
@@ -277,13 +314,25 @@ final class BurndownDataView extends SprintView {
         continue;
       }
 
-      $this->addTaskToTree($output, $task, $map, $handles);
+      $row = $this->addTaskToTree($output, $task, $map, $handles);
+      list ($task, $assigned_to, $priority,$points, $status) = $row[0];
+      $row['sort'] = $this->setSortOrder($row, $order, $task, $assigned_to, $priority,$points, $status);
+      $rows[] = $row;
+    }
+    $rows = isort($rows, 'sort');
+
+    foreach ($rows as $k => $row) {
+      unset($rows[$k]['sort']);
     }
 
-    return $output;
+    if ($reverse) {
+      $rows = array_reverse($rows);
+    }
+    $rows = array_map( function( $a ) { return $a['0']; }, $rows );
+    return $rows;
   }
 
-  private function addTaskToTree(&$output, $task, &$map, $handles, $depth = 0) {
+  private function addTaskToTree($output, $task, $map, $handles, $depth = 0) {
     static $included = array();
     $query = id(new SprintQuery())
         ->setProject($this->project)
@@ -333,6 +382,7 @@ final class BurndownDataView extends SprintView {
         $this->addTaskToTree($output, $child, $map, $handles, $depth + 1);
       }
     }
+    return $output;
   }
 
   /**
