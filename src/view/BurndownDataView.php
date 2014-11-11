@@ -259,7 +259,7 @@ final class BurndownDataView extends SprintView {
   }
 
 
-  private function buildTaskMap ($tasks, $edges) {
+  private function buildTaskMap ($edges) {
     $map = array();
     foreach ($this->tasks as $task) {
       if ($parents =
@@ -295,7 +295,7 @@ final class BurndownDataView extends SprintView {
   private function buildTasksTree($order, $reverse) {
     $query = id(new SprintQuery());
     $edges = $query->getEdges($this->tasks);
-    $map = $this->buildTaskMap($this->tasks, $edges);
+    $map = $this->buildTaskMap($edges);
 
     // We also collect the phids we need to fetch owner information
     $handle_phids = array();
@@ -307,6 +307,7 @@ final class BurndownDataView extends SprintView {
 
     // Now we loop through the tasks, and add them to the output
     $output = array();
+    $rows = array();
     foreach ($this->tasks as $task) {
       // If parents is set, it means this task has a parent in this sprint so
       // skip it, the parent will handle adding this task to the output
