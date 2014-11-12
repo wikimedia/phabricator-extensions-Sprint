@@ -90,8 +90,8 @@ class BurndownDataDate {
     return $this->tasks_total;
   }
 
-  public function setTasksRemaining($tasks_added_today) {
-    $this->tasks_remaining = $tasks_added_today;
+  public function setTasksRemaining($tasks_remaining) {
+    $this->tasks_remaining = $tasks_remaining;
     return $this->tasks_remaining;
   }
 
