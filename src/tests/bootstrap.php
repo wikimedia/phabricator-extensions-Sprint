@@ -1,7 +1,7 @@
 <?php
 
 
-require_once('/srv/phab/libext/Sprint/src/constants/SprintConstants.php');
+require_once('../constants/SprintConstants.php');
 require_once( SprintConstants::ROOT_DIR . '/libext/Sprint/src/tests/Autoloader.php');
 require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/internationalization/pht.php');
 require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/utils/utils.php');

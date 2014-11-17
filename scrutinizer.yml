@@ -12,4 +12,4 @@ build:
     environment:
         timezone: 'Europe/Berlin'
 tools:
-    external_code_coverage: true
+    external_code_coverage: false
