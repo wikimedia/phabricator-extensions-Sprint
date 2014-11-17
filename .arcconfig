@@ -1,7 +1,7 @@
 {
   "project.name" : "sprint",
-  "unit.engine" : "PhutilUnitTestEngine",
+  "unit.engine" : "PhpunitTestEngine",
+  "phpunit_config":  "src/tests/phpunit.xml",
   "load" : [
     "src/"
   ]
-}

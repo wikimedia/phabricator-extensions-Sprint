@@ -1,5 +1,5 @@
 <?php
-final class BurndownDataDateTestCase extends SprintTestCase {
+final class BurndownDataDateTest extends SprintTestCase {
 
   public function testSumPointsTotal() {
     $date = new BurndownDataDate('test date');
@@ -8,7 +8,7 @@ final class BurndownDataDateTestCase extends SprintTestCase {
     $current = id(new BurndownDataDate('tuesday'));
     $current->setPointsTotal('4');
     $total = $date->sumPointsTotal($current, $previous);
-    $this->assertEqual(18, $total);
+    $this->assertEquals(18, $total);
   }
 
   public function testSumTasksTotal() {
@@ -18,7 +18,7 @@ final class BurndownDataDateTestCase extends SprintTestCase {
     $current = id(new BurndownDataDate('tuesday'));
     $current->setTasksTotal('8');
     $total = $date->sumTasksTotal($current, $previous);
-    $this->assertEqual(13, $total);
+    $this->assertEquals(13, $total);
   }
 
   public function testSumTasksRemaining() {
@@ -32,7 +32,7 @@ final class BurndownDataDateTestCase extends SprintTestCase {
     }
    // var_dump($current->getTasksClosedToday());
     $total = $date->sumTasksRemaining($current, $previous);
-    $this->assertEqual(3, $total);
+    $this->assertEquals(3, $total);
   }
 
   public function testSumPointsRemaining() {
@@ -42,6 +42,6 @@ final class BurndownDataDateTestCase extends SprintTestCase {
     $current = id(new BurndownDataDate('tuesday'));
     $current->setPointsClosedToday('2');
     $total = $date->sumPointsRemaining($current, $previous);
-    $this->assertEqual(3, $total);
+    $this->assertEquals(3, $total);
   }
 }

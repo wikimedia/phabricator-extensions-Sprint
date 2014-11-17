@@ -1,6 +1,7 @@
 <?php
+// require_once '/srv/phab/libext/Sprint/scripts/__init_script__.php';
 
-abstract class SprintTestCase extends ArcanistPhutilTestCase {
+abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 
   const NAMESPACE_PREFIX = 'phabricator_unittest_';
 
@@ -9,7 +10,6 @@ abstract class SprintTestCase extends ArcanistPhutilTestCase {
    * that it will establish only isolated, side-effect-free database
    * connections. Defaults to true.
    *
-   * NOTE: You should disable this only in rare circumstances. Unit tests should
    * not rely on external resources like databases, and should not produce
    * side effects.
    */
@@ -184,20 +184,10 @@ abstract class SprintTestCase extends ArcanistPhutilTestCase {
   }
 
   protected function generateNewTestUser() {
+
     $seed = $this->getNextObjectSeed();
 
-    $user = id(new PhabricatorUser())
-        ->setRealName("Test User {$seed}}")
-        ->setUserName("test{$seed}")
-        ->setIsApproved(1);
-
-    $email = id(new PhabricatorUserEmail())
-        ->setAddress("testuser{$seed}@example.com")
-        ->setIsVerified(1);
-
-    $editor = new PhabricatorUserEditor();
-    $editor->setActor($user);
-    $editor->createNewUser($user, $email);
+    $user = id(new PhabricatorUser());
 
     return $user;
   }

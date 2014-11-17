@@ -1,5 +1,5 @@
 <?php
-final class SprintQueryTestCase extends SprintTestCase {
+final class SprintQueryTest extends SprintTestCase {
 
   public function getRequestObject()
   {
@@ -10,9 +10,10 @@ final class SprintQueryTestCase extends SprintTestCase {
   public function testRequestSetUser()
   {
     $r = new AphrontRequest('example.com', '/');
+    var_dump($r);
     $user = $this->generateNewTestUser();
     $r->setUser($user);
-    $this->assertEqual($user, $r->getUser());
+    $this->assertEquals($user, $r->getUser());
     return $r;
   }
 
