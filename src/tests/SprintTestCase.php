@@ -185,8 +185,6 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 
   protected function generateNewTestUser() {
 
-    $seed = $this->getNextObjectSeed();
-
     $user = id(new PhabricatorUser());
 
     return $user;
