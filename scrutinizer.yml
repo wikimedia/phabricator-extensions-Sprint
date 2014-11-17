@@ -3,7 +3,7 @@ build:
     tests:
         before:
             - 'phpunit'
-        environment:
-            timezone: 'Europe/Berlin'
+    environment:
+        timezone: 'Europe/Berlin'
 tools:
     external_code_coverage: true
