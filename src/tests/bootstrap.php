@@ -1,10 +1,12 @@
 <?php
 
-require_once('Autoloader.php');
-require_once('/srv/phab/libphutil/src/internationalization/pht.php');
-require_once('/srv/phab/libphutil/src/utils/utils.php');
-require_once('/srv/phab/libphutil/src/moduleutils/core.php');
-require_once('/srv/phab/libphutil/src/moduleutils/moduleutils.php');
-AutoLoader::registerDirectory('/srv/phab/libext/Sprint');
-AutoLoader::registerDirectory('/srv/phab/phabricator');
-AutoLoader::registerDirectory('/srv/phab/libphutil');
+
+require_once('/srv/phab/libext/Sprint/src/constants/SprintConstants.php');
+require_once( SprintConstants::ROOT_DIR . '/libext/Sprint/src/tests/Autoloader.php');
+require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/internationalization/pht.php');
+require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/utils/utils.php');
+require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/moduleutils/core.php');
+require_once(SprintConstants::LIBPHUTIL_ROOT_DIR . '/src/moduleutils/moduleutils.php');
+AutoLoader::registerDirectory(SprintConstants::ROOT_DIR . '/libext/Sprint');
+AutoLoader::registerDirectory(SprintConstants::PHABRICATOR_ROOT_DIR);
+AutoLoader::registerDirectory(SprintConstants::LIBPHUTIL_ROOT_DIR );
