@@ -1,8 +1,6 @@
 # .scrutinizer.yml
 build:
     tests:
-        before:
-            - 'phpunit src/tests'
         override:
             -
                 command: 'phpunit -c src/tests/phpunit.xml src/tests --coverage-clover=src/tests/clover.xml'
