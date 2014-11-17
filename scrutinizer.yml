@@ -6,9 +6,9 @@ build:
         override:
             -
                 command: 'phpunit -c src/tests/phpunit.xml src/tests --coverage-clover=src/tests/clover.xml'
-                    coverage:
-                        file: 'src/tests/clover.xml'
-                        format: 'php-clover'
+                coverage:
+                    file: 'src/tests/clover.xml'
+                    format: 'php-clover'
     environment:
         timezone: 'Europe/Berlin'
 tools:
