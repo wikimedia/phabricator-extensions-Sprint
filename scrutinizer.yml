@@ -1,11 +1,9 @@
 # .scrutinizer.yml
 build:
     tests:
-        override:
-             coverage:
-                file: 'clover.xml'
-                format: 'php-clover'
-    environment:
-        timezone: 'Europe/Berlin'
+        before:
+            - 'phpunit'
+        environment:
+            timezone: 'Europe/Berlin'
 tools:
     external_code_coverage: true
