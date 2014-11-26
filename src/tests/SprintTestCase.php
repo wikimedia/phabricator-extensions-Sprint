@@ -186,6 +186,7 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
   protected function generateNewTestUser() {
 
     $user = id(new PhabricatorUser());
+    $user->setTimezoneIdentifier('Europe/Berlin');
 
     return $user;
   }

@@ -4,7 +4,7 @@
  * @license GPL version 3
  */
 
-final class BurndownListController extends BurndownController {
+final class BurndownListController extends SprintController {
 
   private $view;
 

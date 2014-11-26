@@ -1,6 +1,6 @@
 <?php
 
-final class SprintReportController extends BurndownController {
+final class SprintReportController extends SprintController {
 
   private $view;
 

@@ -2,9 +2,8 @@ phabricator-extensions-Sprint
 ==================
 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/?branch=master)
-
-@author Michael Peters
-@license GPL version 3
+[![Code Coverage](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/?branch=master)
+[![Build Status](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/badges/build.png?b=master)](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/build-status/master)
 
 Sprints and burndowns in Phabricator
 

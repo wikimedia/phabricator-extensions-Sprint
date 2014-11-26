@@ -4,7 +4,7 @@
  * @license GPL version 3
  */
 
-abstract class BurndownController extends PhabricatorController {
+abstract class SprintController extends PhabricatorController {
 
   public function shouldAllowPublic() {
         return true;

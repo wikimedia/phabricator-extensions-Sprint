@@ -1,6 +1,6 @@
 <?php
 
-final class BurndownDataViewController extends BurndownController {
+final class BurndownDataViewController extends SprintController {
 
   // Project data
   private $projectID;
