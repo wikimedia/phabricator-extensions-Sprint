@@ -7,36 +7,42 @@
 abstract class SprintController extends PhabricatorController {
 
   public function shouldAllowPublic() {
-        return true;
+    return true;
    }
 
   public function getProjectsURI() {
     return '/project/';
   }
 
+  public function getUser() {
+    return $user = $this->getRequest()->getUser();
+  }
+
+  public function setApplicationURI() {
+    return $uri= new PhutilURI($this->getApplicationURI());
+  }
+
   public function buildApplicationMenu() {
-    return $this->buildSideNavView(true)->getMenu();
+    return $this->buildSideNavView(true, $this->getUser(),$this->setApplicationURI())->getMenu();
   }
 
   public function buildNavMenu() {
-    $nav = new AphrontSideNavFilterView();
-    $nav->setBaseURI(new PhutilURI('/sprint/report/'));
-    $nav->addLabel(pht('Sprint Projects'));
-    $nav->addFilter('list', pht('List'));
-    $nav->addLabel(pht('Open Tasks'));
-    $nav->addFilter('project', pht('By Project'));
-    $nav->addFilter('user', pht('By User'));
-    $nav->addLabel(pht('Burndown'));
-    $nav->addFilter('burn', pht('Burndown Rate'));
-
+    $nav = id(new AphrontSideNavFilterView())
+        ->setBaseURI(new PhutilURI('/sprint/report/'))
+        ->addLabel(pht('Sprint Projects'))
+        ->addFilter('list', pht('List'))
+        ->addLabel(pht('Open Tasks'))
+        ->addFilter('project', pht('By Project'))
+        ->addFilter('user', pht('By User'))
+        ->addLabel(pht('Burndown'))
+        ->addFilter('burn', pht('Burndown Rate'));
     return $nav;
   }
 
-  public function buildSideNavView($for_app = false) {
-    $user = $this->getRequest()->getUser();
+  public function buildSideNavView($for_app = false, $user, $uri) {
 
     $nav = new AphrontSideNavFilterView();
-    $nav->setBaseURI(new PhutilURI($this->getApplicationURI()));
+    $nav->setBaseURI($uri);
 
     if ($for_app) {
       $nav->addFilter('create', pht('Create Task'));

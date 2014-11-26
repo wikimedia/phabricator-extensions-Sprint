@@ -10,7 +10,7 @@ final class SprintApplicationTest extends SprintTestCase {
   public function testBaseURI () {
     $burndown_application = new SprintApplication;
     $baseURI = $burndown_application->getBaseURI();
-    $this->assertEquals('/sprint/report/', $baseURI);
+    $this->assertEquals('/sprint/', $baseURI);
   }
 
   public function testgetIconName() {
@@ -35,13 +35,56 @@ final class SprintApplicationTest extends SprintTestCase {
     $burndown_application = new SprintApplication;
     $routes = $burndown_application->getRoutes();
     $assertion = array(
+        '/project/' => array(
+            'view/(?P<id>[1-9]\d*)/'
+            => 'SprintProjectProfileController',
+        ),
         '/sprint/' => array(
+            'edit/(?P<id>[1-9]\d*)/' => 'PhabricatorProjectEditMainController',
             '' => 'BurndownListController',
             'report/' => 'BurndownListController',
             'report/list/' => 'BurndownListController',
             'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
             'view/(?P<id>\d+)/' => 'BurndownDataViewController',
-        ));
+            'details/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectEditDetailsController',
+            'archive/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectArchiveController',
+            'members/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectMembersEditController',
+            'members/(?P<id>[1-9]\d*)/remove/'
+            => 'PhabricatorProjectMembersRemoveController',
+            'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
+            'picture/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectEditPictureController',
+            'icon/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectEditIconController',
+            'board/task/edit/(?P<id>[1-9]\d*)/'
+            =>  'SprintBoardTaskEditController',
+            'board/task/create/'
+            => 'SprintBoardTaskEditController',
+            'board/(?P<id>[1-9]\d*)/' .
+            '(?P<filter>filter/)?' .
+            '(?:query/(?P<queryKey>[^/]+)/)?'
+            => 'SprintBoardViewController',
+            'board/(?P<projectID>[1-9]\d*)/' => array(
+                'edit/(?:(?P<id>\d+)/)?'
+                => 'SprintBoardColumnEditController',
+                'hide/(?:(?P<id>\d+)/)?'
+                => 'SprintBoardColumnHideController',
+                'column/(?:(?P<id>\d+)/)?'
+                => 'SprintBoardColumnDetailController',
+                'import/'
+                => 'SprintBoardImportController',
+                'reorder/'
+                => 'SprintBoardReorderController',
+            ),
+        ),
+        '/tag/' => array(
+            '(?P<slug>[^/]+)/' => 'SprintProjectProfileController',
+            '(?P<slug>[^/]+)/board/' => 'SprintBoardViewController',
+        ),
+    );
     $this->assertEquals($assertion, $routes);
   }
 }

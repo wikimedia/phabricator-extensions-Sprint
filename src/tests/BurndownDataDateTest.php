@@ -25,14 +25,10 @@ final class BurndownDataDateTest extends SprintTestCase {
     $date = new BurndownDataDate('test date');
     $previous = id(new BurndownDataDate('monday'));
     $previous->setTasksRemaining('5');
-    var_dump($previous);
     $current = id(new BurndownDataDate('tuesday'));
-    for ($i=0;$i<2; $i++) {
-      $current->setTasksClosedToday();
-    }
-   // var_dump($current->getTasksClosedToday());
+    $current->setTasksRemaining('2');
     $total = $date->sumTasksRemaining($current, $previous);
-    $this->assertEquals(3, $total);
+    $this->assertEquals(7, $total);
   }
 
   public function testSumPointsRemaining() {
@@ -40,8 +36,8 @@ final class BurndownDataDateTest extends SprintTestCase {
     $previous = id(new BurndownDataDate('monday'));
     $previous->setPointsRemaining('5');
     $current = id(new BurndownDataDate('tuesday'));
-    $current->setPointsClosedToday('2');
+    $current->setPointsRemaining('2');
     $total = $date->sumPointsRemaining($current, $previous);
-    $this->assertEquals(3, $total);
+    $this->assertEquals(7, $total);
   }
 }

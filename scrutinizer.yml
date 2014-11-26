@@ -44,4 +44,6 @@ tools:
             - '\bimplement(?:s|ed)?\b'
         filter:
             paths: {  }
-            excluded_paths: {  }
+            excluded_paths:
+                - src/tests/*
+                - vendor/*

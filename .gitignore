@@ -1,2 +1,3 @@
 .phutil_module_cache
 vendor/
+/src/tests/clover.xml
