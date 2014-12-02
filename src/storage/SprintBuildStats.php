@@ -15,14 +15,11 @@ final class SprintBuildStats {
         new DateInterval('P1D'), // 1 day interval
         id(new DateTime("@" . $end, $timezone))->modify('+1 day')->setTime(17, 0));
 
-
-    $dates = array('before' =>$this->getBurndownDate('Before Sprint'));
-
     foreach ($period as $day) {
       $dates[$day->format('D M j')] = $this->getBurndownDate(
           $day->format('D M j'));
     }
-    $dates['after'] = $this->getBurndownDate('After Sprint');
+
     return $dates;
   }
 
@@ -60,8 +57,6 @@ final class SprintBuildStats {
   public function computeIdealPoints($dates) {
     $total_business_days = 0;
     foreach ($dates as $key => $date) {
-      if ($key == 'before' OR $key == 'after')
-        continue;
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
       if ($day_of_week != 0 AND $day_of_week != 6) {
         $total_business_days++;
@@ -70,13 +65,7 @@ final class SprintBuildStats {
 
     $elapsed_business_days = 0;
     foreach ($dates as $key => $date) {
-      if ($key == 'before') {
-        $date->setPointsIdealRemaining($date->getPointsTotal());
-        continue;
-      } else if ($key == 'after') {
-        $date->setPointsIdealRemaining (null);
-        continue;
-      }
+      $date->setPointsIdealRemaining($date->getPointsTotal());
 
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
       if ($day_of_week != 0 AND $day_of_week != 6) {
@@ -99,10 +88,9 @@ final class SprintBuildStats {
 
     $future = false;
     foreach ($dates as $key => $date) {
-      if ($key != 'before' AND $key != 'after') {
         $now = id(new DateTime('now', $this->timezone));
         $future = new DateTime($date->getDate(), $this->timezone) > $now;
-      }
+
       $data[] = array(
           $future ? null : $date->getPointsTotal(),
           $future ? null : $date->getPointsRemaining(),

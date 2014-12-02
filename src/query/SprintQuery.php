@@ -57,6 +57,24 @@ final class SprintQuery  {
     return $tasks;
   }
 
+  private function getTaskStoryPoints($task_phid,$points_data) {
+    $storypoints = array();
+    foreach ($points_data as $k=>$subarray) {
+      if (isset ($subarray['objectPHID']) && $subarray['objectPHID'] == $task_phid) {
+        $points_data[$k] = $subarray;
+        $storypoints = $subarray['newValue'];
+      }
+    }
+    return $storypoints;
+  }
+
+  public function getStoryPoints($task_phid)  {
+    $data = $this->getXactionData(SprintConstants::CUSTOMFIELD_TYPE_STATUS);
+    $points = $this->getTaskStoryPoints($task_phid,$data);
+    $points = trim($points, '"');
+    return $points;
+  }
+
   public function getXactions($tasks) {
     $task_phids = mpull($tasks, 'getPHID');
 

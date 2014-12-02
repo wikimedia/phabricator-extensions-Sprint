@@ -54,32 +54,15 @@ final class SprintBoardTaskCard {
     return $this->canEdit;
   }
 
-  private function getTaskStoryPoints($task,$points_data) {
-    $storypoints = array();
-    foreach ($points_data as $k=>$subarray) {
-      if (isset ($subarray['objectPHID']) && $subarray['objectPHID'] == $task) {
-        $points_data[$k] = $subarray;
-        $storypoints = $subarray['newValue'];
-      }
-    }
-    return $storypoints;
-  }
-
-  public function getStoryPoints($task)  {
+  public function getItem() {
     $query = id(new SprintQuery())
         ->setProject($this->project)
         ->setViewer($this->viewer);
 
-    $data = $query->getXactionData(SprintConstants::CUSTOMFIELD_TYPE_STATUS);
-    $points = $this->getTaskStoryPoints($task->getPHID(),$data);
-    $points = trim($points, '"');
-    return $points;
-  }
-
-  public function getItem() {
     $task = $this->getTask();
+    $task_phid = $task->getPHID();
     $owner = $this->getOwner();
-    $points = $this->getStoryPoints($task);
+    $points = $query->getStoryPoints($task_phid);
     $can_edit = $this->getCanEdit();
 
     $color_map = ManiphestTaskPriority::getColorMap();

@@ -14,54 +14,54 @@ final class SprintTransaction  {
 
   public function buildDailyData($events, $start, $end, $dates, $xactions) {
 
+    $query = id(new SprintQuery());
+
     foreach ($events as $event) {
       $xaction = $xactions[$event['transactionPHID']];
       $xaction_date = $xaction->getDateCreated();
-      $task_phid = $xaction->getObjectPHID();
 
       // Determine which date to attach this data to
-      if ($xaction_date < $start) {
-        $date = 'before';
-      } else if ($xaction_date > $end) {
-        $date = 'after';
-      } else {
-        //$date = id(new DateTime("@".$xaction_date))->format('D M j');
+      $date = null;
+      if ($xaction_date >= $start && $xaction_date <= $end) {
+        $task_phid = $xaction->getObjectPHID();
+        $points = $query->getStoryPoints($task_phid);
         $date = phabricator_format_local_time($xaction_date, $this->viewer, 'D M j');
-      }
 
-      switch ($event['type']) {
-        case "create":
-          // Will be accounted for by "task-add" when the project is added
-          // But we still include it so it shows on the Events list
-          break;
-        case "task-add":
-          // A task was added to the sprint
-          $this->AddTasksToday($date, $dates);
-//          $this->AddPointsToday($date, $task_phid, $dates);
-          $this->AddTaskInSprint($task_phid);
-          break;
-        case "task-remove":
-          // A task was removed from the sprint
-          $this->RemoveTasksToday($date, $dates);
-          $this->RemovePointsToday($date, $task_phid, $dates);
-          $this->RemoveTaskInSprint($task_phid);
-          break;
-        case "close":
-          // A task was closed, mark it as done
-          $this->CloseTasksToday($date, $dates);
-          $this->ClosePointsToday($date, $task_phid, $dates);
-          $this->CloseTaskStatus($task_phid);
-          break;
-        case "reopen":
-          // A task was reopened, subtract from done
-          $this->ReopenedTasksToday($date, $dates);
-          $this->ReopenedPointsToday($date, $task_phid, $dates);
-          $this->OpenTaskStatus($task_phid);
-          break;
-        case "points":
-          // Points were changed
-          $this->changePoints($date, $task_phid, $xaction, $dates);
-          break;
+          switch ($event['type']) {
+            case "create":
+              // Will be accounted for by "task-add" when the project is added
+              // But we still include it so it shows on the Events list
+              break;
+            case "task-add":
+              // A task was added to the sprint
+              $this->AddTasksToday($date, $dates);
+              $this->AddPointsToday($date, $points, $dates);
+              $this->AddTaskInSprint($task_phid);
+              break;
+            case "task-remove":
+              // A task was removed from the sprint
+              $this->RemoveTasksToday($date, $dates);
+              $this->RemovePointsToday($date, $points, $dates);
+              $this->RemoveTaskInSprint($task_phid);
+              break;
+            case "close":
+              // A task was closed, mark it as done
+              $this->CloseTasksToday($date, $dates);
+              $this->ClosePointsToday($date, $points, $dates);
+              $this->CloseTaskStatus($task_phid);
+              break;
+            case "reopen":
+              // A task was reopened, subtract from done
+              $this->ReopenedTasksToday($date, $dates);
+              $this->ReopenedPointsToday($date, $points, $dates);
+              $this->OpenTaskStatus($task_phid);
+              break;
+            case "points":
+              // Points were changed
+              $old_point_value = $xaction->getOldValue();
+              $this->changePoints($date, $task_phid, $points, $old_point_value, $dates);
+              break;
+          }
       }
     }
     return $dates;
@@ -97,23 +97,23 @@ final class SprintTransaction  {
     return $dates;
   }
 
-  private function AddPointsToday($date, $task_phid, $dates) {
-    $dates[$date]->setPointsAddedToday($this->task_points[$task_phid]);
+  private function AddPointsToday($date, $points, $dates) {
+    $dates[$date]->setPointsAddedToday($points);
     return $dates;
   }
 
-  private function RemovePointsToday($date, $task_phid, $dates) {
-    $dates[$date]->setPointsRemovedToday($this->task_points[$task_phid]);
+  private function RemovePointsToday($date, $points, $dates) {
+    $dates[$date]->setPointsRemovedToday($points);
     return $dates;
   }
 
-  private function ClosePointsToday($date, $task_phid, $dates) {
-   $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
+  private function ClosePointsToday($date, $points, $dates) {
+   $dates[$date]->setPointsClosedToday($points);
     return $dates;
   }
 
-  private function ReopenedPointsToday($date, $task_phid, $dates) {
-    $dates[$date]->setPointsReopenedToday($this->task_points[$task_phid]);
+  private function ReopenedPointsToday($date, $points, $dates) {
+    $dates[$date]->setPointsReopenedToday($points);
     return $dates;
   }
 
@@ -137,22 +137,17 @@ final class SprintTransaction  {
     return $this->task_statuses[$task_phid];
   }
 
-  private function changePoints($date, $task_phid, $xaction, $dates) {
-    $this->task_points[$task_phid] = $xaction->getNewValue();
+  private function changePoints($date, $task_phid, $points, $old_point_value, $dates) {
 
-    // Only make changes if the task is in the sprint
-    if (isset($this->task_in_sprint[$task_phid])) {
-
-      // Adjust points for that day
-      $this->task_points[$task_phid] = $xaction->getNewValue() - $xaction->getOldValue();
+       // Adjust points for that day
+      $this->task_points[$task_phid] = $points - $old_point_value;
       $dates[$date]->setPointsAddedToday($this->task_points[$task_phid]);
 
       // If the task is closed, adjust completed points as well
       if (isset($this->task_statuses[$task_phid]) && $this->task_statuses[$task_phid] == 'closed') {
-        $this->task_points[$task_phid] = $xaction->getNewValue() - $xaction->getOldValue();
+        $this->task_points[$task_phid] = $points - $old_point_value;
         $dates[$date]->setPointsClosedToday($this->task_points[$task_phid]);
       }
-    }
     return $dates;
   }
 }
