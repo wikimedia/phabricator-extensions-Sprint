@@ -98,7 +98,7 @@ final class SprintBoardColumnEditController
         ->setNewValue($v_limit);
 
       try {
-        $editor = id(new PhabricatorProjectColumnTransactionEditor())
+        id(new PhabricatorProjectColumnTransactionEditor())
           ->setActor($viewer)
           ->setContinueOnNoEffect(true)
           ->setContentSourceFromRequest($request)

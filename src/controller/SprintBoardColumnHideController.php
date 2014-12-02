@@ -42,8 +42,6 @@ final class SprintBoardColumnHideController
       return new Aphront404Response();
     }
 
-    $column_phid = $column->getPHID();
-
     $view_uri = $this->getApplicationURI('/board/'.$this->projectID.'/');
     $view_uri = new PhutilURI($view_uri);
     foreach ($request->getPassthroughRequestData() as $key => $value) {
@@ -71,7 +69,7 @@ final class SprintBoardColumnHideController
         ->setNewValue($new_status),
       );
 
-      $editor = id(new PhabricatorProjectColumnTransactionEditor())
+      id(new PhabricatorProjectColumnTransactionEditor())
         ->setActor($viewer)
         ->setContinueOnNoEffect(true)
         ->setContentSourceFromRequest($request)

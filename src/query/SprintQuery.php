@@ -68,12 +68,12 @@ final class SprintQuery  {
   }
 
   public function checkNull($start, $end, $tasks) {
+    $mword = SprintConstants::MAGIC_WORD;
     if (!$start OR !$end) {
-      throw new BurndownException("This project is not set up for Burndowns, "
-          . "make sure it has 'Sprint' in the name, and then edit it to add the "
-          . "sprint start and end date.");
+      throw new BurndownException("This project is not set up for Sprints.  "
+          . "Check that it has a start date and end date.  And has an "
+          . "'{$mword}' in the name.");
     }
-
     if (!$tasks) {
       throw new BurndownException("This project has no tasks.");
     }

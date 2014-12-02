@@ -170,6 +170,18 @@ final class TasksTableView {
     return $map;
   }
 
+  private function setOwnerLink($handles, $task) {
+    // Get the owner object so we can render the owner username/link
+    $owner = $handles[$task->getOwnerPHID()];
+
+    if ($owner instanceof PhabricatorObjectHandle) {
+      $owner_link = $task->getOwnerPHID() ? $owner->renderLink() : 'none assigned';
+    } else {
+      $owner_link = 'none assigned';
+    }
+    return $owner_link;
+  }
+
   private function getTaskPoints($task) {
     $query = id(new SprintQuery())
         ->setProject($this->project)
@@ -180,6 +192,11 @@ final class TasksTableView {
     return $points;
   }
 
+  private function getPriorityName($task) {
+    $priority_name = new ManiphestTaskPriority;
+    return $priority_name->getTaskPriorityName($task->getPriority());
+  }
+
   private function addTaskToTree($output, $task, $tasks, $map, $handles, $depth = 0) {
     static $included = array();
 
@@ -187,21 +204,15 @@ final class TasksTableView {
     $repeat = isset($included[$task->getPHID()]);
 
     $points = $this->getTaskPoints($task);
-    $priority_name = new ManiphestTaskPriority();
+
     $status = $this->setTaskStatus($task);
     $depth_indent = '';
     for ($i = 0; $i < $depth; $i++) {
       $depth_indent .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
     }
 
-    // Get the owner object so we can render the owner username/link
-    $owner = $handles[$task->getOwnerPHID()];
-
-    if ($owner instanceof PhabricatorObjectHandle) {
-      $owner_link = $task->getOwnerPHID() ? $owner->renderLink() : 'none assigned';
-    } else {
-      $owner_link = 'none assigned';
-    }
+    $owner_link = $this->setOwnerLink($handles, $task);
+    $priority_name = $this->getPriorityName($task);
 
     // Build the row
     $output[] = array(
@@ -217,7 +228,7 @@ final class TasksTableView {
             ) . ($repeat ? '&nbsp;&nbsp;<em title="This task is a child of more than one task in this list. Children are only shown on ' .
                 'the first occurance">[Repeat]</em>' : '')),
         $owner_link,
-        $priority_name->getTaskPriorityName($task->getPriority()),
+        $priority_name,
         $points,
         $status,
     );

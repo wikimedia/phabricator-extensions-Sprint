@@ -54,7 +54,6 @@ final class SprintBoardReorderController
         return new Aphront404Response();
       }
 
-      $target_column = $columns[$column_phid];
       $new_sequence = $request->getInt('sequence');
       if ($new_sequence < 0) {
         return new Aphront404Response();

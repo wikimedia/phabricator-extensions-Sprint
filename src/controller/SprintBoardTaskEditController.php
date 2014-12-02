@@ -15,30 +15,15 @@ final class SprintBoardTaskEditController extends ManiphestController {
     $response_type = $request->getStr('responseType', 'task');
     $order = $request->getStr('order', PhabricatorProjectColumn::DEFAULT_ORDER);
 
-    $can_edit_assign = $this->hasApplicationCapability(
-      ManiphestEditAssignCapability::CAPABILITY);
-    $can_edit_policies = $this->hasApplicationCapability(
-      ManiphestEditPoliciesCapability::CAPABILITY);
-    $can_edit_priority = $this->hasApplicationCapability(
-      ManiphestEditPriorityCapability::CAPABILITY);
-    $can_edit_projects = $this->hasApplicationCapability(
-      ManiphestEditProjectsCapability::CAPABILITY);
-    $can_edit_status = $this->hasApplicationCapability(
-      ManiphestEditStatusCapability::CAPABILITY);
+   list($can_edit_assign,$can_edit_policies,$can_edit_priority,
+       $can_edit_projects, $can_edit_status)
+       = $this->setApplicationCapabilities();
 
     $parent_task = null;
     $template_id = null;
 
     if ($this->id) {
-      $task = id(new ManiphestTaskQuery())
-        ->setViewer($user)
-        ->requireCapabilities(
-          array(
-            PhabricatorPolicyCapability::CAN_VIEW,
-            PhabricatorPolicyCapability::CAN_EDIT,
-          ))
-        ->withIDs(array($this->id))
-        ->executeOne();
+      $task = $this->getTask($user);
       if (!$task) {
         return new Aphront404Response();
       }
@@ -58,28 +43,10 @@ final class SprintBoardTaskEditController extends ManiphestController {
           $projects = $request->getStr('projects');
           if ($projects) {
             $tokens = $request->getStrList('projects');
-
             $type_project = PhabricatorProjectProjectPHIDType::TYPECONST;
-            foreach ($tokens as $key => $token) {
-              if (phid_get_type($token) == $type_project) {
-                // If this is formatted like a PHID, leave it as-is.
-                continue;
-              }
 
-              if (preg_match('/^#/', $token)) {
-                // If this already has a "#", leave it as-is.
-                continue;
-              }
-
-              // Add a "#" prefix.
-              $tokens[$key] = '#'.$token;
-            }
-
-            $default_projects = id(new PhabricatorObjectQuery())
-              ->setViewer($user)
-              ->withNames($tokens)
-              ->execute();
-            $default_projects = mpull($default_projects, 'getPHID');
+            $tokens = $this->setTokens($tokens, $type_project);
+            $default_projects = $this->getDefaultProjects($user, $tokens);
 
             if ($default_projects) {
               $task->attachProjectPHIDs($default_projects);
@@ -102,16 +69,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
         if ($can_edit_assign) {
           $assign = $request->getStr('assign');
           if (strlen($assign)) {
-            $assign_user = id(new PhabricatorPeopleQuery())
-              ->setViewer($user)
-              ->withUsernames(array($assign))
-              ->executeOne();
-            if (!$assign_user) {
-              $assign_user = id(new PhabricatorPeopleQuery())
-                ->setViewer($user)
-                ->withPHIDs(array($assign))
-                ->executeOne();
-            }
+            $assign_user = $this->assignUser($user, $assign);
 
             if ($assign_user) {
               $task->setOwnerPHID($assign_user->getPHID());
@@ -138,13 +96,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
     $errors = array();
     $e_title = true;
 
-    $field_list = PhabricatorCustomField::getObjectFields(
-      $task,
-      PhabricatorCustomField::ROLE_EDIT);
-    $field_list->setViewer($user);
-    $field_list->readFieldsFromStorage($task);
-
-    $aux_fields = $field_list->getFields();
+    list($aux_fields, $field_list) = $this->getAuxFields($task, $user);
 
     if ($request->isFormPost()) {
       $changes = array();
@@ -194,68 +146,16 @@ final class SprintBoardTaskEditController extends ManiphestController {
         // hack but shouldn't be long for this world.
         $placeholder_editor = new PhabricatorUserProfileEditor();
 
-        $field_errors = $aux_field->validateApplicationTransactions(
-          $placeholder_editor,
-          PhabricatorTransactions::TYPE_CUSTOMFIELD,
-          array(
-            id(new ManiphestTransaction())
-              ->setOldValue($aux_old_value)
-              ->setNewValue($aux_new_value),
-          ));
-
-        foreach ($field_errors as $error) {
-          $errors[] = $error->getMessage();
-        }
+        $errors = $this->setFieldErrors($aux_field, $placeholder_editor, $aux_old_value, $aux_new_value, $errors);
 
         $old_values[$aux_field->getFieldKey()] = $aux_old_value;
       }
 
       if ($errors) {
-        $task->setTitle($new_title);
-        $task->setDescription($new_desc);
-        $task->setPriority($request->getInt('priority'));
-        $task->setOwnerPHID($owner_phid);
-        $task->setCCPHIDs($request->getArr('cc'));
-        $task->attachProjectPHIDs($request->getArr('projects'));
+        $task = $this->setTaskError($task, $new_title, $new_desc,
+            $request, $owner_phid);
       } else {
-
-        if ($can_edit_priority) {
-          $changes[ManiphestTransaction::TYPE_PRIORITY] =
-            $request->getInt('priority');
-        }
-        if ($can_edit_assign) {
-          $changes[ManiphestTransaction::TYPE_OWNER] = $owner_phid;
-        }
-
-        $changes[ManiphestTransaction::TYPE_CCS] = $request->getArr('cc');
-
-        if ($can_edit_projects) {
-          $projects = $request->getArr('projects');
-          $changes[ManiphestTransaction::TYPE_PROJECTS] =
-            $projects;
-          $column_phid = $request->getStr('columnPHID');
-          // allow for putting a task in a project column at creation -only-
-          if (!$task->getID() && $column_phid && $projects) {
-            $column = id(new PhabricatorProjectColumnQuery())
-              ->setViewer($user)
-              ->withProjectPHIDs($projects)
-              ->withPHIDs(array($column_phid))
-              ->executeOne();
-            if ($column) {
-              $changes[ManiphestTransaction::TYPE_PROJECT_COLUMN] =
-                array(
-                  'new' => array(
-                    'projectPHID' => $column->getProjectPHID(),
-                    'columnPHIDs' => array($column_phid),
-                  ),
-                  'old' => array(
-                    'projectPHID' => $column->getProjectPHID(),
-                    'columnPHIDs' => array(),
-                  ),
-                );
-            }
-          }
-        }
+        $changes = $this->setTaskChanges($request, $owner_phid, $user, $task);
 
         if ($can_edit_policies) {
           $changes[PhabricatorTransactions::TYPE_VIEW_POLICY] =
@@ -264,84 +164,17 @@ final class SprintBoardTaskEditController extends ManiphestController {
             $request->getStr('editPolicy');
         }
 
-        $template = new ManiphestTransaction();
-        $transactions = array();
-
-        foreach ($changes as $type => $value) {
-          $transaction = clone $template;
-          $transaction->setTransactionType($type);
-          if ($type == ManiphestTransaction::TYPE_PROJECT_COLUMN) {
-            $transaction->setNewValue($value['new']);
-            $transaction->setOldValue($value['old']);
-          } else if ($type == ManiphestTransaction::TYPE_PROJECTS) {
-            // TODO: Gross.
-            $project_type =
-              PhabricatorProjectObjectHasProjectEdgeType::EDGECONST;
-            $transaction
-              ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
-              ->setMetadataValue('edge:type', $project_type)
-              ->setNewValue(
-                array(
-                  '=' => array_fuse($value),
-                ));
-          } else {
-            $transaction->setNewValue($value);
-          }
-          $transactions[] = $transaction;
-        }
+       $template = new ManiphestTransaction();
+       $transactions = $this->setTransactions($template, $changes);
 
         if ($aux_fields) {
-          foreach ($aux_fields as $aux_field) {
-            $transaction = clone $template;
-            $transaction->setTransactionType(
-              PhabricatorTransactions::TYPE_CUSTOMFIELD);
-            $aux_key = $aux_field->getFieldKey();
-            $transaction->setMetadataValue('customfield:key', $aux_key);
-            $old = idx($old_values, $aux_key);
-            $new = $aux_field->getNewValueForApplicationTransactions();
-
-            $transaction->setOldValue($old);
-            $transaction->setNewValue($new);
-
-            $transactions[] = $transaction;
-          }
-        }
+          $transactions = $this->setAuxFieldTransactions($aux_fields, $template, $old_values);
+         }
 
         if ($transactions) {
           $is_new = !$task->getID();
-
-          $event = new PhabricatorEvent(
-            PhabricatorEventType::TYPE_MANIPHEST_WILLEDITTASK,
-            array(
-              'task'          => $task,
-              'new'           => $is_new,
-              'transactions'  => $transactions,
-            ));
-          $event->setUser($user);
-          $event->setAphrontRequest($request);
-          PhutilEventEngine::dispatchEvent($event);
-
-          $task = $event->getValue('task');
-          $transactions = $event->getValue('transactions');
-
-          $editor = id(new ManiphestTransactionEditor())
-            ->setActor($user)
-            ->setContentSourceFromRequest($request)
-            ->setContinueOnNoEffect(true)
-            ->applyTransactions($task, $transactions);
-
-          $event = new PhabricatorEvent(
-            PhabricatorEventType::TYPE_MANIPHEST_DIDEDITTASK,
-            array(
-              'task'          => $task,
-              'new'           => $is_new,
-              'transactions'  => $transactions,
-            ));
-          $event->setUser($user);
-          $event->setAphrontRequest($request);
-          PhutilEventEngine::dispatchEvent($event);
+          $task = $this->createEvent($task, $is_new, $transactions, $user, $request);
         }
-
 
         if ($parent_task) {
           // TODO: This should be transactional now.
@@ -440,20 +273,10 @@ final class SprintBoardTaskEditController extends ManiphestController {
           $user->getPHID(),
         ));
         if ($template_id) {
-          $template_task = id(new ManiphestTaskQuery())
-            ->setViewer($user)
-            ->withIDs(array($template_id))
-            ->executeOne();
+          $template_task = $this->getTemplateTask($user, $template_id);
           if ($template_task) {
-            $cc_phids = array_unique(array_merge(
-              $template_task->getCCPHIDs(),
-              array($user->getPHID())));
-            $task->setCCPHIDs($cc_phids);
-            $task->attachProjectPHIDs($template_task->getProjectPHIDs());
-            $task->setOwnerPHID($template_task->getOwnerPHID());
-            $task->setPriority($template_task->getPriority());
-            $task->setViewPolicy($template_task->getViewPolicy());
-            $task->setEditPolicy($template_task->getEditPolicy());
+            $cc_phids = $this->setCCPHIDS($template_task, $user);
+            $task = $this->setTemplateTask($task, $template_task, $cc_phids);
 
             $template_fields = PhabricatorCustomField::getObjectFields(
               $template_task,
@@ -484,17 +307,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
       }
     }
 
-    $phids = array_merge(
-      array($task->getOwnerPHID()),
-      $task->getCCPHIDs(),
-      $task->getProjectPHIDs());
-
-    if ($parent_task) {
-      $phids[] = $parent_task->getPHID();
-    }
-
-    $phids = array_filter($phids);
-    $phids = array_unique($phids);
+    $phids = $this->getTaskPHIDS($task, $parent_task);
 
     $handles = $this->loadViewerHandles($phids);
 
@@ -751,6 +564,274 @@ final class SprintBoardTaskEditController extends ManiphestController {
         'title' => $header_name,
         'pageObjects' => $page_objects,
       ));
+  }
+  private function setApplicationCapabilities() {
+    $can_edit_assign = $this->hasApplicationCapability(
+        ManiphestEditAssignCapability::CAPABILITY);
+    $can_edit_policies = $this->hasApplicationCapability(
+        ManiphestEditPoliciesCapability::CAPABILITY);
+    $can_edit_priority = $this->hasApplicationCapability(
+        ManiphestEditPriorityCapability::CAPABILITY);
+    $can_edit_projects = $this->hasApplicationCapability(
+        ManiphestEditProjectsCapability::CAPABILITY);
+    $can_edit_status = $this->hasApplicationCapability(
+        ManiphestEditStatusCapability::CAPABILITY);
+    return array($can_edit_assign,$can_edit_policies,$can_edit_priority,
+        $can_edit_projects,$can_edit_status);
+  }
+
+  private function setTokens($tokens, $type_project) {
+    foreach ($tokens as $key => $token) {
+      if (phid_get_type($token) == $type_project) {
+        // If this is formatted like a PHID, leave it as-is.
+        continue;
+      }
+
+      if (preg_match('/^#/', $token)) {
+        // If this already has a "#", leave it as-is.
+        continue;
+      }
+
+      // Add a "#" prefix.
+      $tokens[$key] = '#'.$token;
+    }
+    return $tokens;
+  }
+
+  private function getDefaultProjects($user, $tokens) {
+    $default_projects = id(new PhabricatorObjectQuery())
+        ->setViewer($user)
+        ->withNames($tokens)
+        ->execute();
+    $default_projects = mpull($default_projects, 'getPHID');
+    return $default_projects;
+  }
+
+  private function getTask($user) {
+    $task = id(new ManiphestTaskQuery())
+        ->setViewer($user)
+        ->requireCapabilities(
+            array(
+                PhabricatorPolicyCapability::CAN_VIEW,
+                PhabricatorPolicyCapability::CAN_EDIT,
+            ))
+        ->withIDs(array($this->id))
+        ->executeOne();
+    return $task;
+  }
+
+  private function getAuxFields($task, $user){
+    $field_list = PhabricatorCustomField::getObjectFields(
+        $task,
+        PhabricatorCustomField::ROLE_EDIT);
+    $field_list->setViewer($user);
+    $field_list->readFieldsFromStorage($task);
+    $aux_fields = $field_list->getFields();
+    return array($aux_fields, $field_list);
+  }
+
+  private function setTaskError($task, $new_title, $new_desc, $request, $owner_phid) {
+    $task->setTitle($new_title)
+        ->setDescription($new_desc)
+        ->setPriority($request->getInt('priority'))
+        ->setOwnerPHID($owner_phid)
+        ->setCCPHIDs($request->getArr('cc'))
+        ->attachProjectPHIDs($request->getArr('projects'));
+    return $task;
+  }
+
+  private function setFieldErrors($aux_field, $placeholder_editor, $aux_old_value, $aux_new_value, $errors) {
+    $field_errors = $aux_field->validateApplicationTransactions(
+        $placeholder_editor,
+        PhabricatorTransactions::TYPE_CUSTOMFIELD,
+        array(
+            id(new ManiphestTransaction())
+                ->setOldValue($aux_old_value)
+                ->setNewValue($aux_new_value),
+        ));
+
+    foreach ($field_errors as $error) {
+      $errors[] = $error->getMessage();
+    }
+    return $errors;
+  }
+
+  private function setTaskChanges($request, $owner_phid, $user, $task) {
+    list($can_edit_assign,$can_edit_policies,$can_edit_priority,
+        $can_edit_projects, $can_edit_status)
+        = $this->setApplicationCapabilities();
+
+    if ($can_edit_priority) {
+      $changes[ManiphestTransaction::TYPE_PRIORITY] =
+          $request->getInt('priority');
+    }
+    if ($can_edit_assign) {
+      $changes[ManiphestTransaction::TYPE_OWNER] = $owner_phid;
+    }
+
+    $changes[ManiphestTransaction::TYPE_CCS] = $request->getArr('cc');
+
+    if ($can_edit_projects) {
+      $projects = $request->getArr('projects');
+      $changes[ManiphestTransaction::TYPE_PROJECTS] =
+          $projects;
+      $column_phid = $request->getStr('columnPHID');
+      // allow for putting a task in a project column at creation -only-
+      if (!$task->getID() && $column_phid && $projects) {
+        $column = id(new PhabricatorProjectColumnQuery())
+            ->setViewer($user)
+            ->withProjectPHIDs($projects)
+            ->withPHIDs(array($column_phid))
+            ->executeOne();
+        if ($column) {
+          $changes[ManiphestTransaction::TYPE_PROJECT_COLUMN] =
+              array(
+                  'new' => array(
+                      'projectPHID' => $column->getProjectPHID(),
+                      'columnPHIDs' => array($column_phid),
+                  ),
+                  'old' => array(
+                      'projectPHID' => $column->getProjectPHID(),
+                      'columnPHIDs' => array(),
+                  ),
+              );
+        }
+      }
+    }
+    return $changes;
+  }
+
+  private function createEvent($task, $is_new, $transactions, $user, $request) {
+    $event = new PhabricatorEvent(
+        PhabricatorEventType::TYPE_MANIPHEST_WILLEDITTASK,
+        array(
+            'task'          => $task,
+            'new'           => $is_new,
+            'transactions'  => $transactions,
+        ));
+    $event->setUser($user);
+    $event->setAphrontRequest($request);
+    PhutilEventEngine::dispatchEvent($event);
+
+    $task = $event->getValue('task');
+    $transactions = $event->getValue('transactions');
+    id(new ManiphestTransactionEditor())
+        ->setActor($user)
+        ->setContentSourceFromRequest($request)
+        ->setContinueOnNoEffect(true)
+        ->applyTransactions($task, $transactions);
+    $event = new PhabricatorEvent(
+        PhabricatorEventType::TYPE_MANIPHEST_DIDEDITTASK,
+        array(
+            'task'          => $task,
+            'new'           => $is_new,
+            'transactions'  => $transactions,
+        ));
+    $event->setUser($user);
+    $event->setAphrontRequest($request);
+    PhutilEventEngine::dispatchEvent($event);
+    return $task;
+  }
+
+  private function setTransactions($template, $changes) {
+    $transactions = array();
+
+    foreach ($changes as $type => $value) {
+      $transaction = clone $template;
+      $transaction->setTransactionType($type);
+      if ($type == ManiphestTransaction::TYPE_PROJECT_COLUMN) {
+        $transaction->setNewValue($value['new']);
+        $transaction->setOldValue($value['old']);
+      } else if ($type == ManiphestTransaction::TYPE_PROJECTS) {
+        // TODO: Gross.
+        $project_type =
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST;
+        $transaction
+            ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
+            ->setMetadataValue('edge:type', $project_type)
+            ->setNewValue(
+                array(
+                    '=' => array_fuse($value),
+                ));
+      } else {
+        $transaction->setNewValue($value);
+      }
+      $transactions[] = $transaction;
+    }
+    return array ($transactions);
+  }
+
+  private function setAuxFieldTransactions($aux_fields, $template, $old_values) {
+    foreach ($aux_fields as $aux_field) {
+      $transaction = clone $template;
+      $transaction->setTransactionType(
+          PhabricatorTransactions::TYPE_CUSTOMFIELD);
+      $aux_key = $aux_field->getFieldKey();
+      $transaction->setMetadataValue('customfield:key', $aux_key);
+      $old = idx($old_values, $aux_key);
+      $new = $aux_field->getNewValueForApplicationTransactions();
+
+      $transaction->setOldValue($old);
+      $transaction->setNewValue($new);
+
+      $transactions[] = $transaction;
+    }
+    return $transactions;
+  }
+
+  private function assignUser($user, $assign) {
+    $assign_user = id(new PhabricatorPeopleQuery())
+        ->setViewer($user)
+        ->withUsernames(array($assign))
+        ->executeOne();
+    if (!$assign_user) {
+      $assign_user = id(new PhabricatorPeopleQuery())
+          ->setViewer($user)
+          ->withPHIDs(array($assign))
+          ->executeOne();
+    }
+    return $assign_user;
+  }
+
+  private function getTemplateTask($user, $template_id) {
+    $template_task = id(new ManiphestTaskQuery())
+        ->setViewer($user)
+        ->withIDs(array($template_id))
+        ->executeOne();
+    return $template_task;
+  }
+
+  private function setCCPHIDS($template_task, $user) {
+    $cc_phids = array_unique(array_merge(
+        $template_task->getCCPHIDs(),
+        array($user->getPHID())));
+    return $cc_phids;
+  }
+
+  private function setTemplateTask($task, $template_task, $cc_phids) {
+    $task->setCCPHIDs($cc_phids);
+    $task->attachProjectPHIDs($template_task->getProjectPHIDs());
+    $task->setOwnerPHID($template_task->getOwnerPHID());
+    $task->setPriority($template_task->getPriority());
+    $task->setViewPolicy($template_task->getViewPolicy());
+    $task->setEditPolicy($template_task->getEditPolicy());
+    return $task;
+  }
+
+  private function getTaskPHIDS($task, $parent_task) {
+    $phids = array_merge(
+        array($task->getOwnerPHID()),
+        $task->getCCPHIDs(),
+        $task->getProjectPHIDs());
+
+    if ($parent_task) {
+      $phids[] = $parent_task->getPHID();
+    }
+
+    $phids = array_filter($phids);
+    $phids = array_unique($phids);
+
+    return $phids;
   }
 
 }

@@ -15,11 +15,11 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function getUser() {
-    return $user = $this->getRequest()->getUser();
+    return $this->getRequest()->getUser();
   }
 
   public function setApplicationURI() {
-    return $uri= new PhutilURI($this->getApplicationURI());
+    return new PhutilURI($this->getApplicationURI());
   }
 
   public function buildApplicationMenu() {

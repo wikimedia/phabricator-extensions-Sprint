@@ -46,7 +46,7 @@ final class SprintBoardColumnDetailController
       ->withObjectPHIDs(array($column->getPHID()))
       ->execute();
 
-    $engine = id(new PhabricatorMarkupEngine())
+    id(new PhabricatorMarkupEngine())
       ->setViewer($viewer);
 
     $timeline = id(new PhabricatorApplicationTransactionView())

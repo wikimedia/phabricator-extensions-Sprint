@@ -87,10 +87,8 @@ final class SprintBoardViewController
           return id(new AphrontRedirectResponse())
             ->setURI(
               $this->getApplicationURI('board/'.$project->getID().'/import/'));
-          break;
         default:
           return $this->initializeWorkboardDialog($project);
-          break;
       }
     }
 
@@ -350,8 +348,11 @@ final class SprintBoardViewController
 
     $base_uri = $this->getURIWithState();
 
+
     $items = array();
     foreach ($named as $key => $name) {
+      $active_order = null;
+
       $is_selected = ($key == $sort_key);
       if ($is_selected) {
         $active_order = $name;
@@ -411,6 +412,8 @@ final class SprintBoardViewController
 
     $items = array();
     foreach ($named as $key => $name) {
+      $active_filter = null;
+
       $is_selected = ($key == $query_key);
       if ($is_selected) {
         $active_filter = $name;
