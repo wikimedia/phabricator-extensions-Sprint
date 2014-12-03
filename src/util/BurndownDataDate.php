@@ -147,16 +147,6 @@ class BurndownDataDate {
     return $current->points_total;
   }
 
-  public function sumTasksRemaining($added, $closed) {
-    $this->tasks_remaining = $added - $closed;
-    return $this->tasks_remaining;
-  }
-
-  public function sumPointsRemaining($current, $previous) {
-   $current->points_remaining = $previous->points_remaining - $current->points_remaining;
-    return $current->points_remaining;
-  }
-
   public function changePoints($points, $old_point_value, $dates) {
     // Adjust points for that day
     $points = $points - $old_point_value;
