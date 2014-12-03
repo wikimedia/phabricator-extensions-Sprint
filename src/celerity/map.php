@@ -7,9 +7,9 @@
  */
 return array(
   'names' => array(
-    'behavior-c3-chart.js' => '339d1b90',
+    'behavior-c3-chart.js' => '89d978a3',
     'behavior-c3-pie.js' => '4731bdd9',
-    'behavior-sprint-boards.js' => '6ce2b136',
+    'behavior-sprint-boards.js' => 'b2754b95',
     'c3.css' => '93642428',
     'c3.js' => '4b517cca',
     'd3.min.js' => '1595fbde',
@@ -18,9 +18,9 @@ return array(
     'c3' => '4b517cca',
     'c3-css' => '93642428',
     'd3' => '1595fbde',
-    'javelin-behavior-c3-chart' => '339d1b90',
+    'javelin-behavior-c3-chart' => '89d978a3',
     'javelin-behavior-c3-pie' => '4731bdd9',
-    'javelin-behavior-sprint-boards' => '6ce2b136',
+    'javelin-behavior-sprint-boards' => 'b2754b95',
   ),
   'requires' => array(
     '4b517cca' => array(

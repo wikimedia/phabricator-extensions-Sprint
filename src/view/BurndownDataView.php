@@ -40,8 +40,11 @@ final class BurndownDataView extends SprintView
     $pie = $this->buildC3Pie();
     $sprint_table = new SprintTableView();
     $burndown_table = $sprint_table->buildBurnDownTable($this->sprint_data);
-    $event_table = new EventTableView();
-    $event_table = $event_table->buildEventTable($this->project, $this->viewer);
+    $event_table = id(new EventTableView())
+        ->setProject($this->project)
+        ->setViewer($this->viewer)
+        ->setRequest($this->request);
+    $event_table = $event_table->buildEventTable();
     return array($chart, $tasks_table, $pie, $burndown_table, $event_table);
   }
 
@@ -55,10 +58,10 @@ final class BurndownDataView extends SprintView
     $stats = id(new SprintBuildStats());
     $tasks = $query->getTasks();
     $query->checkNull($start, $end, $tasks);
-
     $timezone = $stats->setTimezone($this->viewer);
     $dates = $stats->buildDateArray($start, $end, $timezone);
     $this->timeseries = $stats->buildTimeSeries($start, $end);
+
 
     $xactions = $query->getXactions($tasks);
     $events = $query->getEvents($xactions, $tasks);

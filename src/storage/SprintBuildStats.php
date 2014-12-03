@@ -2,6 +2,10 @@
 
 final class SprintBuildStats {
   private $timezone;
+  private $total_tasks_added;
+  private $tasks_remaining;
+  private $total_points_added;
+  private $points_remaining;
 
   public function setTimezone ($viewer) {
     $this->timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
@@ -37,19 +41,100 @@ final class SprintBuildStats {
   // Now that we have the data for each day, we need to loop over and sum
   // up the relevant columns
   public function sumSprintStats($dates) {
-    $previous = null;
-    foreach ($dates as $current) {
-      $current->setTasksTotal($current->getTasksAddedToday());
-      $current->setPointsTotal($current->getPointsAddedToday());
-      $current->setTasksRemaining($current->getTasksAddedToday() - $current->getTasksClosedToday());
-      $current->setPointsRemaining($current->getPointsAddedToday() - $current->getPointsClosedToday());
-      if ($previous) {
-        $current->sumTasksTotal($current, $previous);
-        $current->sumPointsTotal($current, $previous);
-        $current->sumTasksRemaining($current, $previous);
-        $current->sumPointsRemaining ($current, $previous);
+     $this->sumTasksTotal($dates);
+     $this->calcTasksRemaining($dates);
+     $this->sumPointsTotal($dates);
+     $this->calcPointsRemaining($dates);
+    return $dates;
+
+  }
+
+  public function sumTasksTotal($dates) {
+    $first = true;
+    $previous = new BurndownDataDate($date=null);
+    foreach ($dates as $date) {
+      $this->total_tasks_added += $date->getTasksAddedToday();
+      if ($first) {
+        $date->setTasksTotal($this->total_tasks_added);
+        $tasks_total = $this->total_tasks_added;
+      } else {
+        $tasks_total = $date->sumTasksTotal($date, $previous);
+        $date->setTasksTotal($tasks_total);
       }
-      $previous = $current;
+      $this->total_tasks_added += $tasks_total;
+      $previous = $date;
+      $first = false;
+    }
+    return $dates;
+  }
+
+  public function sumPointsTotal($dates) {
+    $first = true;
+    $previous = new BurndownDataDate($date=null);
+    foreach ($dates as $date) {
+      $this->total_points_added += $date->getPointsAddedToday();
+      if ($first) {
+        $date->setPointsTotal($this->total_points_added);
+        $points_total = $this->total_points_added;
+      } else {
+        $points_total = $date->sumPointsTotal($date, $previous);
+        $date->setPointsTotal($points_total);
+      }
+      $this->total_points_added += $points_total;
+      $previous = $date;
+      $first = false;
+    }
+    return $dates;
+  }
+
+  public function calcPointsRemaining($dates) {
+    $first = true;
+    foreach ($dates as $date) {
+      $points_added = $date->getPointsAddedToday();
+      $points_closed = $date->getPointsClosedToday();
+      $points_reopened = $date->getPointsReopenedToday();
+      $points_removed = $date->getPointsRemovedToday();
+
+      if ($first) {
+        $points_total = $points_added + $points_reopened - $points_removed - $points_closed;
+        $net_change =0;
+      } else {
+        $points_total = $this->points_remaining;
+        $net_change = $points_added + $points_reopened - $points_removed - $points_closed;
+      }
+
+      $points_diff = $net_change;
+      $points_remaining = $points_total + $points_diff;
+      if ($points_remaining < 0) {
+        $points_remaining = 0;
+      }
+      $date->setPointsRemaining($points_remaining);
+      $this->points_remaining = $points_remaining;
+
+      $first = false;
+    }
+    return $dates;
+  }
+
+  public function calcTasksRemaining($dates) {
+    $first = true;
+    foreach ($dates as $date) {
+      $tasks_added = $date->getTasksAddedToday();
+      $tasks_closed = $date->getTasksClosedToday();
+      $tasks_reopened = $date->getTasksReopenedToday();
+      $tasks_removed = $date->getTasksRemovedToday();
+      if ($first) {
+        $tasks_total = $tasks_added + $tasks_reopened - $tasks_removed - $tasks_closed;
+        $net_change = 0;
+      } else {
+        $tasks_total = $this->tasks_remaining;
+        $net_change = $tasks_added + $tasks_reopened - $tasks_removed - $tasks_closed;
+      }
+      $tasks_diff = $net_change;
+      $tasks_remaining = $tasks_total + $tasks_diff;
+      $date->setTasksRemaining($tasks_remaining);
+      $this->tasks_remaining = $tasks_remaining;
+      $first = false;
     }
     return $dates;
   }
@@ -83,7 +168,7 @@ final class SprintBuildStats {
         pht('Total Points'),
         pht('Remaining Points'),
         pht('Ideal Points'),
-        pht('Points Today'),
+        pht('Points Closed Today'),
     ));
 
     $future = false;

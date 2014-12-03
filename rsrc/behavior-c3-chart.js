@@ -23,7 +23,7 @@ JX.behavior('c3-chart', function(config) {
              type: 'line',
              types: {
                  'Ideal Points': 'spline',
-                 'Points Today': 'bar'
+                 'Points Closed Today': 'bar'
              },
          },
          axis: {
