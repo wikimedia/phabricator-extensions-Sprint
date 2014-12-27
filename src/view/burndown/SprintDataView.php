@@ -41,11 +41,16 @@ final class SprintDataView extends SprintView
         ->setViewer($this->viewer)
         ->setPHID($this->project->getPHID());
 
-    $this->taskpoints = $query->getTaskData(SprintConstants::CUSTOMFIELD_INDEX);
+    $this->taskpoints = $query->getTaskData();
     $tasks = $query->getTasks();
     $this->tasks = mpull($tasks, null, 'getPHID');
 
-    $chart = $this->buildC3Chart($query);
+    $chart_data = $this->buildChartDataSet($query);
+    $chart_view = id(new C3ChartView())
+        ->setChartData($chart_data)
+        ->setProject($this->project)
+        ->setTimeSeries($this->timeseries);
+    $chart = $chart_view->buildC3Chart();
 
     $tasks_table_view = id(new TasksTableView())
         ->setProject($this->project)
@@ -54,21 +59,25 @@ final class SprintDataView extends SprintView
         ->setTasks($this->tasks)
         ->setTaskPoints($this->taskpoints)
         ->setQuery($query);
-
     $tasks_table = $tasks_table_view->buildTasksTable();
+
     $pie = $this->buildC3Pie();
     $history_table_view = new HistoryTableView();
     $history_table = $history_table_view->buildHistoryTable($this->before);
+
     $sprint_table_view = new SprintTableView();
     $sprint_table = $sprint_table_view->buildSprintTable($this->sprint_data,
         $this->before);
+
     $event_table_view = id(new EventTableView())
         ->setProject($this->project)
         ->setViewer($this->viewer)
-        ->setRequest($this->request);
-    $event_table = $event_table_view->buildEventTable($this->events,
-        $this->xactions,
-        $this->tasks, $this->start, $this->end);
+        ->setRequest($this->request)
+        ->setEvents($this->events)
+        ->setTasks($this->tasks);
+    $event_table = $event_table_view->buildEventTable(
+        $this->start, $this->end);
+
     return array($chart, $tasks_table, $pie, $history_table, $sprint_table,
         $event_table);
   }
@@ -97,64 +106,13 @@ final class SprintDataView extends SprintView
         ->setTasks($this->tasks)
         ->setTaskPoints($this->taskpoints);
 
-    $sprint_xaction->buildStatArrays();
-
-    $dates = $sprint_xaction->buildDailyData($this->events, $this->before,
+    $dates = $sprint_xaction->parseEvents($this->events, $this->before,
         $this->start, $this->end, $dates, $this->xactions, $this->project);
 
     $this->sprint_data = $stats->setSprintData($dates, $this->before);
     $data = $stats->buildDataSet($this->sprint_data);
-    $data = $this->transposeArray($data);
+    $data = $stats->transposeArray($data);
     return $data;
-  }
-
-  private function transposeArray($array) {
-    $transposed_array = array();
-    if ($array) {
-      foreach ($array as $row_key => $row) {
-        if (is_array($row) && !empty($row)) {
-          foreach ($row as $column_key => $element) {
-            $transposed_array[$column_key][$row_key] = $element;
-          }
-        } else {
-          $transposed_array[0][$row_key] = $row;
-        }
-      }
-    }
-    return $transposed_array;
-  }
-
-  private function buildC3Chart($query) {
-    $data = $this->buildChartDataSet($query);
-    $totalpoints = $data[0];
-    $remainingpoints = $data[1];
-    $idealpoints = $data[2];
-    $pointstoday = $data[3];
-    $timeseries = $this->timeseries;
-
-    require_celerity_resource('d3', 'sprint');
-    require_celerity_resource('c3-css', 'sprint');
-    require_celerity_resource('c3', 'sprint');
-
-    $id = 'chart';
-    Javelin::initBehavior('c3-chart', array(
-        'hardpoint' => $id,
-        'timeseries' => $timeseries,
-        'totalpoints' => $totalpoints,
-        'remainingpoints' => $remainingpoints,
-        'idealpoints' => $idealpoints,
-        'pointstoday' => $pointstoday
-    ), 'sprint');
-
-    $chart = id(new PHUIObjectBoxView())
-        ->setHeaderText(pht('Burndown for ' . $this->project->getName()))
-        ->appendChild(phutil_tag('div',
-            array(
-                'id' => 'chart',
-                'style' => 'width: 100%; height:400px'
-            ), ''));
-
-    return $chart;
   }
 
   private function buildC3Pie() {

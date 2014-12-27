@@ -39,13 +39,6 @@ final class TasksTableView {
     return $this;
   }
 
-  public function getTaskOpenStatusSum () {
-    return $this->task_open_status_sum;
-  }
-
-  public function getTaskClosedStatusSum () {
-    return $this->task_closed_status_sum;
-  }
   /**
    * Format the tasks data for display on the page.
    *

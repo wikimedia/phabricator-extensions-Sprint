@@ -4,6 +4,8 @@ final class EventTableView {
   private $project;
   private $viewer;
   private $request;
+  private $events;
+  private $tasks;
 
   public function setProject ($project) {
     $this->project = $project;
@@ -15,15 +17,25 @@ final class EventTableView {
     return $this;
   }
 
+  public function setEvents ($events) {
+    $this->events = $events;
+    return $this;
+  }
+
+  public function setTasks ($tasks) {
+    $this->tasks = $tasks;
+    return $this;
+  }
+
   public function setRequest ($request) {
     $this->request =  $request;
     return $this;
   }
 
-  public function buildEventTable($events, $xactions, $tasks, $start, $end) {
+  public function buildEventTable($start, $end) {
     $order = $this->request->getStr('ord', 'name');
     list($order, $reverse) = AphrontTableView::parseSort($order);
-    $rows = $this->buildEventsTree($events, $xactions, $tasks,  $start, $end,
+    $rows = $this->buildEventsTree($start, $end,
         $order, $reverse);
     $table = id(new AphrontTableView($rows))
         ->setHeaders(
@@ -67,16 +79,15 @@ final class EventTableView {
     return $box;
   }
 
-  private function buildEventsTree ($events, $xactions, $tasks,  $start, $end,
+  private function buildEventsTree ($start, $end,
                                     $order, $reverse) {
 
     $rows = array();
-    foreach ($events as $event) {
-      $xaction = $xactions[$event['transactionPHID']];
-      $xaction_date = $xaction->getDateCreated();
+    foreach ($this->events as $event) {
+      $xaction_date = $event['epoch'];
       if ($xaction_date > $start && $xaction_date < $end) {
-        $task_phid = $xaction->getObjectPHID();
-        $task = $tasks[$task_phid];
+        $task_phid = $event['objectPHID'];
+        $task = $this->tasks[$task_phid];
         $rows[] = array(
             $event['epoch'],
             phabricator_datetime($event['epoch'], $this->viewer),

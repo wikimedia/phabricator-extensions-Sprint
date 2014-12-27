@@ -16,15 +16,16 @@ final class SprintUIEventListener
   }
 
   private function filterSprints ($phandles, $value){
+    $handles = array();
     if(is_array($phandles) && count($phandles)>0)
     {
       foreach($phandles as $handle) {
-             if (stripos($handle->getName(), $value) !== false) {
-                $newarray[$handle->getPHID()] = $phandles[$handle->getPHID()];
-             }
+        if (stripos($handle->getName(), $value) !== false) {
+            $handles[$handle->getPHID()] = $phandles[$handle->getPHID()];
+        }
       }
     }
-    return $newarray;
+    return $handles;
   }
 
   private function handlePropertyEvent($event) {

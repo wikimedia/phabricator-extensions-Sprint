@@ -14,6 +14,7 @@ phutil_register_library_map(array(
     'BurndownDataDate' => 'util/BurndownDataDate.php',
     'BurndownDataDateTest' => 'tests/BurndownDataDateTest.php',
     'BurndownException' => 'exception/BurndownException.php',
+    'C3ChartView' => 'view/burndown/C3ChartView.php',
     'CeleritySprintResources' => 'celerity/CeleritySprintResources.php',
     'DateIterator' => 'tests/DateIterator.php',
     'EventTableView' => 'view/burndown/EventTableView.php',

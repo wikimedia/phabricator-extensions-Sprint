@@ -1,11 +1,10 @@
 <?php
 
-final class HistoryTableView
-{
+final class HistoryTableView {
 
-  public function buildHistoryTable($before)
-  {
-        $bdata[] = array(
+  public function buildHistoryTable($before) {
+    $bdata = array();
+    $bdata[] = array(
             $before->getTasksAddedBefore(),
             $before->getTasksReopenedBefore(),
             $before->getTasksClosedBefore(),
