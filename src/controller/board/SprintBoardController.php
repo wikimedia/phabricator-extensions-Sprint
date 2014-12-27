@@ -5,6 +5,10 @@ abstract class SprintBoardController
 
   private $project;
 
+  public function shouldAllowPublic() {
+    return true;
+  }
+
   protected function setProject(PhabricatorProject $project) {
     $this->project = $project;
     return $this;

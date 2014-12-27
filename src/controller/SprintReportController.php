@@ -49,7 +49,7 @@ final class SprintReportController extends SprintController {
 
     $nav->appendChild($core);
     $nav->setCrumbs(
-        $this->buildApplicationCrumbs()
+        $this->buildSprintApplicationCrumbs()
             ->addTextCrumb(pht('Reports')));
 
     return $this->buildApplicationPage(

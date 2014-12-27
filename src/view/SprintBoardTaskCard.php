@@ -62,7 +62,8 @@ final class SprintBoardTaskCard {
     $task = $this->getTask();
     $task_phid = $task->getPHID();
     $owner = $this->getOwner();
-    $points = $query->getStoryPoints($task_phid);
+
+    $points = $query->getStoryPointsForTask($task_phid);
     $can_edit = $this->getCanEdit();
 
     $color_map = ManiphestTaskPriority::getColorMap();
@@ -82,11 +83,17 @@ final class SprintBoardTaskCard {
           'points' => $points,
         ))
       ->addAction(
-        id(new PHUIListItemView())
-        ->setName(pht('Edit'))
-        ->setIcon('fa-pencil')
-        ->addSigil('edit-project-card')
-        ->setHref('/sprint/board/task/edit/'.$task->getID().'/'))
+            id(new PHUIListItemView())
+                ->setName(pht('Edit'))
+                ->setIcon('fa-pencil')
+                ->addSigil('edit-project-card')
+                ->setHref('/sprint/board/task/edit/'.$task->getID().'/'))
+      ->addAction(
+            id(new PHUIListItemView())
+                ->setName(pht('Edit Blocking Tasks'))
+                ->setHref("/search/attach/{$task_phid}/TASK/blocks/")
+                ->setIcon('fa-link')
+                ->setDisabled(!$can_edit))
       ->setBarColor($bar_color);
 
     if ($owner) {

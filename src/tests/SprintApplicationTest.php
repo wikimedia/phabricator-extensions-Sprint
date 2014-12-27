@@ -22,30 +22,27 @@ final class SprintApplicationTest extends SprintTestCase {
   public function testgetShortDescription() {
     $burndown_application = new SprintApplication;
     $description = $burndown_application->getShortDescription();
-    $this->assertEquals('Build burndowns', $description);
+    $this->assertEquals('Build Sprints', $description);
   }
 
   public function testgetEventListeners() {
     $burndown_application = new SprintApplication;
     $eventlistener = $burndown_application->getEventListeners();
     $this->assertInstanceOf('BurndownActionMenuEventListener', $eventlistener[0]);
+    $this->assertInstanceOf('SprintUIEventListener', $eventlistener[1]);
   }
 
   public function testgetRoutes() {
     $burndown_application = new SprintApplication;
     $routes = $burndown_application->getRoutes();
     $assertion = array(
-        '/project/' => array(
-            'view/(?P<id>[1-9]\d*)/'
-            => 'SprintProjectProfileController',
-        ),
         '/sprint/' => array(
             'edit/(?P<id>[1-9]\d*)/' => 'PhabricatorProjectEditMainController',
-            '' => 'BurndownListController',
-            'report/' => 'BurndownListController',
-            'report/list/' => 'BurndownListController',
+            '' => 'SprintListController',
+            'report/' => 'SprintListController',
+            'report/list/' => 'SprintListController',
             'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
-            'view/(?P<id>\d+)/' => 'BurndownDataViewController',
+            'view/(?P<id>\d+)/' => 'SprintDataViewController',
             'details/(?P<id>[1-9]\d*)/'
             => 'PhabricatorProjectEditDetailsController',
             'archive/(?P<id>[1-9]\d*)/'
@@ -81,8 +78,7 @@ final class SprintApplicationTest extends SprintTestCase {
             ),
         ),
         '/tag/' => array(
-            '(?P<slug>[^/]+)/' => 'SprintProjectProfileController',
-            '(?P<slug>[^/]+)/board/' => 'SprintBoardViewController',
+            '(?P<slug>[^/]+)/sboard/' => 'SprintBoardViewController',
         ),
     );
     $this->assertEquals($assertion, $routes);

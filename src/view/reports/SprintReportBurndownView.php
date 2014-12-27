@@ -123,6 +123,9 @@ final class SprintReportBurndownView extends SprintView {
     return $day_buckets;
   }
 
+  /**
+   * @param string $format
+   */
   private function buildBucket($epoch, $format) {
     $bucket = phabricator_format_local_time(
         $epoch,
@@ -269,6 +272,9 @@ final class SprintReportBurndownView extends SprintView {
     return $panel;
   }
 
+  /**
+   * @param string[] $rowc
+   */
   private function StatsTableView($rows, $rowc) {
     $table = new AphrontTableView($rows);
     $table->setRowClasses($rowc);
@@ -344,6 +350,9 @@ final class SprintReportBurndownView extends SprintView {
       return array(array_keys($out), array_values($out));
     }
 
+    /**
+     * @param string $label
+     */
     private function formatBurnRow($label, $info) {
       $delta = $info['open'] - $info['close'];
       $fmt = number_format($delta);

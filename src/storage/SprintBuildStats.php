@@ -2,14 +2,16 @@
 
 final class SprintBuildStats {
   private $timezone;
-  private $total_tasks_added;
-  private $tasks_remaining;
-  private $total_points_added;
-  private $points_remaining;
 
   public function setTimezone ($viewer) {
     $this->timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
     return $this->timezone;
+  }
+
+  public function setSprintData($dates, $before) {
+    $dates = $this->sumSprintStats($dates, $before);
+    $sprint_data = $this->computeIdealPoints($dates, $before);
+    return $sprint_data;
   }
 
   public function buildDateArray($start, $end, DateTimeZone $timezone) {
@@ -27,12 +29,20 @@ final class SprintBuildStats {
     return $dates;
   }
 
+  public function buildBefore($start, $timezone) {
+    $before = id(new DateTime("@" . $start, $timezone))->modify('-1 day')->setTime(2, 0);
+    return $this->getBurndownDate($before->format('D M j'));
+  }
+
   public function buildTimeSeries($start, $end) {
     $timezone = $this->timezone;
     $timeseries = array_keys($this->buildDateArray ($start, $end, $timezone));
     return $timeseries;
   }
 
+  /**
+   * @param string $date
+   */
   public function getBurndownDate ($date) {
     $sprint_date = id(new BurndownDataDate($date));
     return $sprint_date;
@@ -40,106 +50,145 @@ final class SprintBuildStats {
 
   // Now that we have the data for each day, we need to loop over and sum
   // up the relevant columns
-  public function sumSprintStats($dates) {
-     $this->sumTasksTotal($dates);
-     $this->calcTasksRemaining($dates);
-     $this->sumPointsTotal($dates);
-     $this->calcPointsRemaining($dates);
-    return $dates;
 
+  public function sumSprintStats($dates, $before) {
+//    $this->sumTasksTotal($dates, $before);
+    $this->sumPointsTotal($dates, $before);
+    $this->calcTasksRemaining($dates, $before);
+     $this->calcPointsRemaining($dates, $before);
+    return $dates;
   }
 
-  public function sumTasksTotal($dates) {
+  public function sumTasksTotal($dates, $before) {
     $first = true;
     $previous = new BurndownDataDate($date=null);
+    $tasks_added_today = null;
+    $tasks_reopened_today = null;
+    $tasks_closed_today = null;
+
+    $tasks_added_before = $before->getTasksAddedBefore();
+    $tasks_reopened_before = $before->getTasksReopenedBefore();
+    $tasks_closed_before = $before->getTasksClosedBefore();
+    $tasks_before = $tasks_added_before + $tasks_reopened_before - $tasks_closed_before;
+
     foreach ($dates as $date) {
-      $this->total_tasks_added += $date->getTasksAddedToday();
+      $tasks_added_today += $date->getTasksAddedToday();
+      $tasks_reopened_today += $date->getTasksReopenedToday();
+      $tasks_closed_today += $date->getTasksClosedToday();
+      $tasks_today = $tasks_added_today + $tasks_reopened_today - $tasks_closed_today;
       if ($first) {
-        $date->setTasksTotal($this->total_tasks_added);
-        $tasks_total = $this->total_tasks_added;
+        $start_tasks = $tasks_before + $tasks_today;
+        $date->setTasksTotal($start_tasks);
       } else {
-        $tasks_total = $date->sumTasksTotal($date, $previous);
+        $tasks_total = $previous->getTasksRemaining();
         $date->setTasksTotal($tasks_total);
       }
-      $this->total_tasks_added += $tasks_total;
       $previous = $date;
       $first = false;
     }
     return $dates;
   }
 
-  public function sumPointsTotal($dates) {
+  public function sumPointsTotal($dates, $before) {
     $first = true;
     $previous = new BurndownDataDate($date=null);
+    $points_added_today = null;
+    $points_reopened_today = null;
+    $points_closed_today = null;
+
+    $points_added_before = $before->getPointsAddedBefore();
+    $points_reopened_before = $before->getPointsReopenedBefore();
+    $points_closed_before = $before->getPointsClosedBefore();
+    $points_before = $points_added_before + $points_reopened_before - $points_closed_before;
+
     foreach ($dates as $date) {
-      $this->total_points_added += $date->getPointsAddedToday();
+      $points_added_today += $date->getPointsAddedToday();
+      $points_reopened_today += $date->getPointsReopenedToday();
+      $points_closed_today += $date->getPointsClosedToday();
+      $points_today = $points_added_today + $points_reopened_today - $points_closed_today;
       if ($first) {
-        $date->setPointsTotal($this->total_points_added);
-        $points_total = $this->total_points_added;
+        $start_points = $points_before + $points_today;
+        $date->setPointsTotal($start_points);
       } else {
-        $points_total = $date->sumPointsTotal($date, $previous);
+        $points_total = $previous->getPointsTotal();
         $date->setPointsTotal($points_total);
       }
-      $this->total_points_added += $points_total;
       $previous = $date;
       $first = false;
     }
     return $dates;
   }
 
-  public function calcPointsRemaining($dates) {
+  public function calcPointsRemaining($dates, $before) {
     $first = true;
+    $previous = new BurndownDataDate($date=null);
+    $points_added_before = null;
+    $points_closed_before = null;
+    $points_reopened_before = null;
+    $points_added_today = null;
+    $points_closed_today = null;
+    $points_reopened_today = null;
+    $points_remaining = null;
     foreach ($dates as $date) {
-      $points_added = $date->getPointsAddedToday();
-      $points_closed = $date->getPointsClosedToday();
-      $points_reopened = $date->getPointsReopenedToday();
-      $points_removed = $date->getPointsRemovedToday();
-
+      $points_added_today = $date->getPointsAddedToday();
+      $points_closed_today = $date->getPointsClosedToday();
+      $points_reopened_today = $date->getPointsReopenedToday();
+      $points_today = $points_added_today + $points_reopened_today - $points_closed_today;
       if ($first) {
-        $points_total = $points_added + $points_reopened - $points_removed - $points_closed;
-        $net_change =0;
+        $points_added_before = $before->getPointsAddedBefore();
+        $points_reopened_before = $before->getPointsReopenedBefore();
+        $points_closed_before = $before->getPointsClosedBefore();
+        $points_before = $points_added_before + $points_reopened_before - $points_closed_before;
+        $points_remaining = $points_today + $points_before;
       } else {
-        $points_total = $this->points_remaining;
-        $net_change = $points_added + $points_reopened - $points_removed - $points_closed;
+        $yesterday_points_remaining = $previous->getPointsRemaining();
+        $date->setYesterdayPointsRemaining($yesterday_points_remaining);
+        $points_remaining = $points_today + $yesterday_points_remaining;
       }
 
-      $points_diff = $net_change;
-      $points_remaining = $points_total + $points_diff;
       if ($points_remaining < 0) {
         $points_remaining = 0;
       }
       $date->setPointsRemaining($points_remaining);
-      $this->points_remaining = $points_remaining;
-
+      $previous = $date;
       $first = false;
     }
     return $dates;
   }
 
-  public function calcTasksRemaining($dates) {
+  public function calcTasksRemaining($dates, $before) {
     $first = true;
+    $previous = new BurndownDataDate($date=null);
+    $tasks_added_before = null;
+    $tasks_closed_before = null;
+    $tasks_reopened_before = null;
+    $tasks_added_today = null;
+    $tasks_closed_today = null;
+    $tasks_reopened_today = null;
     foreach ($dates as $date) {
-      $tasks_added = $date->getTasksAddedToday();
-      $tasks_closed = $date->getTasksClosedToday();
-      $tasks_reopened = $date->getTasksReopenedToday();
-      $tasks_removed = $date->getTasksRemovedToday();
+      $tasks_added_today = $date->getTasksAddedToday();
+      $tasks_closed_today = $date->getTasksClosedToday();
+      $tasks_reopened_today = $date->getTasksReopenedToday();
+      $tasks_today = $tasks_added_today + $tasks_reopened_today - $tasks_closed_today;
       if ($first) {
-        $tasks_total = $tasks_added + $tasks_reopened - $tasks_removed - $tasks_closed;
-        $net_change = 0;
+        $tasks_added_before = $before->getTasksAddedBefore();
+        $tasks_reopened_before = $before->getTasksReopenedBefore();
+        $tasks_closed_before = $before->getTasksClosedBefore();
+        $tasks_before = $tasks_added_before + $tasks_reopened_before - $tasks_closed_before;
+        $tasks_remaining = $tasks_today + $tasks_before;
       } else {
-        $tasks_total = $this->tasks_remaining;
-        $net_change = $tasks_added + $tasks_reopened - $tasks_removed - $tasks_closed;
+        $yesterday_tasks_remaining = $previous->getTasksRemaining();
+        $date->setYesterdayTasksRemaining($yesterday_tasks_remaining);
+        $tasks_remaining = $tasks_today + $yesterday_tasks_remaining;
       }
-      $tasks_diff = $net_change;
-      $tasks_remaining = $tasks_total + $tasks_diff;
       $date->setTasksRemaining($tasks_remaining);
-      $this->tasks_remaining = $tasks_remaining;
+      $previous = $date;
       $first = false;
     }
     return $dates;
   }
 
-  public function computeIdealPoints($dates) {
+  public function computeIdealPoints($dates, $before) {
     $total_business_days = 0;
     foreach ($dates as $key => $date) {
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
@@ -165,7 +214,7 @@ final class SprintBuildStats {
 
   public function buildDataSet ($dates) {
     $data = array(array(
-        pht('Total Points'),
+        pht('Start Points'),
         pht('Remaining Points'),
         pht('Ideal Points'),
         pht('Points Closed Today'),
@@ -185,15 +234,5 @@ final class SprintBuildStats {
 
     }
     return $data;
-  }
-
-  public function setTaskOpenStatusSum ($task_open_status_sum, $points) {
-    $task_open_status_sum += $points;
-    return $task_open_status_sum;
-  }
-
-  public function setTaskClosedStatusSum ($task_closed_status_sum, $points) {
-    $task_closed_status_sum += $points;
-    return $task_closed_status_sum;
   }
 }

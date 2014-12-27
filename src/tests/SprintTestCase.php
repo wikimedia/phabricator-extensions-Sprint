@@ -191,6 +191,10 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
     return $user;
   }
 
+  protected function generateNewTestProject() {
+    $project = id(new PhabricatorProject());
+     return $project;
+  }
 
   /**
    * Throws unless tests are currently executing. This method can be used to

@@ -1,6 +1,6 @@
 <?php
 
-final class BurndownDataViewController extends SprintController {
+final class SprintDataViewController extends SprintController {
 
   // Project data
   private $projectID;
@@ -27,7 +27,7 @@ final class BurndownDataViewController extends SprintController {
     $burndown_view = false;
 
     try {
-      $burndown_view = id(new BurndownDataView())
+      $burndown_view = id(new SprintDataView())
           ->setProject($project)
           ->setViewer($viewer)
           ->setRequest($request);
@@ -37,11 +37,17 @@ final class BurndownDataViewController extends SprintController {
           ->setErrors(array($e->getMessage()));
     }
 
-    $crumbs = $this->buildApplicationCrumbs();
+    $pid = $project->getID();
+    $crumbs = $this->buildSprintApplicationCrumbs();
     $crumbs->addTextCrumb(
         $project->getName(),
-        '/project/view/'.$project->getID());
+        '/project/view/'.$pid);
     $crumbs->addTextCrumb(pht('Burndown'));
+    $crumbs->addAction(
+        id(new PHUIListItemView())
+            ->setName(pht('Sprint Board'))
+            ->setHref('/sprint/board/'.$pid)
+            ->setIcon('fa-columns'));
 
     return $this->buildApplicationPage(
         array(

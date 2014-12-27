@@ -149,7 +149,7 @@ final class SprintBoardColumnEditController
 
     $crumbs = $this->buildApplicationCrumbs();
     $crumbs->addTextCrumb(
-      pht('Board'),
+      pht('board'),
       $this->getApplicationURI('board/'.$project->getID().'/'));
 
     if (!$is_new) {

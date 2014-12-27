@@ -57,7 +57,7 @@ final class SprintBoardColumnDetailController
     $title = pht('%s', $column->getDisplayName());
     $crumbs = $this->buildApplicationCrumbs();
     $crumbs->addTextCrumb(
-      pht('Board'),
+      pht('board'),
       $this->getApplicationURI('board/'.$project->getID().'/'));
     $crumbs->addTextCrumb($title);
 
@@ -95,6 +95,9 @@ final class SprintBoardColumnDetailController
     return $header;
   }
 
+  /**
+   * @return PhabricatorProjectColumn
+   */
   private function buildActionView(PhabricatorProjectColumn $column) {
     $viewer = $this->getRequest()->getUser();
 

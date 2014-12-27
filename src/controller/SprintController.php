@@ -39,6 +39,9 @@ abstract class SprintController extends PhabricatorController {
     return $nav;
   }
 
+  /**
+   * @param PhutilURI $uri
+   */
   public function buildSideNavView($for_app = false, $user, $uri) {
 
     $nav = new AphrontSideNavFilterView();
@@ -64,15 +67,52 @@ abstract class SprintController extends PhabricatorController {
   }
 
   protected function buildApplicationCrumbs() {
-    $crumbs = parent::buildApplicationCrumbs();
+    $crumbs = $this->buildCrumbs('projects', '/project/');
+
+    $can_create = $this->hasApplicationCapability(
+        ProjectCreateProjectsCapability::CAPABILITY);
+
+    $crumbs->addAction(
+        id(new PHUIListItemView())
+            ->setName(pht('Create Project'))
+            ->setHref($this->getProjectsURI().'create/')
+            ->setIcon('fa-plus-square')
+            ->setDisabled(!$can_create)
+            ->setAppIcon('projects'));
+
+    return $crumbs;
+  }
+  protected function buildSprintApplicationCrumbs() {
+    $crumbs = $this->buildCrumbs('slowvote', '/sprint/');
+
+  $can_create = $this->hasApplicationCapability(
+        ProjectCreateProjectsCapability::CAPABILITY);
 
     $crumbs->addAction(
         id(new PHUIListItemView())
             ->setName(pht('Create Sprint'))
             ->setHref($this->getProjectsURI().'create/')
-            ->setIcon('fa-calendar'));
+            ->setIcon('fa-calendar')
+            ->setDisabled(!$can_create));
 
     return $crumbs;
+  }
+  protected function buildCrumbs($sprite, $uri) {
+    $crumbs = array();
+
+
+      $crumbs[] = id(new PhabricatorCrumbView())
+          ->setHref($uri)
+          ->setAural($sprite)
+          ->setIcon($sprite);
+
+
+    $view = new PhabricatorCrumbsView();
+    foreach ($crumbs as $crumb) {
+      $view->addCrumb($crumb);
+    }
+
+    return $view;
   }
 
 }

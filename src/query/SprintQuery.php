@@ -1,6 +1,6 @@
 <?php
 
-final class SprintQuery  {
+final class SprintQuery extends SprintDAO {
 
   private $viewer;
   private $project;
@@ -53,31 +53,26 @@ final class SprintQuery  {
     $tasks = id(new ManiphestTaskQuery())
         ->setViewer($this->viewer)
         ->withAnyProjects(array($this->project->getPHID()))
+        ->needProjectPHIDs(true)
         ->execute();
     return $tasks;
   }
 
-  private function getTaskStoryPoints($task_phid,$points_data) {
-    $storypoints = array();
-    foreach ($points_data as $k=>$subarray) {
-      if (isset ($subarray['objectPHID']) && $subarray['objectPHID'] == $task_phid) {
-        $points_data[$k] = $subarray;
-        $storypoints = $subarray['newValue'];
+  public function getStoryPointsForTask($task_phid)  {
+    $object = new ManiphestCustomFieldStorage();
+    $corecustomfield = $object->loadRawDataWhere('objectPHID= %s', $task_phid);
+    if (!empty($corecustomfield)) {
+      foreach ($corecustomfield as $array) {
+        $points = idx($array, 'fieldValue');
       }
+    } else {
+      $points = 0;
     }
-    return $storypoints;
-  }
-
-  public function getStoryPoints($task_phid)  {
-    $data = $this->getXactionData(SprintConstants::CUSTOMFIELD_TYPE_STATUS);
-    $points = $this->getTaskStoryPoints($task_phid,$data);
-    $points = trim($points, '"');
-    return $points;
+     return $points;
   }
 
   public function getXactions($tasks) {
     $task_phids = mpull($tasks, 'getPHID');
-
     $xactions = id(new ManiphestTransactionQuery())
         ->setViewer($this->viewer)
         ->withObjectPHIDs($task_phids)
@@ -107,6 +102,16 @@ final class SprintQuery  {
     return $conn;
   }
 
+  public function getCustomFieldObj () {
+    $table = new ManiphestCustomFieldStorage();
+    return $table;
+  }
+
+  public function getCustomFieldConn () {
+    $conn = $this->getCustomFieldObj()->establishConnection('r');
+    return $conn;
+  }
+
   public function getJoins() {
 
     $joins = '';
@@ -114,6 +119,22 @@ final class SprintQuery  {
       $joins = qsprintf(
           $this->getXactionConn(),
           'JOIN %T t ON x.objectPHID = t.phid
+          JOIN %T p ON p.src = t.phid AND p.type = %d AND p.dst = %s',
+          id(new ManiphestTask())->getTableName(),
+          PhabricatorEdgeConfig::TABLE_NAME_EDGE,
+          PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+          $this->project_phid);
+    }
+    return $joins;
+  }
+
+  public function getCustomFieldJoins() {
+
+    $joins = '';
+    if ($this->project_phid) {
+      $joins = qsprintf(
+          $this->getCustomFieldConn(),
+          'JOIN %T t ON f.objectPHID = t.phid
           JOIN %T p ON p.src = t.phid AND p.type = %d AND p.dst = %s',
           id(new ManiphestTask())->getTableName(),
           PhabricatorEdgeConfig::TABLE_NAME_EDGE,
@@ -134,6 +155,18 @@ final class SprintQuery  {
         $where);
     return $data;
  }
+
+  public function getTaskData($where) {
+    $task_dao = new ManiphestCustomFieldStorage();
+    $data = queryfx_all(
+        $this->getCustomFieldConn(),
+        'SELECT f.* FROM %T f %Q',
+        $this->getCustomFieldObj()->getTableName(),
+        $this->getCustomFieldJoins());
+
+    $task_data = $task_dao->loadAllFromArray($data);
+    return $task_data;
+  }
 
   public function getEdges ($tasks) {
     // Load all edges of depends and depended on tasks

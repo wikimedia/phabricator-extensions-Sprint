@@ -17,7 +17,7 @@ final class SprintBuildStatsTest extends SprintTestCase {
   }
 
   /**
-   * @return array
+   * @return DateIterator
    */
   public function providerDateArray() {
 
@@ -30,16 +30,25 @@ final class SprintBuildStatsTest extends SprintTestCase {
   }
 
 
+  /**
+   * @param string $now
+   */
   function short_date($now) {
     $short = array($now + $this->short_interval,$now + $this->short_interval*2,$now + $this->short_interval*3, $now + $this->short_interval*4, $now + $this->short_interval*5);
     return $short;
   }
 
+  /**
+   * @param string $now
+   */
   function medium_date($now) {
     $medium = array($now + $this->day_interval,$now + $this->day_interval*2, $now + $this->day_interval*3,$now + $this->day_interval*4, $now + $this->day_interval*5);
     return $medium;
   }
 
+  /**
+   * @param string $now
+   */
   function long_date($now) {
     $long = array($now + $this->week_interval,$now + $this->week_interval*2, $now + $this->week_interval*4,$this->multi_month_interval, $this->year_interval);
     return $long;

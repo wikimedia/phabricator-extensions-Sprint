@@ -17,6 +17,9 @@ final class CeleritySprintResources extends CelerityResourcesOnDisk {
     return $this->getSprintPath('celerity/map.php');
   }
 
+  /**
+   * @param string $to_file
+   */
   private function getSprintPath($to_file) {
     return (phutil_get_library_root('sprint')).'/'.$to_file;
   }

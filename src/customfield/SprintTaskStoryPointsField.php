@@ -5,7 +5,8 @@
  */
 
 final class SprintTaskStoryPointsField extends ManiphestCustomField
-  implements PhabricatorStandardCustomFieldInterface {
+  implements
+    PhabricatorStandardCustomFieldInterface {
 
   private $obj;
   private $text_proxy;
@@ -19,7 +20,6 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
         'name' => $this->getFieldName(),
         'description' => $this->getFieldDescription(),
       ));
-
     $this->setProxy($this->text_proxy);
   }
 
@@ -46,10 +46,20 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
   public function showField() {
     static $show = null;
 
+    $viewer = $this->getViewer();
+
     if ($show == null) {
 
      if ($this->getObject() instanceof ManiphestTask) {
-        $project_phids = $this->getObject()->getProjectPHIDs();
+       $id = $this->getObject()->getID();
+       if ($id) {
+          $task = id(new ManiphestTaskQuery())
+             ->setViewer($viewer)
+             ->withIds(array($id))
+             ->needProjectPHIDs(true)
+             ->executeOne();
+          $project_phids = $task->getProjectPHIDs();
+       }
      }
 
       if (empty($project_phids)) {

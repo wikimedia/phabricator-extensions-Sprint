@@ -100,6 +100,9 @@ final class SprintReportOpenTasksView extends SprintView {
     return array($filter, $panel);
   }
 
+  /**
+   * @param integer $total
+   */
   private function setSortOrder ($row, $order, $total, $oldest_all, $oldest_pri,
                                  $closed, $handle) {
     switch ($order) {
@@ -123,6 +126,12 @@ final class SprintReportOpenTasksView extends SprintView {
   return $row['sort'];
   }
 
+  /**
+   * @param string|null $base_link
+   * @param PhutilSafeHTML|null $leftover_name
+   * @param string $order
+   * @param integer $reverse
+   */
   private function buildRowsfromResult ($project_handle, $result,
                                         $result_closed, $base_link, $leftover,
                                         $leftover_name, $leftover_closed,
@@ -239,6 +248,9 @@ final class SprintReportOpenTasksView extends SprintView {
     return array ($tasks, $name, $closed);
   }
 
+  /**
+   * @param string $col_header
+   */
   private function buildTableColumns($col_header) {
     $cname = array($col_header);
     $cclass = array('pri left narrow');
@@ -289,6 +301,11 @@ final class SprintReportOpenTasksView extends SprintView {
     return array ($cname, $cclass);
   }
 
+  /**
+   * @param string[] $cclass
+   * @param string $order
+   * @param integer $reverse
+   */
   private function buildOpenTasksTable($rows, $cname, $cclass, $order,
                                        $reverse) {
     $table = new AphrontTableView($rows);
@@ -353,17 +370,28 @@ final class SprintReportOpenTasksView extends SprintView {
     return id(new ManiphestTaskQuery())
         ->setViewer($this->request->getUser())
         ->withIDs($ids)
+        ->needProjectPHIDs(true)
         ->execute();
   }
 
+  /**
+   * @param PhabricatorUser $user
+   */
   private function getOpenTasks($user) {
     $query = $this->openStatusQuery($user);
     $tasks = $query->execute();
     return $tasks;
   }
 
+  /**
+   * @param PhabricatorUser $user
+   */
   private function getOpenTasksforProject($user, $phids) {
-    $query = $this->openStatusQuery($user)->withAnyProjects($phids);
+    $query = id(new ManiphestTaskQuery())
+        ->setViewer($user)
+        ->needProjectPHIDs(true)
+        ->withAnyProjects($phids)
+        ->withStatuses(ManiphestTaskStatus::getOpenStatusConstants());
     $tasks = $query->execute();
     return $tasks;
   }
@@ -371,6 +399,7 @@ final class SprintReportOpenTasksView extends SprintView {
   private function openStatusQuery($user) {
     $query = id(new ManiphestTaskQuery())
         ->setViewer($user)
+        ->needProjectPHIDs(true)
         ->withStatuses(ManiphestTaskStatus::getOpenStatusConstants());
     return $query;
   }

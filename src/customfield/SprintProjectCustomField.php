@@ -7,24 +7,12 @@
 abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   implements PhabricatorStandardCustomFieldInterface {
 
-  /**
-   * Use this function to determine whether to show sprint fields
-   *
-   *    public function renderPropertyViewValue(array $handles) {
-   *      if (!$this->shouldShowSprintFields()) {
-   *        return
-   *      }
-   *      // Actually show something
-   *
-   * NOTE: You can NOT call this in functions like "shouldAppearInEditView" because
-   * $this->getObject() is not available yet.
-   *
-   */
-  protected function shouldShowSprintFields()
-  {
-    if ($this->getObject() instanceof PhabricatorProject) {
-      return (strpos($this->getObject()->getName(), SprintConstants::MAGIC_WORD) !== FALSE);
-    }
+
+  protected function isSprint() {
+    $validator = new SprintValidator;
+    $is_sprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'shouldShowSprintFields'), $this->getObject());
+    return $is_sprint;
   }
 
   /**
@@ -34,6 +22,10 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
     return 'project';
   }
 
+  /**
+   * @param string $name
+   * @param string $description
+   */
   public function getDateFieldProxy($date_field, $name, $description) {
     $obj = clone $date_field;
     $date_proxy = id(new PhabricatorStandardCustomFieldDate())
@@ -48,22 +40,25 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   }
 
   public function renderDateProxyPropertyViewValue($date_proxy, $handles) {
-    if (!$this->shouldShowSprintFields()) {
-      return null;
+    $is_sprint = $this->isSprint();
+
+    if ($is_sprint && ($date_proxy->getFieldValue())) {
+        return $date_proxy->renderPropertyViewValue($handles);
+    } else {
+       return null;
     }
-    if ($date_proxy->getFieldValue())
-    {
-      return $date_proxy->renderPropertyViewValue($handles);
-    }
-    return null;
   }
 
+  /**
+   * @param string $time
+   */
   public function renderDateProxyEditControl($date_proxy, $time) {
-    if (!$this->shouldShowSprintFields()) {
+    $is_sprint = $this->isSprint();
+
+    if ($is_sprint && $date_proxy) {
+        return $this->newDateControl($date_proxy, $time);
+    } else {
       return null;
-    }
-    if ($date_proxy) {
-      return $this->newDateControl($date_proxy, $time);
     }
    }
 
@@ -72,14 +67,10 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
       return $this->getProxy()->renderPropertyViewLabel();
     }
     return $this->getFieldName();
-
   }
 
   public function renderPropertyViewValue(array $handles) {
-    if ($this->getProxy()) {
       return $this->getProxy()->renderPropertyViewValue($handles);
-    }
-    throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
 
   // == Edit View
@@ -88,10 +79,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   }
 
   public function renderEditControl(array $handles) {
-    if ($this->getProxy()) {
       return $this->getProxy()->renderEditControl($handles);
-    }
-    throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
 
   public function newDateControl($proxy, $time) {

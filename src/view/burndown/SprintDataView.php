@@ -4,7 +4,7 @@
  * @license GPL version 3
  */
 
-final class BurndownDataView extends SprintView
+final class SprintDataView extends SprintView
 {
 
   private $request;
@@ -13,7 +13,12 @@ final class BurndownDataView extends SprintView
   private $project;
   private $viewer;
   private $tasks;
+  private $taskpoints;
+  private $events;
   private $xactions;
+  private $start;
+  private $end;
+  private $before;
 
   public function setProject($project) {
     $this->project = $project;
@@ -31,60 +36,76 @@ final class BurndownDataView extends SprintView
   }
 
   public function render() {
-    $chart = $this->buildC3Chart();
-    $tasks_table = id(new TasksTableView())
-        ->setProject($this->project)
-        ->setViewer($this->viewer)
-        ->setRequest($this->request);
-    $tasks_table = $tasks_table->buildTasksTable();
-    $pie = $this->buildC3Pie();
-    $sprint_table = new SprintTableView();
-    $burndown_table = $sprint_table->buildBurnDownTable($this->sprint_data);
-    $event_table = id(new EventTableView())
-        ->setProject($this->project)
-        ->setViewer($this->viewer)
-        ->setRequest($this->request);
-    $event_table = $event_table->buildEventTable();
-    return array($chart, $tasks_table, $pie, $burndown_table, $event_table);
-  }
-
-  private function buildChartDataSet() {
     $query = id(new SprintQuery())
         ->setProject($this->project)
-        ->setViewer($this->viewer);
-    $aux_fields = $query->getAuxFields();
-    $start = $query->getStartDate($aux_fields);
-    $end = $query->getEndDate($aux_fields);
-    $stats = id(new SprintBuildStats());
+        ->setViewer($this->viewer)
+        ->setPHID($this->project->getPHID());
+
+    $this->taskpoints = $query->getTaskData(SprintConstants::CUSTOMFIELD_INDEX);
     $tasks = $query->getTasks();
-    $query->checkNull($start, $end, $tasks);
-    $timezone = $stats->setTimezone($this->viewer);
-    $dates = $stats->buildDateArray($start, $end, $timezone);
-    $this->timeseries = $stats->buildTimeSeries($start, $end);
-
-
-    $xactions = $query->getXactions($tasks);
-    $events = $query->getEvents($xactions, $tasks);
-
-    $this->xactions = mpull($xactions, null, 'getPHID');
     $this->tasks = mpull($tasks, null, 'getPHID');
 
-    $sprint_xaction = id(new SprintTransaction())
-        ->setViewer($this->viewer);
-    $sprint_xaction->buildStatArrays($tasks);
-    $dates = $sprint_xaction->buildDailyData($events, $start, $end, $dates, $this->xactions);
+    $chart = $this->buildC3Chart($query);
 
-    $this->sprint_data = $this->setSprintData($dates);
+    $tasks_table_view = id(new TasksTableView())
+        ->setProject($this->project)
+        ->setViewer($this->viewer)
+        ->setRequest($this->request)
+        ->setTasks($this->tasks)
+        ->setTaskPoints($this->taskpoints)
+        ->setQuery($query);
+
+    $tasks_table = $tasks_table_view->buildTasksTable();
+    $pie = $this->buildC3Pie();
+    $history_table_view = new HistoryTableView();
+    $history_table = $history_table_view->buildHistoryTable($this->before);
+    $sprint_table_view = new SprintTableView();
+    $sprint_table = $sprint_table_view->buildSprintTable($this->sprint_data,
+        $this->before);
+    $event_table_view = id(new EventTableView())
+        ->setProject($this->project)
+        ->setViewer($this->viewer)
+        ->setRequest($this->request);
+    $event_table = $event_table_view->buildEventTable($this->events,
+        $this->xactions,
+        $this->tasks, $this->start, $this->end);
+    return array($chart, $tasks_table, $pie, $history_table, $sprint_table,
+        $event_table);
+  }
+
+  private function buildChartDataSet($query) {
+
+    $aux_fields = $query->getAuxFields();
+    $this->start = $query->getStartDate($aux_fields);
+    $this->end = $query->getEndDate($aux_fields);
+    $stats = id(new SprintBuildStats());
+
+    $query->checkNull($this->start, $this->end, $this->tasks);
+    $timezone = $stats->setTimezone($this->viewer);
+    $this->before = $stats->buildBefore($this->start, $timezone);
+    $dates = $stats->buildDateArray($this->start, $this->end, $timezone);
+    $this->timeseries = $stats->buildTimeSeries($this->start, $this->end);
+
+
+    $xactions = $query->getXactions($this->tasks);
+    $this->events = $query->getEvents($xactions, $this->tasks);
+
+    $this->xactions = mpull($xactions, null, 'getPHID');
+
+    $sprint_xaction = id(new SprintTransaction())
+        ->setViewer($this->viewer)
+        ->setTasks($this->tasks)
+        ->setTaskPoints($this->taskpoints);
+
+    $sprint_xaction->buildStatArrays();
+
+    $dates = $sprint_xaction->buildDailyData($this->events, $this->before,
+        $this->start, $this->end, $dates, $this->xactions, $this->project);
+
+    $this->sprint_data = $stats->setSprintData($dates, $this->before);
     $data = $stats->buildDataSet($this->sprint_data);
     $data = $this->transposeArray($data);
     return $data;
-  }
-
-  private function setSprintData($dates) {
-    $stats = id(new SprintBuildStats());
-    $dates = $stats->sumSprintStats($dates);
-    $sprint_data = $stats->computeIdealPoints($dates);
-    return $sprint_data;
   }
 
   private function transposeArray($array) {
@@ -103,8 +124,8 @@ final class BurndownDataView extends SprintView
     return $transposed_array;
   }
 
-  private function buildC3Chart() {
-    $data = $this->buildChartDataSet();
+  private function buildC3Chart($query) {
+    $data = $this->buildChartDataSet($query);
     $totalpoints = $data[0];
     $remainingpoints = $data[1];
     $idealpoints = $data[2];
@@ -137,13 +158,12 @@ final class BurndownDataView extends SprintView
   }
 
   private function buildC3Pie() {
-    $tasks_table = id(new TasksTableView())
-        ->setProject($this->project)
-        ->setViewer($this->viewer)
-        ->setRequest($this->request);
-    $tasks_table->setStatusPoints();
-    $task_open_status_sum = $tasks_table->getOpenStatusSum();
-    $task_closed_status_sum = $tasks_table->getClosedStatusSum();
+    $sprintpoints = id(new SprintPoints())
+        ->setTaskPoints($this->taskpoints)
+        ->setTasks($this->tasks);
+
+    list($task_open_status_sum, $task_closed_status_sum) = $sprintpoints
+        ->getStatusSums();
 
     require_celerity_resource('d3', 'sprint');
     require_celerity_resource('c3-css', 'sprint');

@@ -1,6 +1,9 @@
 <?php
 final class ProjectOpenTasksView extends OpenTasksView {
 
+  /**
+   * @param string $date
+   */
   public function execute( $tasks, $recently_closed, $date) {
     $result = array();
     $leftover = array();
