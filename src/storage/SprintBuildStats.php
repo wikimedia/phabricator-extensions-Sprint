@@ -10,12 +10,12 @@ final class SprintBuildStats {
 
   public function setSprintData($dates, $before) {
     $dates = $this->sumSprintStats($dates, $before);
-    $sprint_data = $this->computeIdealPoints($dates, $before);
-    return $sprint_data;
+    $dates = $this->computeIdealPoints($dates);
+    return $dates;
   }
 
   public function buildDateArray($start, $end, DateTimeZone $timezone) {
-
+    $dates = array();
     $period = new DatePeriod(
         id(new DateTime("@" . $start, $timezone))->setTime(2, 0),
         new DateInterval('P1D'), // 1 day interval
@@ -122,13 +122,6 @@ final class SprintBuildStats {
   public function calcPointsRemaining($dates, $before) {
     $first = true;
     $previous = new BurndownDataDate($date=null);
-    $points_added_before = null;
-    $points_closed_before = null;
-    $points_reopened_before = null;
-    $points_added_today = null;
-    $points_closed_today = null;
-    $points_reopened_today = null;
-    $points_remaining = null;
     foreach ($dates as $date) {
       $points_added_today = $date->getPointsAddedToday();
       $points_closed_today = $date->getPointsClosedToday();
@@ -159,12 +152,6 @@ final class SprintBuildStats {
   public function calcTasksRemaining($dates, $before) {
     $first = true;
     $previous = new BurndownDataDate($date=null);
-    $tasks_added_before = null;
-    $tasks_closed_before = null;
-    $tasks_reopened_before = null;
-    $tasks_added_today = null;
-    $tasks_closed_today = null;
-    $tasks_reopened_today = null;
     foreach ($dates as $date) {
       $tasks_added_today = $date->getTasksAddedToday();
       $tasks_closed_today = $date->getTasksClosedToday();
@@ -188,7 +175,7 @@ final class SprintBuildStats {
     return $dates;
   }
 
-  public function computeIdealPoints($dates, $before) {
+  public function computeIdealPoints($dates) {
     $total_business_days = 0;
     foreach ($dates as $key => $date) {
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
@@ -220,16 +207,12 @@ final class SprintBuildStats {
         pht('Points Closed Today'),
     ));
 
-    $future = false;
     foreach ($dates as $key => $date) {
-        $now = id(new DateTime('now', $this->timezone));
-        $future = new DateTime($date->getDate(), $this->timezone) > $now;
-
       $data[] = array(
-          $future ? null : $date->getPointsTotal(),
-          $future ? null : $date->getPointsRemaining(),
+          $date->getPointsTotal(),
+          $date->getPointsRemaining(),
           $date->getPointsIdealRemaining(),
-          $future ? null : $date->getPointsClosedToday(),
+          $date->getPointsClosedToday(),
       );
 
     }

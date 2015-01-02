@@ -8,6 +8,7 @@ final class SprintBoardTaskCard {
   private $owner;
   private $canEdit;
   private $task_node_id;
+  private $points;
 
   public function setViewer(PhabricatorUser $viewer) {
     $this->viewer = $viewer;
@@ -54,17 +55,63 @@ final class SprintBoardTaskCard {
     return $this->canEdit;
   }
 
+  public function getUserImage() {
+    $ownername = $this->owner->getName();
+    $ownerlink = '/p/'.$ownername.'/';
+    $image_uri = $this->owner->getImageURI();
+
+    $sigil = 'has-tooltip';
+    $meta  = array(
+        'tip' => pht($ownername),
+        'size' => 200,
+        'align' => 'E',);
+    $image = id(new PHUIIconView())
+        ->addSigil($sigil)
+        ->setMetadata($meta)
+        ->setHref($ownerlink)
+        ->setImage($image_uri)
+        ->setHeadSize(PHUIIconView::HEAD_SMALL);
+
+  return $image;
+  }
+
+  public function getPointList() {
+      $pointslabel = 'Points:';
+      $pointsvalue = phutil_tag(
+          'dd',
+          array(
+              'class' => 'phui-card-list-value',
+          ),
+          array($this->points, ' '));
+
+      $pointskey = phutil_tag(
+          'dt',
+          array(
+              'class' => 'phui-card-list-key',
+          ),
+          array($pointslabel, ' '));
+      return phutil_tag(
+          'dl',
+          array(
+              'class' => 'phui-property-list-container',
+          ),
+          array(
+              $pointskey,
+              $pointsvalue,
+          ));
+    }
+
   public function getItem() {
+    require_celerity_resource('phui-workboard-view-css', 'sprint');
+
     $query = id(new SprintQuery())
         ->setProject($this->project)
         ->setViewer($this->viewer);
-
     $task = $this->getTask();
-    $task_phid = $task->getPHID();
     $owner = $this->getOwner();
-
-    $points = $query->getStoryPointsForTask($task_phid);
+    $task_phid = $task->getPHID();
     $can_edit = $this->getCanEdit();
+    $this->points = $query->getStoryPointsForTask($task_phid);
 
     $color_map = ManiphestTaskPriority::getColorMap();
     $bar_color = idx($color_map, $task->getPriority(), 'grey');
@@ -78,9 +125,9 @@ final class SprintBoardTaskCard {
       ->setDisabled($task->isClosed())
       ->setMetadata(
         array(
-          'objectPHID' => $task->getPHID(),
+          'objectPHID' => $task_phid,
           'taskNodeID' => $this->task_node_id,
-          'points' => $points,
+          'points' => $this->points,
         ))
       ->addAction(
             id(new PHUIListItemView())
@@ -88,21 +135,13 @@ final class SprintBoardTaskCard {
                 ->setIcon('fa-pencil')
                 ->addSigil('edit-project-card')
                 ->setHref('/sprint/board/task/edit/'.$task->getID().'/'))
-      ->addAction(
-            id(new PHUIListItemView())
-                ->setName(pht('Edit Blocking Tasks'))
-                ->setHref("/search/attach/{$task_phid}/TASK/blocks/")
-                ->setIcon('fa-link')
-                ->setDisabled(!$can_edit))
       ->setBarColor($bar_color);
 
-    if ($owner) {
-      $card->addAttribute($owner->renderLink());
-    }
-    if ($points) {
-      $card->addAttribute($points);
-    }
+     $card->addAttribute($this->getPointList());
 
+    if ($owner) {
+      $card->setImageIcon($this->getUserImage());
+    }
     return $card;
   }
 

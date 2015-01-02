@@ -9,6 +9,10 @@ build:
                     format: 'php-clover'
     environment:
         timezone: 'Europe/Berlin'
+    filter:
+            excluded_paths:
+                - src/tests/*
+                - vendor/*
 tools:
     external_code_coverage: false
     php_sim:

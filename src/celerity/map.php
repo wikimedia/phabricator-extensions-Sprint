@@ -13,6 +13,7 @@ return array(
     'c3.css' => '93642428',
     'c3.js' => '4b517cca',
     'd3.min.js' => '1595fbde',
+    'phui-workboard-view.css' => '24307748',
   ),
   'symbols' => array(
     'c3' => '4b517cca',
@@ -21,6 +22,7 @@ return array(
     'javelin-behavior-c3-chart' => '89d978a3',
     'javelin-behavior-c3-pie' => '4731bdd9',
     'javelin-behavior-sprint-boards' => 'b2754b95',
+    'phui-workboard-view-css' => '24307748',
   ),
   'requires' => array(
     '4b517cca' => array(

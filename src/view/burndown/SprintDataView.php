@@ -107,7 +107,7 @@ final class SprintDataView extends SprintView
         ->setTaskPoints($this->taskpoints);
 
     $dates = $sprint_xaction->parseEvents($this->events, $this->before,
-        $this->start, $this->end, $dates, $this->xactions, $this->project);
+        $this->start, $this->end, $dates, $this->xactions);
 
     $this->sprint_data = $stats->setSprintData($dates, $this->before);
     $data = $stats->buildDataSet($this->sprint_data);

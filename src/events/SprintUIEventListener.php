@@ -28,7 +28,8 @@ final class SprintUIEventListener
     return $handles;
   }
 
-  private function handlePropertyEvent($event) {
+  private function handlePropertyEvent($event)
+  {
     $user = $event->getUser();
     $object = $event->getValue('object');
 
@@ -43,17 +44,15 @@ final class SprintUIEventListener
     }
 
     $project_phids = PhabricatorEdgeQuery::loadDestinationPHIDs(
-      $object->getPHID(),
-      PhabricatorProjectObjectHasProjectEdgeType::EDGECONST);
+        $object->getPHID(),
+        PhabricatorProjectObjectHasProjectEdgeType::EDGECONST);
     if ($project_phids) {
       $project_phids = array_reverse($project_phids);
       $phandles = id(new PhabricatorHandleQuery())
-        ->setViewer($user)
-        ->withPHIDs($project_phids)
-        ->execute();
-     $handles = $this->filterSprints($phandles, SprintConstants::MAGIC_WORD);
-    } else {
-      $handles = array();
+          ->setViewer($user)
+          ->withPHIDs($project_phids)
+          ->execute();
+      $handles = $this->filterSprints($phandles, SprintConstants::MAGIC_WORD);
     }
 
     // If this object can appear on boards, build the workboard annotations.
@@ -69,46 +68,40 @@ final class SprintUIEventListener
       require_celerity_resource('maniphest-task-summary-css');
 
       $positions = id(new PhabricatorProjectColumnPositionQuery())
-        ->setViewer($user)
-        ->withBoardPHIDs($project_phids)
-        ->withObjectPHIDs(array($object->getPHID()))
-        ->needColumns(true)
-        ->execute();
+          ->setViewer($user)
+          ->withBoardPHIDs($project_phids)
+          ->withObjectPHIDs(array($object->getPHID()))
+          ->needColumns(true)
+          ->execute();
       $positions = mpull($positions, null, 'getBoardPHID');
 
       foreach ($handles as $handle) {
         $project_phid = $handle->getPHID();
 
         $position = idx($positions, $project_phid);
-          if ($position) {
-            $column = $position->getColumn();
+        if ($position) {
+          $column = $position->getColumn();
 
-            $column_name = pht('(%s)', $column->getDisplayName());
-            $column_link = phutil_tag(
-                'a',
-                array(
-                    'href' => $handle->getURI().'sboard/',
-                    'class' => 'maniphest-board-link',
-                ),
-                $column_name);
+          $column_name = pht('(%s)', $column->getDisplayName());
+          $column_link = phutil_tag(
+              'a',
+              array(
+                  'href' => $handle->getURI() . 'sboard/',
+                  'class' => 'maniphest-board-link',
+              ),
+              $column_name);
 
-            $annotations[$project_phid] = array(
-                ' ',
-                $column_link);
-          }
+          $annotations[$project_phid] = array(
+              ' ',
+              $column_link);
         }
       }
-
-    if ($handles) {
       $list = id(new PHUIHandleTagListView())
-        ->setHandles($handles)
-        ->setAnnotations($annotations);
-    } else {
-      $list = phutil_tag('em', array(), pht('None'));
+          ->setHandles($handles)
+          ->setAnnotations($annotations);
+
+      $view = $event->getValue('view');
+      $view->addProperty(pht('Sprints'), $list);
     }
-
-    $view = $event->getValue('view');
-    $view->addProperty(pht('Sprint'), $list);
   }
-
 }

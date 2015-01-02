@@ -181,12 +181,12 @@ final class SprintQuery extends SprintDAO {
   }
 
   public function getEvents($xactions) {
-    $scope_phid = array($this->project->getPHID());
+    $scope_phid = $this->project->getPHID();
     $events = $this->extractEvents($xactions, $scope_phid);
     return $events;
   }
 
-  private function setXActionEventType ($xaction, $old, $new, $scope_phids) {
+  private function setXActionEventType ($xaction, $old, $new, $scope_phid) {
     switch ($xaction->getTransactionType()) {
       case ManiphestTransaction::TYPE_STATUS:
         $old_is_closed = ($old === null) ||
@@ -230,10 +230,10 @@ final class SprintQuery extends SprintDAO {
         $old = ipull($old, 'dst');
         $new = ipull($new, 'dst');
 
-        $in_old_scope = array_intersect_key($scope_phids, $old);
-        $in_new_scope = array_intersect_key($scope_phids, $new);
+        $in_old_scope = array_key_exists($scope_phid, $old);
+        $in_new_scope = array_key_exists($scope_phid, $new);
 
-        if ($in_new_scope && !$in_old_scope) {
+        if ($in_new_scope) {
           return 'task-add';
         } else if ($in_old_scope && !$in_new_scope) {
           // NOTE: We will miss some of these events, becuase we are only

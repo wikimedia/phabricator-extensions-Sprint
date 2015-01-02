@@ -1,0 +1,49 @@
+/**
+ * @provides phui-workboard-view-css
+ */
+
+.device-desktop .phui-workboard-event-view {
+    margin-left: 0px;
+    position: relative;
+}
+
+.device-desktop .phui-workboard-minor-event .phui-timeline-image {
+    width: 26px;
+    height: 26px;
+    background-size: 26px auto;
+}
+
+.phui-card-list-value {
+color: {$darkgreytext};
+}
+
+.device-desktop .phui-card-list-value {
+    width: 70%;
+    margin-left: 1%;
+    float: left;
+    margin-bottom: 4px;
+}
+
+.phui-card-list-key {
+color: {$bluetext};
+font-weight: bold;
+overflow: hidden;
+white-space: nowrap;
+}
+
+.device-desktop .phui-card-list-key {
+    width: 25%;
+    float: left;
+    clear: left;
+    margin-bottom: 4px;
+}
+
+.device .phui-card-list-value,
+.phui-card-list-stacked .phui-card-list-properties
+.phui-card-list-value {
+    padding: 0 16px;
+    margin-bottom: 8px;
+    width: auto;
+    word-break: break-word;
+    float: none;
+}
