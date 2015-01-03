@@ -31,7 +31,6 @@ final class SprintTransaction  {
         ->setTaskPoints($this->taskpoints);
 
     foreach ($events as $event) {
-      $date = null;
       $xaction = $xactions[$event['transactionPHID']];
       $xaction_date = $event['epoch'];
       $task_phid = $event['objectPHID'];

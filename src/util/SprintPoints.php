@@ -18,6 +18,7 @@ private $tasks;
   }
 
   public function getTaskPoints($task_phid) {
+    $points = null;
     $taskpoints = mpull($this->taskpoints, null, 'getObjectPHID');
     if (!empty($taskpoints)) {
       foreach ($taskpoints as $key=>$value) {

@@ -346,9 +346,9 @@ final class SprintBoardViewController
 
 
     $items = array();
-    foreach ($named as $key => $name) {
-      $active_order = null;
+    $active_order = null;
 
+    foreach ($named as $key => $name) {
       $is_selected = ($key == $sort_key);
       if ($is_selected) {
         $active_order = $name;
@@ -407,9 +407,9 @@ final class SprintBoardViewController
     }
 
     $items = array();
-    foreach ($named as $key => $name) {
-      $active_filter = null;
+    $active_filter = null;
 
+    foreach ($named as $key => $name) {
       $is_selected = ($key == $query_key);
       if ($is_selected) {
         $active_filter = $name;

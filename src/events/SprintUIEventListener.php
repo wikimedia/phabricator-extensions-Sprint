@@ -32,6 +32,7 @@ final class SprintUIEventListener
   {
     $user = $event->getUser();
     $object = $event->getValue('object');
+    $handles = array();
 
     if (!$object || !$object->getPHID()) {
       // No object, or the object has no PHID yet..

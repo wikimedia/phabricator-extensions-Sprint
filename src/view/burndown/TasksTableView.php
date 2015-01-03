@@ -139,7 +139,7 @@ final class TasksTableView {
       $points = $sprintpoints->getTaskPoints($task->getPHID());
 
       $row = $this->addTaskToTree($output, $blocked, $task, $handles, $points);
-      list ($task, $cdate, $date_created, $udate, $last_update, $owner_link, $numpriority, $priority, $points, $status) = $row[0];
+      list ($task, $cdate,, $udate,, $owner_link, $numpriority,, $points, $status) = $row[0];
       $row['sort'] = $this->setSortOrder($row, $order, $task, $cdate, $udate, $owner_link, $numpriority, $points, $status);
       $rows[] = $row;
     }
