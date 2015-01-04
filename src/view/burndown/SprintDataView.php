@@ -84,12 +84,13 @@ final class SprintDataView extends SprintView
 
   private function buildChartDataSet($query) {
 
-    $aux_fields = $query->getAuxFields();
+    $field_list = $query->getCustomFieldList();
+    $aux_fields = $query->getAuxFields($field_list);
     $this->start = $query->getStartDate($aux_fields);
     $this->end = $query->getEndDate($aux_fields);
-    $stats = id(new SprintBuildStats());
-
     $query->checkNull($this->start, $this->end, $this->tasks);
+
+    $stats = id(new SprintBuildStats());
     $timezone = $stats->setTimezone($this->viewer);
     $this->before = $stats->buildBefore($this->start, $timezone);
     $dates = $stats->buildDateArray($this->start, $this->end, $timezone);

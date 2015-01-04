@@ -29,11 +29,15 @@ final class SprintQuery extends SprintDAO {
         ->execute();
   }
 
-  public function getAuxFields() {
+  public function getCustomFieldList() {
     $field_list = PhabricatorCustomField::getObjectFields($this->project,
         PhabricatorCustomField::ROLE_EDIT);
     $field_list->setViewer($this->viewer);
     $field_list->readFieldsFromStorage($this->project);
+    return $field_list;
+  }
+
+  public function getAuxFields($field_list) {
     $aux_fields = $field_list->getFields();
     return $aux_fields;
   }

@@ -82,11 +82,8 @@ abstract class SprintController extends PhabricatorController {
 
     return $crumbs;
   }
-  protected function buildSprintApplicationCrumbs() {
+  protected function buildSprintApplicationCrumbs($can_create) {
     $crumbs = $this->buildCrumbs('slowvote', '/sprint/');
-
-  $can_create = $this->hasApplicationCapability(
-        ProjectCreateProjectsCapability::CAPABILITY);
 
     $crumbs->addAction(
         id(new PHUIListItemView())

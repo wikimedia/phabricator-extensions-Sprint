@@ -24,6 +24,24 @@ final class SprintQueryTest extends SprintTestCase {
     );
   }
 
+  private function createProject(PhabricatorUser $user) {
+    $project = PhabricatorProject::initializeNewProject($user);
+    $project->setName('Test Project '.mt_rand());
+    return $project;
+  }
+
+//  public function testgetTasks() {
+//    $viewer = $this->generateNewTestUser();
+//    $project = $this->createProject($viewer);
+//    $phid[] = $project->generatePHID();
+//    $project->attachMemberPHIDs($phid);
+//    $query = id(new SprintQuery())
+//        ->setProject($project)
+//        ->setViewer($viewer);
+//    $tasks = $query->getTasks();
+//    $this->assertInstanceOf('ManiphestTask', $tasks[0]);
+
+//  }
   /**
    * @depends testRequestSetUser
    */

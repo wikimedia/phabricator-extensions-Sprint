@@ -22,6 +22,7 @@ phutil_register_library_map(array(
     'OpenTasksView' => 'view/reports/OpenTasksView.php',
     'PhabricatorFactSprintEngine' => 'fact/PhabricatorFactSprintEngine.php',
     'ProjectOpenTasksView' => 'view/reports/ProjectOpenTasksView.php',
+    'ProjectsTableView' => 'view/ProjectsTableView.php',
     'SprintApplication' => 'application/SprintApplication.php',
     'SprintApplicationTest' => 'tests/SprintApplicationTest.php',
     'SprintBeginDateField' => 'customfield/SprintBeginDateField.php',

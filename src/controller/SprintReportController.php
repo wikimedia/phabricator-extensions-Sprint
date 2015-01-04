@@ -47,9 +47,11 @@ final class SprintReportController extends SprintController {
         return new Aphront404Response();
     }
 
+    $can_create = $this->hasApplicationCapability(
+        ProjectCreateProjectsCapability::CAPABILITY);
     $nav->appendChild($core);
     $nav->setCrumbs(
-        $this->buildSprintApplicationCrumbs()
+        $this->buildSprintApplicationCrumbs($can_create)
             ->addTextCrumb(pht('Reports')));
 
     return $this->buildApplicationPage(
