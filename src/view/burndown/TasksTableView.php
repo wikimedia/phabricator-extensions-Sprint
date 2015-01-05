@@ -192,14 +192,14 @@ final class TasksTableView {
     $map = array();
     foreach ($tasks as $task) {
       if ($parents =
-          $edges[$task->getPHID()][PhabricatorEdgeConfig::TYPE_TASK_DEPENDED_ON_BY_TASK]) {
+          $edges[$task->getPHID()][ ManiphestTaskDependedOnByTaskEdgeType::EDGECONST]) {
         foreach ($parents as $parent) {
           // Make sure this task is in this sprint.
           if (isset($tasks[$parent['dst']]))
             $map[$task->getPHID()]['parent'][] = $parent['dst'];
         }
       } elseif ($children =
-          $edges[$task->getPHID()][PhabricatorEdgeConfig::TYPE_TASK_DEPENDS_ON_TASK]) {
+          $edges[$task->getPHID()][ManiphestTaskDependsOnTaskEdgeType::EDGECONST]) {
           foreach ($children as $child) {
           // Make sure this task is in this sprint.
             if (isset($tasks[$child['dst']])) {

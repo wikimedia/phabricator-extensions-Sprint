@@ -12,6 +12,7 @@ build:
 filter:
     excluded_paths:
         - src/tests/*
+        - src/controller/board/*
         - vendor/*
 tools:
     external_code_coverage: false
