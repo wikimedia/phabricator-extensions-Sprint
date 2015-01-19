@@ -124,16 +124,25 @@ final class SprintTransaction  {
     return $dates;
   }
 
+  /**
+   * @param string $date
+   */
   private function AddTasksToday($date, $dates) {
     $dates[$date]->setTasksAddedToday();
     return $dates;
   }
 
+  /**
+   * @param string $date
+   */
   private function CloseTasksToday($date, $dates) {
     $dates[$date]->setTasksClosedToday();
     return $dates;
   }
 
+  /**
+   * @param string $date
+   */
   private function ReopenedTasksToday($date, $dates) {
    $dates[$date]->setTasksReopenedToday();
     return $dates;
@@ -144,11 +153,17 @@ final class SprintTransaction  {
     $before->setPointsAddedBefore($points);
   }
 
+  /**
+   * @param string $date
+   */
   private function ClosePointsToday($date, $points, $dates) {
    $dates[$date]->setPointsClosedToday($points);
     return $dates;
   }
 
+  /**
+   * @param string $date
+   */
   private function ReopenedPointsToday($date, $points, $dates) {
     $dates[$date]->setPointsReopenedToday($points);
     return $dates;
@@ -159,6 +174,9 @@ final class SprintTransaction  {
     return $this->task_in_sprint[$task_phid];
   }
 
+  /**
+   * @param string $date
+   */
   private function changePoints($date, $task_phid, $new_point_value, $old_point_value, $dates) {
 
     // Adjust points for that day
@@ -171,6 +189,9 @@ final class SprintTransaction  {
     $this->task_created = $task_phid;
   }
 
+  /**
+   * @param string[] $keys
+   */
   function getxActionValue($mapping, $keys) {
     $output_arr = array();
     foreach($keys as $key) {
