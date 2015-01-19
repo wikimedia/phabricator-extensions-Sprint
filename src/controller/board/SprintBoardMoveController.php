@@ -1,7 +1,7 @@
 <?php
 
 final class SprintBoardMoveController
-  extends SprintController {
+  extends PhabricatorProjectController {
 
   private $id;
 
@@ -25,6 +25,7 @@ final class SprintBoardMoveController
       ->requireCapabilities(
         array(
           PhabricatorPolicyCapability::CAN_VIEW,
+          PhabricatorPolicyCapability::CAN_EDIT,
         ))
       ->withIDs(array($this->id))
       ->executeOne();

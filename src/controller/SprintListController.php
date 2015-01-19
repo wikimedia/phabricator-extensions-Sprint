@@ -28,12 +28,12 @@ final class SprintListController extends SprintController {
     $can_create = $this->hasApplicationCapability(
         ProjectCreateProjectsCapability::CAPABILITY);
     $crumbs = $this->buildSprintApplicationCrumbs($can_create);
-    $crumbs->addTextCrumb(pht('Burndown List'));
+    $crumbs->addTextCrumb(pht('Sprint Burndown List'));
 
 
     $help = id(new PHUIBoxView())
         ->appendChild(phutil_tag('p', array(),
-            "To have a project show up in this list, make sure it's name includes"
+            "To have a project show up in this list, make sure its name includes"
             ."\"".SprintConstants::MAGIC_WORD."\" and then edit it to set the start and end date."
         ))
         ->addMargin(PHUI::MARGIN_LARGE);
@@ -57,7 +57,7 @@ final class SprintListController extends SprintController {
 
   // Load all projects with "§" in the name.
   private function loadAllProjects($viewer) {
-    $projects = id(new PhabricatorProjectQuery())
+    $projects = id(new SprintProjectQuery())
       ->setViewer($viewer)
       ->withDatasourceQuery(SprintConstants::MAGIC_WORD)
       ->execute();

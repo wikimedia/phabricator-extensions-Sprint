@@ -59,7 +59,7 @@ final class ProjectsTableView {
     $row[] =  phutil_tag(
         'a',
         array(
-            'href'  => '/sprint/view/'.$project->getId(),
+            'href'  => '/project/sprint/view/'.$project->getId(),
             'style' => 'font-weight:bold',
         ),
         $project->getName());

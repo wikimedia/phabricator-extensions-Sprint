@@ -66,7 +66,8 @@ final class SprintQuery extends SprintDAO {
   public function getStoryPointsForTask($task_phid)  {
     $points = null;
     $object = new ManiphestCustomFieldStorage();
-    $corecustomfield = $object->loadRawDataWhere('objectPHID= %s', $task_phid);
+    $corecustomfield = $object->loadRawDataWhere('objectPHID= %s AND
+    fieldIndex=%s', $task_phid, SprintConstants::CUSTOMFIELD_INDEX);
     if (!empty($corecustomfield)) {
       foreach ($corecustomfield as $array) {
         $points = idx($array, 'fieldValue');
@@ -166,9 +167,11 @@ final class SprintQuery extends SprintDAO {
     $task_dao = new ManiphestCustomFieldStorage();
     $data = queryfx_all(
         $this->getCustomFieldConn(),
-        'SELECT f.* FROM %T f %Q',
+        'SELECT f.* FROM %T f %Q
+        WHERE fieldIndex = %s',
         $this->getCustomFieldObj()->getTableName(),
-        $this->getCustomFieldJoins());
+        $this->getCustomFieldJoins(),
+        SprintConstants::CUSTOMFIELD_INDEX);
 
     $task_data = $task_dao->loadAllFromArray($data);
     return $task_data;

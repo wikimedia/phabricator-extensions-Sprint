@@ -11,16 +11,13 @@ final class SprintBoardViewController
   private $sortKey;
   private $showHidden;
 
-  public function willProcessRequest(array $data) {
-    $this->id = idx($data, 'id');
-    $this->slug = idx($data, 'slug');
-    $this->queryKey = idx($data, 'queryKey');
-    $this->filter = (bool)idx($data, 'filter');
+  public function shouldAllowPublic() {
+    return true;
   }
 
-  public function processRequest() {
-    $request = $this->getRequest();
+  public function handleRequest(AphrontRequest $request) {
     $viewer = $request->getUser();
+    $id = $request->getURIData('id');
 
     $show_hidden = $request->getBool('hidden');
     $this->showHidden = $show_hidden;
@@ -28,10 +25,12 @@ final class SprintBoardViewController
     $project = id(new PhabricatorProjectQuery())
       ->setViewer($viewer)
       ->needImages(true);
-    if ($this->slug) {
-      $project->withSlugs(array($this->slug));
+    $id = $request->getURIData('id');
+    $slug = $request->getURIData('slug');
+    if ($slug) {
+      $project->withSlugs(array($slug));
     } else {
-      $project->withIDs(array($this->id));
+      $project->withIDs(array($id));
     }
     $project = $project->executeOne();
     if (!$project) {
@@ -83,8 +82,10 @@ final class SprintBoardViewController
           return id(new AphrontRedirectResponse())
             ->setURI(
               $this->getApplicationURI('board/'.$project->getID().'/import/'));
+          break;
         default:
           return $this->initializeWorkboardDialog($project);
+          break;
       }
     }
 
@@ -105,7 +106,7 @@ final class SprintBoardViewController
           $engine->getQueryResultsPageURI($saved->getQueryKey())));
     }
 
-    $query_key = $this->queryKey;
+    $query_key = $request->getURIData('queryKey');
     if (!$query_key) {
       $query_key = 'open';
     }
@@ -127,7 +128,7 @@ final class SprintBoardViewController
       $custom_query = $saved;
     }
 
-    if ($this->filter) {
+    if ($request->getURIData('filter')) {
       $filter_form = id(new AphrontFormView())
         ->setUser($viewer);
       $engine->buildSearchForm($filter_form, $saved);
@@ -267,12 +268,9 @@ final class SprintBoardViewController
           $owner = $this->handles[$task->getOwnerPHID()];
         }
         $can_edit = idx($task_can_edit_map, $task->getPHID(), false);
-        $task_node_id = celerity_generate_unique_node_id();
         $cards->addItem(id(new SprintBoardTaskCard())
           ->setViewer($viewer)
-          ->setProject($project)
           ->setTask($task)
-          ->setNode($task_node_id)
           ->setOwner($owner)
           ->setCanEdit($can_edit)
           ->getItem());
@@ -300,16 +298,14 @@ final class SprintBoardViewController
     $header_link = phutil_tag(
       'a',
       array(
-        'href' => $this->getApplicationURI('view/'.$project->getID().'/'),
+        'href' => $this->getApplicationURI('profile/'.$project->getID().'/'),
       ),
       $project->getName());
 
     $header = id(new PHUIHeaderView())
-      ->setHeader($header_link)
+      ->setHeader(pht('%s Workboard', $header_link))
       ->setUser($viewer)
       ->setNoBackground(true)
-      ->setImage($project->getProfileImageURI())
-      ->setImageURL($this->getApplicationURI('view/'.$project->getID().'/'))
       ->addActionLink($sort_menu)
       ->addActionLink($filter_menu)
       ->addActionLink($manage_menu)
@@ -319,13 +315,16 @@ final class SprintBoardViewController
       ->appendChild($board)
       ->addClass('project-board-wrapper');
 
+    $nav = $this->buildIconNavView($project);
+    $nav->appendChild($header);
+    $nav->appendChild($board_box);
+
     return $this->buildApplicationPage(
       array(
-        $header,
-        $board_box,
+        $nav,
       ),
       array(
-        'title' => pht('%s board', $project->getName()),
+        'title' => pht('%s Board', $project->getName()),
         'showFooter' => false,
       ));
   }
@@ -344,10 +343,7 @@ final class SprintBoardViewController
 
     $base_uri = $this->getURIWithState();
 
-
     $items = array();
-    $active_order = null;
-
     foreach ($named as $key => $name) {
       $is_selected = ($key == $sort_key);
       if ($is_selected) {
@@ -407,8 +403,6 @@ final class SprintBoardViewController
     }
 
     $items = array();
-    $active_filter = null;
-
     foreach ($named as $key => $name) {
       $is_selected = ($key == $query_key);
       if ($is_selected) {
@@ -520,7 +514,7 @@ final class SprintBoardViewController
     }
 
     $manage_button = id(new PHUIButtonView())
-      ->setText(pht('Manage board'))
+      ->setText(pht('Manage Board'))
       ->setIcon($manage_icon)
       ->setTag('a')
       ->setHref('#')
@@ -615,7 +609,7 @@ final class SprintBoardViewController
       ->setValue('backlog-only')
       ->addButton(
         'backlog-only',
-        pht('New Empty board'),
+        pht('New Empty Board'),
         pht('Create a new board with just a backlog column.'))
       ->addButton(
         'import',

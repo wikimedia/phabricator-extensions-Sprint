@@ -28,7 +28,7 @@ abstract class SprintController extends PhabricatorController {
 
   public function buildNavMenu() {
     $nav = id(new AphrontSideNavFilterView())
-        ->setBaseURI(new PhutilURI('/sprint/report/'))
+        ->setBaseURI(new PhutilURI($this->getApplicationURI().'report/'))
         ->addLabel(pht('Sprint Projects'))
         ->addFilter('list', pht('List'))
         ->addLabel(pht('Open Tasks'))
@@ -83,7 +83,7 @@ abstract class SprintController extends PhabricatorController {
     return $crumbs;
   }
   protected function buildSprintApplicationCrumbs($can_create) {
-    $crumbs = $this->buildCrumbs('slowvote', '/sprint/');
+    $crumbs = $this->buildCrumbs('slowvote', $this->getApplicationURI());
 
     $crumbs->addAction(
         id(new PHUIListItemView())
@@ -112,4 +112,39 @@ abstract class SprintController extends PhabricatorController {
     return $view;
   }
 
+  public function buildIconNavView(PhabricatorProject $project) {
+    $id = $project->getID();
+    $nav = $this->buildSprintIconNavView($project);
+    $nav->selectFilter("board/{$id}/");
+    return $nav;
+  }
+
+  public function buildSprintIconNavView(PhabricatorProject $project) {
+    $user = $this->getRequest()->getUser();
+    $id = $project->getID();
+    $picture = $project->getProfileImageURI();
+    $name = $project->getName();
+
+    $columns = id(new PhabricatorProjectColumnQuery())
+        ->setViewer($user)
+        ->withProjectPHIDs(array($project->getPHID()))
+        ->execute();
+    if ($columns) {
+      $board_icon = 'fa-columns';
+    } else {
+      $board_icon = 'fa-columns grey';
+    }
+
+    $nav = new AphrontSideNavFilterView();
+    $nav->setIconNav(true);
+    $nav->setBaseURI(new PhutilURI($this->getApplicationURI()));
+    $nav->addIcon("profile/{$id}/", $name, null, $picture);
+    $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire');
+    $nav->addIcon("sboard/{$id}/", pht('Sprint Board'), $board_icon);
+    $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o');
+    $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group');
+    $nav->addIcon("edit/{$id}/", pht('Edit'), 'fa-pencil');
+
+    return $nav;
+  }
 }

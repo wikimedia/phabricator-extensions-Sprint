@@ -12,7 +12,7 @@ final class SprintApplication extends PhabricatorApplication {
 
   public function getBaseURI()
   {
-      return '/sprint/';
+      return '/project/sprint/';
   }
 
   public function getIconName() {
@@ -38,34 +38,9 @@ final class SprintApplication extends PhabricatorApplication {
 
   public function getRoutes() {
       return array(
-          '/sprint/' => array(
-              'edit/(?P<id>[1-9]\d*)/' => 'PhabricatorProjectEditMainController',
-              '' => 'SprintListController',
-              'report/' => 'SprintListController',
-              'report/list/' => 'SprintListController',
-              'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
-              'view/(?P<id>\d+)/' => 'SprintDataViewController',
-              'details/(?P<id>[1-9]\d*)/'
-              => 'PhabricatorProjectEditDetailsController',
+          '/project/sprint/' => array(
               'archive/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectArchiveController',
-              'members/(?P<id>[1-9]\d*)/'
-              => 'PhabricatorProjectMembersEditController',
-              'members/(?P<id>[1-9]\d*)/remove/'
-              => 'PhabricatorProjectMembersRemoveController',
-              'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
-              'picture/(?P<id>[1-9]\d*)/'
-              => 'PhabricatorProjectEditPictureController',
-              'icon/(?P<id>[1-9]\d*)/'
-              => 'PhabricatorProjectEditIconController',
-              'board/task/edit/(?P<id>[1-9]\d*)/'
-              =>  'SprintBoardTaskEditController',
-              'board/task/create/'
-              => 'SprintBoardTaskEditController',
-              'board/(?P<id>[1-9]\d*)/' .
-              '(?P<filter>filter/)?' .
-              '(?:query/(?P<queryKey>[^/]+)/)?'
-              => 'SprintBoardViewController',
               'board/(?P<projectID>[1-9]\d*)/' => array(
                   'edit/(?:(?P<id>\d+)/)?'
                   => 'SprintBoardColumnEditController',
@@ -78,6 +53,40 @@ final class SprintApplication extends PhabricatorApplication {
                   'reorder/'
                   => 'SprintBoardReorderController',
               ),
+              'board/task/edit/(?P<id>[1-9]\d*)/'
+              =>  'SprintBoardTaskEditController',
+              'board/task/create/'
+              => 'SprintBoardTaskEditController',
+              'board/(?P<id>[1-9]\d*)/'.
+              '(?P<filter>filter/)?'.
+              '(?:query/(?P<queryKey>[^/]+)/)?'
+              => 'SprintBoardViewController',
+              'burn/(?P<id>\d+)/' => 'SprintDataViewController',
+              'details/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditDetailsController',
+              'edit/(?P<id>[1-9]\d*)/' => 'PhabricatorProjectEditMainController',
+              '' => 'SprintListController',
+              'feed/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectFeedController',
+              'icon/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditIconController',
+              'members/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectMembersEditController',
+              'members/(?P<id>[1-9]\d*)/remove/'
+              => 'PhabricatorProjectMembersRemoveController',
+              'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
+              'picture/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditPictureController',
+              'profile/(?P<id>[1-9]\d*)/'
+              => 'SprintProjectProfileController',
+              'report/' => 'SprintListController',
+              'report/list/' => 'SprintListController',
+              'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
+              'sboard/(?P<id>[1-9]\d*)/'.
+              '(?P<filter>filter/)?'.
+              '(?:query/(?P<queryKey>[^/]+)/)?'
+              => 'SprintBoardViewController',
+              'view/(?P<id>\d+)/' => 'SprintDataViewController',
           ),
           '/tag/' => array(
               '(?P<slug>[^/]+)/sboard/' => 'SprintBoardViewController',
@@ -94,14 +103,6 @@ final class SprintApplication extends PhabricatorApplication {
         ProjectCreateProjectsCapability::CAPABILITY => array(),
         ProjectCanLockProjectsCapability::CAPABILITY => array(
             'default' => PhabricatorPolicies::POLICY_ADMIN,
-        ),
-        ProjectDefaultViewCapability::CAPABILITY => array(
-            'caption' => pht(
-                'Default view policy for newly created projects.'),
-        ),
-        ProjectDefaultEditCapability::CAPABILITY => array(
-            'caption' => pht(
-                'Default edit policy for newly created projects.'),
         ),
         ManiphestDefaultViewCapability::CAPABILITY => array(
             'caption' => pht('Default view policy for newly created tasks.'),

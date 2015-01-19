@@ -30,12 +30,14 @@ final class SprintDataViewController extends SprintController {
     $can_create = $this->hasApplicationCapability(
         ProjectCreateProjectsCapability::CAPABILITY);
     $crumbs = $this->getCrumbs($project, $can_create);
+    $nav = $this->buildIconNavView($project);
+    $nav->appendChild($crumbs);
+    $nav->appendChild($error_box);
+    $nav->appendChild($burndown_view);
 
     return $this->buildApplicationPage(
         array(
-            $crumbs,
-            $error_box,
-            $burndown_view,
+            $nav,
         ),
         array(
             'title' => array(pht('Burndown'), $project->getName()),
@@ -48,6 +50,7 @@ final class SprintDataViewController extends SprintController {
     $project = id(new PhabricatorProjectQuery())
         ->setViewer($viewer)
         ->withIDs(array($pid))
+        ->needImages(true)
         ->executeOne();
    return $project;
   }
@@ -58,12 +61,12 @@ final class SprintDataViewController extends SprintController {
     $crumbs = $this->buildSprintApplicationCrumbs($can_create);
     $crumbs->addTextCrumb(
         $project->getName(),
-        '/project/view/'.$pid);
+        $this->getApplicationURI().'profile/'.$pid);
     $crumbs->addTextCrumb(pht('Burndown'));
     $crumbs->addAction(
         id(new PHUIListItemView())
             ->setName(pht('Sprint Board'))
-            ->setHref('/sprint/board/'.$pid)
+            ->setHref($this->getApplicationURI().'board/'.$pid)
             ->setIcon('fa-columns'));
    return $crumbs;
   }

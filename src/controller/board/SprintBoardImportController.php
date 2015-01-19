@@ -56,7 +56,7 @@ final class SprintBoardImportController
         if ($import_column->isHidden()) {
           continue;
         }
-        PhabricatorProjectColumn::initializeNewColumn($viewer)
+        $new_column = PhabricatorProjectColumn::initializeNewColumn($viewer)
           ->setSequence($import_column->getSequence())
           ->setProjectPHID($project->getPHID())
           ->setName($import_column->getName())

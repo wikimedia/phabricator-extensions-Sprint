@@ -23,7 +23,7 @@ private $tasks;
     if (!empty($taskpoints)) {
       foreach ($taskpoints as $key=>$value) {
         if ($key == $task_phid) {
-          $points = $value->getfieldValue();
+            $points = $value->getfieldValue();
         }
       }
       if (!isset($points)) {

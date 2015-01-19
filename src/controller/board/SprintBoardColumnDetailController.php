@@ -22,6 +22,7 @@ final class SprintBoardColumnDetailController
           PhabricatorPolicyCapability::CAN_VIEW,
         ))
       ->withIDs(array($this->projectID))
+      ->needImages(true)
       ->executeOne();
 
     if (!$project) {
@@ -41,25 +42,12 @@ final class SprintBoardColumnDetailController
       return new Aphront404Response();
     }
 
-    $xactions = id(new PhabricatorProjectColumnTransactionQuery())
-      ->setViewer($viewer)
-      ->withObjectPHIDs(array($column->getPHID()))
-      ->execute();
-
-    id(new PhabricatorMarkupEngine())
-      ->setViewer($viewer);
-
-    $timeline = id(new PhabricatorApplicationTransactionView())
-      ->setUser($viewer)
-      ->setObjectPHID($column->getPHID())
-      ->setTransactions($xactions);
+    $timeline = $this->buildTransactionTimeline(
+      $column,
+      new PhabricatorProjectColumnTransactionQuery());
+    $timeline->setShouldTerminate(true);
 
     $title = pht('%s', $column->getDisplayName());
-    $crumbs = $this->buildApplicationCrumbs();
-    $crumbs->addTextCrumb(
-      pht('board'),
-      $this->getApplicationURI('board/'.$project->getID().'/'));
-    $crumbs->addTextCrumb($title);
 
     $header = $this->buildHeaderView($column);
     $actions = $this->buildActionView($column);
@@ -69,11 +57,13 @@ final class SprintBoardColumnDetailController
       ->setHeader($header)
       ->addPropertyList($properties);
 
+    $nav = $this->buildIconNavView($project);
+    $nav->appendChild($box);
+    $nav->appendChild($timeline);
+
     return $this->buildApplicationPage(
       array(
-        $crumbs,
-        $box,
-        $timeline,
+        $nav,
       ),
       array(
         'title' => $title,
@@ -95,9 +85,6 @@ final class SprintBoardColumnDetailController
     return $header;
   }
 
-  /**
-   * @return PhabricatorProjectColumn
-   */
   private function buildActionView(PhabricatorProjectColumn $column) {
     $viewer = $this->getRequest()->getUser();
 

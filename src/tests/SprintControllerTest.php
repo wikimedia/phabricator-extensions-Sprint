@@ -10,7 +10,7 @@ final class SprintControllerTest extends SprintTestCase {
   public function testbuildSideNavView() {
     $stub = $this->getMockForAbstractClass('SprintController');
     $user = $this->generateNewTestUser();
-    $uri = new PhutilURI('/sprint/');
+    $uri = new PhutilURI('/project/sprint/');
     $nav = $stub->buildSideNavView($for_app = false, $user, $uri);
     $this->assertInstanceOf('AphrontSideNavFilterView', $nav);
   }
@@ -20,6 +20,8 @@ final class SprintControllerTest extends SprintTestCase {
     $viewer = $this->generateNewTestUser();
     $project = $projectobj->initializeNewProject($viewer);
     $dv = new SprintDataViewController();
+    $app = new SprintApplication();
+    $dv->setCurrentApplication($app);
     $can_create = true;
     $crumbs = $dv->getCrumbs($project, $can_create);
     $this->assertInstanceOf('PhabricatorCrumbsView', $crumbs);
@@ -29,7 +31,7 @@ final class SprintControllerTest extends SprintTestCase {
     $projectobj = new PhabricatorProject();
     $viewer = $this->generateNewTestUser();
     $project = $projectobj->initializeNewProject($viewer);
-    $request = new AphrontRequest('phab.wmde.de', '/sprint/view/18');
+    $request = new AphrontRequest('phab.wmde.de', '/project/sprint/view/18');
     $dv = new SprintDataViewController();
     $burndownview = $dv->getBurndownView($request, $project, $viewer);
     $this->assertInstanceOf('SprintDataView', $burndownview);
@@ -41,4 +43,32 @@ final class SprintControllerTest extends SprintTestCase {
     $errorbox = $dv->getErrorBox($e);
     $this->assertInstanceOf('AphrontErrorView', $errorbox);
   }
+
+  public function testprocessRequestFail() {
+    $dvcontroller = new SprintDataViewController();
+    $sprint = new SprintApplication();
+    $dvcontroller->setCurrentApplication($sprint);
+    $request = new AphrontRequest('phab.wmde.de', '/project/sprint/view/18');
+    $data['id'] =  3;
+    $request->setRequestdata($data);
+    $viewer = $this->generateNewTestUser();
+    $request->setUser($viewer);
+    $dvcontroller->willProcessRequest($data);
+    $dvcontroller->setRequest($request);
+    $response = $dvcontroller->processRequest();
+    $this->assertInstanceOf('Aphront404Response', $response);
+  }
+
+//  public function testprocessRequestListController() {
+//     $this->willRunTests();
+//     $lcontroller = new SprintListController();
+//     $sprint = new SprintApplication();
+//     $lcontroller->setCurrentApplication($sprint);
+//     $request = new AphrontRequest('phab.wmde.de', '/project/sprint/view/18');
+//     $viewer = $this->generateNewTestUser();
+//     $request->setUser($viewer);
+//     $lcontroller->setRequest($request);
+//     $response = $lcontroller->processRequest();
+//     $this->assertInstanceOf('AphrontWebpageResponse', $response);
+//   }
 }

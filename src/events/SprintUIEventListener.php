@@ -78,7 +78,8 @@ final class SprintUIEventListener
 
       foreach ($handles as $handle) {
         $project_phid = $handle->getPHID();
-
+        $uri = $handle->getURI().'sboard/';
+        $handle->setURI($uri);
         $position = idx($positions, $project_phid);
         if ($position) {
           $column = $position->getColumn();
@@ -87,7 +88,7 @@ final class SprintUIEventListener
           $column_link = phutil_tag(
               'a',
               array(
-                  'href' => $handle->getURI() . 'sboard/',
+                  'href' => $uri,
                   'class' => 'maniphest-board-link',
               ),
               $column_name);
