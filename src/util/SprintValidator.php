@@ -2,16 +2,19 @@
 
 final class SprintValidator {
 
-  public function checkForSprint($showfields, $project) {
-    $show = $showfields($project);
-    if ($show === false) {
+  public function checkForSprint($showfields, $project_phid) {
+    $show = $showfields($project_phid);
+    if ($show == false) {
       return false;
     } else {
       return true;
     }
   }
 
-  public function shouldShowSprintFields($project) {
-    return (stripos($project->getName(), SprintConstants::MAGIC_WORD));
+  public function isSprint($project_phid) {
+    $query = id(new SprintQuery())
+        ->setPHID($project_phid);
+    $issprint = $query->getIsSprint();
+    return $issprint;
   }
 }

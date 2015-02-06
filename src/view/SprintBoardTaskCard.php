@@ -101,6 +101,13 @@ final class SprintBoardTaskCard {
           ));
     }
 
+  protected function isSprint($object) {
+    $validator = new SprintValidator();
+    $issprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'isSprint'), $object->getPHID());
+    return $issprint;
+  }
+
   public function getItem() {
     require_celerity_resource('phui-workboard-view-css', 'sprint');
 
@@ -112,6 +119,7 @@ final class SprintBoardTaskCard {
     $task_phid = $task->getPHID();
     $can_edit = $this->getCanEdit();
     $this->points = $query->getStoryPointsForTask($task_phid);
+
 
     $color_map = ManiphestTaskPriority::getColorMap();
     $bar_color = idx($color_map, $task->getPriority(), 'grey');
@@ -134,14 +142,17 @@ final class SprintBoardTaskCard {
                 ->setName(pht('Edit'))
                 ->setIcon('fa-pencil')
                 ->addSigil('edit-project-card')
-                ->setHref('/project/sprint/board/task/edit/'.$task->getID().'/'))
+                ->setHref('/project/sprint/board/task/edit/'.$task->getID()
+                    .'/'))
       ->setBarColor($bar_color);
 
-     $card->addAttribute($this->getPointList());
-
-    if ($owner) {
-      $card->setImageIcon($this->getUserImage());
+    if ($this->isSprint($this->project) !== false) {
+      $card->addAttribute($this->getPointList());
+      if ($owner) {
+        $card->setImageIcon($this->getUserImage());
+      }
     }
+
     return $card;
   }
 

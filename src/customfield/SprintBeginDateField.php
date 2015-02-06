@@ -6,10 +6,11 @@
 
 final class SprintBeginDateField extends SprintProjectCustomField {
 
-  private $date_proxy;
+  private $dateproxy;
 
   public function __construct() {
-    $this->date_proxy = $this->getDateFieldProxy($this, $this->getFieldName(), $this->getFieldDescription());
+    $this->dateproxy = $this->getDateFieldProxy($this, $this->getFieldName(),
+        $this->getFieldDescription());
   }
 
   // == General field identity stuff
@@ -26,11 +27,12 @@ final class SprintBeginDateField extends SprintProjectCustomField {
   }
 
   public function renderPropertyViewValue(array $handles) {
-    return $this->renderDateProxyPropertyViewValue($this->date_proxy, $handles);
+    return $this->renderDateProxyPropertyViewValue($this->dateproxy, $handles);
   }
 
   public function renderEditControl(array $handles) {
-    return $this->renderDateProxyEditControl($this->date_proxy,'start-of-business');
+    return $this->renderDateProxyEditControl($this->dateproxy,
+        'start-of-business');
   }
 
   // == Search

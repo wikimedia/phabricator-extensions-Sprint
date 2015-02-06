@@ -45,7 +45,7 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 
   private function getComputedConfiguration() {
     $config = $this->getPhabricatorTestCaseConfiguration() + array(
-            self::PHABRICATOR_TESTCONFIG_ISOLATE_LISK             => true,
+            self::PHABRICATOR_TESTCONFIG_ISOLATE_LISK             => false,
             self::PHABRICATOR_TESTCONFIG_BUILD_STORAGE_FIXTURES   => false,
         );
 
@@ -91,7 +91,8 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
       LiskDAO::beginIsolateAllLiskEffectsToCurrentProcess();
     }
 
-    $this->env = PhabricatorEnv::beginScopedEnv();
+//    $this->env = new PhabricatorEnv();
+//    $this->env->initializeWebEnvironment();
 
     // NOTE: While running unit tests, we act as though all applications are
     // installed, regardless of the install's configuration. Tests which need
@@ -140,7 +141,7 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
     }
   }
 
-  protected function willRunOneTest($test) {
+  protected function willRunOneTest() {
     $config = $this->getComputedConfiguration();
 
     if ($config[self::PHABRICATOR_TESTCONFIG_BUILD_STORAGE_FIXTURES]) {
@@ -185,7 +186,8 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 
   protected function generateNewTestUser() {
 
-    $user = id(new PhabricatorUser());
+    $user = id(new PhabricatorUser())
+        ->getOmnipotentUser();
     $user->setTimezoneIdentifier('Europe/Berlin');
 
     return $user;

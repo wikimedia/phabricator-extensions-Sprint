@@ -11,9 +11,9 @@ final class SprintListController extends SprintController {
   public function processRequest() {
     $request = $this->getRequest();
     $viewer = $request->getUser();
-
     $nav = $this->buildNavMenu();
-    $projects = $this->loadAllProjects($viewer);
+    $sprint_phids = $this->getSprintPHIDs();
+    $projects = $this->loadAllSprints($viewer, $sprint_phids);
     $this->view = $nav->selectFilter($this->view, 'list');
 
     $projects_table_view = id(new ProjectsTableView())
@@ -33,9 +33,8 @@ final class SprintListController extends SprintController {
 
     $help = id(new PHUIBoxView())
         ->appendChild(phutil_tag('p', array(),
-            "To have a project show up in this list, make sure its name includes"
-            ."\"".SprintConstants::MAGIC_WORD."\" and then edit it to set the start and end date."
-        ))
+            'To have a project show up in this list, make sure that the'
+            .'"Is Sprint" box has been checked in Project Edit Details'))
         ->addMargin(PHUI::MARGIN_LARGE);
 
     $nav->appendChild(
@@ -55,11 +54,16 @@ final class SprintListController extends SprintController {
       ));
   }
 
-  // Load all projects with "§" in the name.
-  private function loadAllProjects($viewer) {
-    $projects = id(new SprintProjectQuery())
+  private function getSprintPHIDs() {
+    $query = id(new SprintQuery());
+    $sprint_phids = $query->getSprintPHIDs();
+    return $sprint_phids;
+  }
+
+  private function loadAllSprints($viewer, $sprints) {
+    $projects = id(new PhabricatorProjectQuery())
       ->setViewer($viewer)
-      ->withDatasourceQuery(SprintConstants::MAGIC_WORD)
+      ->withPHIDS($sprints)
       ->execute();
     return $projects;
   }

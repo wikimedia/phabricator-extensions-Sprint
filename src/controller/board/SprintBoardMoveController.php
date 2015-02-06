@@ -168,6 +168,7 @@ final class SprintBoardMoveController
     $card = id(new SprintBoardTaskCard())
       ->setViewer($viewer)
       ->setTask($object)
+      ->setProject($project)
       ->setOwner($owner)
       ->setCanEdit(true)
       ->getItem();

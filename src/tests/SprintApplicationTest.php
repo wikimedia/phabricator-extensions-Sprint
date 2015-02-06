@@ -9,14 +9,14 @@ final class SprintApplicationTest extends SprintTestCase {
 
   public function testBaseURI () {
     $burndown_application = new SprintApplication;
-    $baseURI = $burndown_application->getBaseURI();
-    $this->assertEquals('/project/sprint/', $baseURI);
+    $baseuri = $burndown_application->getBaseURI();
+    $this->assertEquals('/project/sprint/', $baseuri);
   }
 
   public function testgetIconName() {
     $burndown_application = new SprintApplication;
     $icon_name = $burndown_application->getIconName();
-    $this->assertEquals('slowvote', $icon_name);
+    $this->assertEquals('fa-puzzle-piece', $icon_name);
   }
 
   public function testgetShortDescription() {
@@ -29,16 +29,16 @@ final class SprintApplicationTest extends SprintTestCase {
     $burndown_application = new SprintApplication;
     $eventlistener = $burndown_application->getEventListeners();
     $this->assertInstanceOf('BurndownActionMenuEventListener', $eventlistener[0]);
-    $this->assertInstanceOf('SprintUIEventListener', $eventlistener[1]);
   }
 
   public function testgetRoutes() {
     $burndown_application = new SprintApplication;
     $routes = $burndown_application->getRoutes();
     $assertion = array(
+      // this is the default application route controller
         '/project/sprint/' => array(
-            'archive/(?P<id>[1-9]\d*)/'
-            => 'PhabricatorProjectArchiveController',
+            '' => 'SprintListController',
+          // these are forked controllers for the Sprint Board
             'board/(?P<projectID>[1-9]\d*)/' => array(
                 'edit/(?:(?P<id>\d+)/)?'
                 => 'SprintBoardColumnEditController',
@@ -51,19 +51,28 @@ final class SprintApplicationTest extends SprintTestCase {
                 'reorder/'
                 => 'SprintBoardReorderController',
             ),
+          // these allow task creation and editing from a Sprint Board
             'board/task/edit/(?P<id>[1-9]\d*)/'
-            =>  'SprintBoardTaskEditController',
+            => 'SprintBoardTaskEditController',
             'board/task/create/'
             => 'SprintBoardTaskEditController',
+          // these are for board filters and column queries
             'board/(?P<id>[1-9]\d*)/'.
             '(?P<filter>filter/)?'.
             '(?:query/(?P<queryKey>[^/]+)/)?'
             => 'SprintBoardViewController',
+          // these are native Sprint application controllers
             'burn/(?P<id>\d+)/' => 'SprintDataViewController',
+            'profile/(?P<id>[1-9]\d*)/'
+            => 'SprintProjectProfileController',
+            'report/list/' => 'SprintListController',
+            'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
+            'view/(?P<id>\d+)/' => 'SprintDataViewController',
+          // all routes following point to default controllers
+            'archive/(?P<id>[1-9]\d*)/'
+            => 'PhabricatorProjectArchiveController',
             'details/(?P<id>[1-9]\d*)/'
             => 'PhabricatorProjectEditDetailsController',
-            'edit/(?P<id>[1-9]\d*)/' => 'PhabricatorProjectEditMainController',
-            '' => 'SprintListController',
             'feed/(?P<id>[1-9]\d*)/'
             => 'PhabricatorProjectFeedController',
             'icon/(?P<id>[1-9]\d*)/'
@@ -75,19 +84,13 @@ final class SprintApplicationTest extends SprintTestCase {
             'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
             'picture/(?P<id>[1-9]\d*)/'
             => 'PhabricatorProjectEditPictureController',
-            'profile/(?P<id>[1-9]\d*)/'
-            => 'SprintProjectProfileController',
-            'report/' => 'SprintListController',
-            'report/list/' => 'SprintListController',
-            'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
-            'sboard/(?P<id>[1-9]\d*)/'.
-            '(?P<filter>filter/)?'.
-            '(?:query/(?P<queryKey>[^/]+)/)?'
-            => 'SprintBoardViewController',
-            'view/(?P<id>\d+)/' => 'SprintDataViewController',
+            'update/(?P<id>[1-9]\d*)/(?P<action>[^/]+)/'
+            => 'PhabricatorProjectUpdateController',
         ),
+      // primary tag route override
         '/tag/' => array(
-            '(?P<slug>[^/]+)/sboard/' => 'SprintBoardViewController',
+            '(?P<slug>[^/]+)/' => 'SprintBoardViewController',
+            '(?P<slug>[^/]+)/board/' => 'SprintBoardViewController',
         ),
     );
     $this->assertEquals($assertion, $routes);

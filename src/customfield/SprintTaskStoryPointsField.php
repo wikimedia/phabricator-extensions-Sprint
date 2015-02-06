@@ -9,18 +9,18 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
     PhabricatorStandardCustomFieldInterface {
 
   private $obj;
-  private $text_proxy;
+  private $textproxy;
 
   public function __construct() {
     $this->obj = clone $this;
-    $this->text_proxy = id(new PhabricatorStandardCustomFieldText())
+    $this->textproxy = id(new PhabricatorStandardCustomFieldText())
       ->setFieldKey($this->getFieldKey())
       ->setApplicationField($this->obj)
       ->setFieldConfig(array(
         'name' => $this->getFieldName(),
         'description' => $this->getFieldDescription(),
       ));
-    $this->setProxy($this->text_proxy);
+    $this->setProxy($this->textproxy);
   }
 
   public function canSetProxy() {
@@ -58,25 +58,19 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
              ->withIds(array($id))
              ->needProjectPHIDs(true)
              ->executeOne();
-          $project_phids = $task->getProjectPHIDs();
+          $projectphids = $task->getProjectPHIDs();
        }
      }
 
-      if (empty($project_phids)) {
+      if (empty($projectphids)) {
         return $show = false;
       }
-      // Fetch the names from all the Projects associated with this task
-      $projects = id(new PhabricatorProject())
-        ->loadAllWhere(
-        'phid IN (%Ls)',
-        $project_phids);
-      $names = mpull($projects, 'getName');
 
-      // Set show to true if one of the Projects contains "Sprint"
       $show = false;
-      foreach($names as $name) {
-        if (strpos($name, SprintConstants::MAGIC_WORD) !== false) {
+      foreach ($projectphids as $projectphid) {
+        if ($this->isSprint($projectphid)) {
           $show = true;
+          break;
         }
       }
     }
@@ -84,25 +78,21 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
   }
 
   public function renderPropertyViewLabel() {
-    if (!$this->showField()) {
-      return null;
+    if ($this->showField() === true) {
+      if ($this->textproxy) {
+        return $this->textproxy->renderPropertyViewLabel();
+      }
+      return $this->getFieldName();
     }
-
-    if ($this->text_proxy) {
-      return $this->text_proxy->renderPropertyViewLabel();
-    }
-    return $this->getFieldName();
   }
 
   public function renderPropertyViewValue(array $handles) {
-    if (!$this->showField()) {
-      return null;
+    if ($this->showField() === true) {
+      if ($this->textproxy) {
+        return $this->textproxy->renderPropertyViewValue($handles);
+      }
+      throw new PhabricatorCustomFieldImplementationIncompleteException($this);
     }
-
-    if ($this->text_proxy) {
-      return $this->text_proxy->renderPropertyViewValue($handles);
-    }
-    throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
 
   public function shouldAppearInEditView() {
@@ -110,20 +100,24 @@ final class SprintTaskStoryPointsField extends ManiphestCustomField
   }
 
   public function renderEditControl(array $handles) {
-    if (!$this->showField()) {
-      return null;
+    if ($this->showField() === true) {
+      if ($this->textproxy) {
+        return $this->textproxy->renderEditControl($handles);
+      }
+      throw new PhabricatorCustomFieldImplementationIncompleteException($this);
     }
-
-    if ($this->text_proxy) {
-      return $this->text_proxy->renderEditControl($handles);
-    }
-    throw new PhabricatorCustomFieldImplementationIncompleteException($this);
   }
 
   // == Search
-  public function shouldAppearInApplicationSearch()
-  {
+  public function shouldAppearInApplicationSearch() {
     return true;
+  }
+
+  protected function isSprint($projectphid) {
+    $validator = new SprintValidator();
+    $issprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'isSprint'), $projectphid);
+    return $issprint;
   }
 
 }

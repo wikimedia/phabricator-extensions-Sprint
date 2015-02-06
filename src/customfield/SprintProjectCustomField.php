@@ -10,9 +10,9 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
 
   protected function isSprint() {
     $validator = new SprintValidator;
-    $is_sprint = call_user_func(array($validator, 'checkForSprint'),
-        array($validator, 'shouldShowSprintFields'), $this->getObject());
-    return $is_sprint;
+    $issprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'isSprint'), $this->getObject()->getPHID());
+    return $issprint;
   }
 
   /**
@@ -26,24 +26,45 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
    * @param string $name
    * @param string $description
    */
-  public function getDateFieldProxy($date_field, $name, $description) {
-    $obj = clone $date_field;
-    $date_proxy = id(new PhabricatorStandardCustomFieldDate())
+  public function getDateFieldProxy($datefield, $name, $description) {
+    $obj = clone $datefield;
+    $dateproxy = id(new PhabricatorStandardCustomFieldDate())
         ->setFieldKey($this->getFieldKey())
         ->setApplicationField($obj)
         ->setFieldConfig(array(
             'name' => $name,
             'description' => $description
         ));
-    $this->setProxy($date_proxy);
-    return $date_proxy;
+    $this->setProxy($dateproxy);
+    return $dateproxy;
   }
 
-  public function renderDateProxyPropertyViewValue($date_proxy, $handles) {
-    $is_sprint = $this->isSprint();
+  /**
+   * @param string $name
+   * @param string $description
+   */
+  public function getBoolFieldProxy($field, $name, $description) {
+    $obj = clone $field;
+    $fieldproxy = id(new PhabricatorStandardCustomFieldBool())
+        ->setFieldKey($this->getFieldKey())
+        ->setApplicationField($obj)
+        ->setFieldConfig(array(
+            'name' => $name,
+            'description' => $description,
+        ));
+    $this->setProxy($fieldproxy);
+    return $fieldproxy;
+  }
 
-    if ($is_sprint && ($date_proxy->getFieldValue())) {
-        return $date_proxy->renderPropertyViewValue($handles);
+  public function renderBoolProxyPropertyViewValue($boolproxy, $handles) {
+      return $boolproxy->renderPropertyViewValue($handles);
+  }
+
+  public function renderDateProxyPropertyViewValue($dateproxy, $handles) {
+    $issprint = $this->isSprint();
+
+    if ($issprint && ($dateproxy->getFieldValue())) {
+        return $dateproxy->renderPropertyViewValue($handles);
     } else {
        return null;
     }
@@ -52,11 +73,11 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
   /**
    * @param string $time
    */
-  public function renderDateProxyEditControl($date_proxy, $time) {
-    $is_sprint = $this->isSprint();
+  public function renderDateProxyEditControl($dateproxy, $time) {
+    $issprint = $this->isSprint();
 
-    if ($is_sprint && $date_proxy) {
-        return $this->newDateControl($date_proxy, $time);
+    if ($issprint && $dateproxy) {
+        return $this->newDateControl($dateproxy, $time);
     } else {
       return null;
     }

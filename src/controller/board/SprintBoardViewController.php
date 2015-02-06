@@ -39,6 +39,7 @@ final class SprintBoardViewController
 
     $this->setProject($project);
     $this->id = $project->getID();
+    $is_sprint = $this->isSprint($project);
 
     $sort_key = $request->getStr('order');
     switch ($sort_key) {
@@ -108,7 +109,7 @@ final class SprintBoardViewController
 
     $query_key = $request->getURIData('queryKey');
     if (!$query_key) {
-      $query_key = 'open';
+      $query_key = 'all';
     }
     $this->queryKey = $query_key;
 
@@ -204,15 +205,27 @@ final class SprintBoardViewController
       ->setUser($viewer)
       ->setID($board_id);
 
-    Javelin::initBehavior(
-      'sprint-boards',
-      array(
-        'boardID' => $board_id,
-        'projectPHID' => $project->getPHID(),
-        'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
-        'createURI' => '/maniphest/task/create/',
-        'order' => $this->sortKey,
-      ), 'sprint');
+    if ($is_sprint == true) {
+      Javelin::initBehavior(
+          'sprint-boards',
+          array(
+              'boardID' => $board_id,
+              'projectPHID' => $project->getPHID(),
+              'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
+              'createURI' => '/project/sprint/board/task/create/',
+              'order' => $this->sortKey,
+          ), 'sprint');
+    } else {
+      $this->initBehavior(
+          'project-boards',
+          array(
+              'boardID' => $board_id,
+              'projectPHID' => $project->getPHID(),
+              'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
+              'createURI' => '/maniphest/task/create/',
+              'order' => $this->sortKey,
+          ));
+    }
 
     $this->handles = ManiphestTaskListView::loadTaskHandles($viewer, $tasks);
 
@@ -249,18 +262,18 @@ final class SprintBoardViewController
 
       $panel->setHeaderTag($count_tag);
 
-      $cards = id(new PHUIObjectItemListView())
-        ->setUser($viewer)
-        ->setFlush(true)
-        ->setAllowEmptyList(true)
-        ->addSigil('project-column')
-        ->setMetadata(
-          array(
-            'columnPHID' => $column->getPHID(),
-            'countTagID' => $tag_id,
-            'countTagContentID' => $tag_content_id,
-            'pointLimit' => $column->getPointLimit(),
-          ));
+        $cards = id(new PHUIObjectItemListView())
+            ->setUser($viewer)
+            ->setFlush(true)
+            ->setAllowEmptyList(true)
+            ->addSigil('project-column')
+            ->setMetadata(
+                array(
+                    'columnPHID' => $column->getPHID(),
+                    'countTagID' => $tag_id,
+                    'countTagContentID' => $tag_content_id,
+                    'pointLimit' => $column->getPointLimit(),
+                ));
 
       foreach ($column_tasks as $task) {
         $owner = null;
@@ -268,12 +281,23 @@ final class SprintBoardViewController
           $owner = $this->handles[$task->getOwnerPHID()];
         }
         $can_edit = idx($task_can_edit_map, $task->getPHID(), false);
-        $cards->addItem(id(new SprintBoardTaskCard())
-          ->setViewer($viewer)
-          ->setTask($task)
-          ->setOwner($owner)
-          ->setCanEdit($can_edit)
-          ->getItem());
+        if ($is_sprint == true) {
+          $cards->addItem(id(new SprintBoardTaskCard())
+              ->setProject($project)
+              ->setViewer($viewer)
+              ->setTask($task)
+              ->setOwner($owner)
+              ->setCanEdit($can_edit)
+              ->getItem());
+        } else {
+          $cards->addItem(id(new ProjectBoardTaskCard())
+              ->setViewer($viewer)
+              ->setTask($task)
+              ->setOwner($owner)
+              ->setCanEdit($can_edit)
+              ->getItem());
+        }
+
       }
       $panel->setCards($cards);
       $board->addPanel($panel);

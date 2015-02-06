@@ -22,8 +22,8 @@ final class SprintDataViewController extends SprintController {
     $burndown_view = null;
 
     try {
-      $burndown_view = $this->getBurndownView($request, $project, $viewer);
-      } catch (BurndownException $e) {
+      $sprintdata_view = $this->getSprintDataView($request, $project, $viewer);
+      } catch (Exception $e) {
       $error_box = $this->getErrorBox($e);
     }
 
@@ -33,7 +33,7 @@ final class SprintDataViewController extends SprintController {
     $nav = $this->buildIconNavView($project);
     $nav->appendChild($crumbs);
     $nav->appendChild($error_box);
-    $nav->appendChild($burndown_view);
+    $nav->appendChild($sprintdata_view);
 
     return $this->buildApplicationPage(
         array(
@@ -71,16 +71,16 @@ final class SprintDataViewController extends SprintController {
    return $crumbs;
   }
 
-  public function getBurndownView($request, $project, $viewer) {
-    $burndown_view = id(new SprintDataView())
+  public function getSprintDataView($request, $project, $viewer) {
+    $sprintdata_view = id(new SprintDataView())
         ->setProject($project)
         ->setViewer($viewer)
         ->setRequest($request);
-    return $burndown_view;
+    return $sprintdata_view;
   }
 
   public function getErrorBox($e) {
-    $error_box = id(new AphrontErrorView())
+    $error_box = id(new PHUIErrorView())
         ->setTitle(pht('Burndown could not be rendered for this project'))
         ->setErrors(array($e->getMessage()));
     return $error_box;

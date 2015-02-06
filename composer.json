@@ -14,7 +14,7 @@
                     "type": "git",
                     "reference": "master"
                 },
-                "version": "1.0.1"
+                "version": "1.0.2"
             }
         },
         {
@@ -31,7 +31,7 @@
                     "type": "git",
                     "reference": "master"
                 },
-                "version": "1.0.1"
+                "version": "1.0.2"
             }
         }
     ],
@@ -53,7 +53,7 @@
     },
     "require": {
         "php": ">=5.3.2",
-        "phabricator/phabricator": "1.0.1",
-        "libphutil/libphutil": "1.0.1"
+        "phabricator/phabricator": "1.0.2",
+        "libphutil/libphutil": "1.0.2"
     }
 }

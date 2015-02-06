@@ -23,11 +23,18 @@ final class BurndownActionMenuEventListener extends PhabricatorEventListener {
 
     $actions = null;
     if ($object instanceof PhabricatorProject &&
-      stripos($object->getName(), SprintConstants::MAGIC_WORD) !== false) {
+      $this->isSprint($object) !== false) {
       $actions = $this->renderUserItems($event);
     }
 
     $this->addActionMenuItems($event, $actions);
+  }
+
+  protected function isSprint($object) {
+    $validator = new SprintValidator();
+    $issprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'isSprint'), $object->getPHID());
+    return $issprint;
   }
 
   private function renderUserItems(PhutilEvent $event) {

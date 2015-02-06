@@ -110,23 +110,6 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $this->assertEquals('AphrontFormDateControl', get_class($control));
   }
 
-  public function testcheckForSprint()  {
-    $validator = new SprintValidator();
-    $mword = SprintConstants::MAGIC_WORD;
-    $showfields = array($validator, 'shouldShowSprintFields');
-    $project = id(new PhabricatorProject())->setName($mword.'Test');
-    $is_sprint = $validator->checkForSprint($showfields, $project);
-    $this->assertTrue($is_sprint);
-  }
-
-  public function testcheckForNonSprint()  {
-    $validator = new SprintValidator();
-    $showfields = array($validator, 'shouldShowSprintFields');
-    $project = id(new PhabricatorProject())->setName('Test');
-    $is_sprint = $validator->checkForSprint($showfields, $project);
-    $this->assertFalse($is_sprint);
-  }
-
   public function testrenderDateProxyPropertyViewValue()
   {
     $classname = 'SprintProjectCustomField';

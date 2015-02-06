@@ -29,7 +29,12 @@ JX.behavior('c3-chart', function(config) {
          axis: {
             x: {
                 type: 'category',
-                categories: config.timeseries
+                categories: config.timeseries,
+                tick: {
+                    culling: {
+                        max: 18
+                    }
+                }
             }
          }
      });

@@ -56,7 +56,6 @@ abstract class SprintController extends PhabricatorController {
         ->addNavigationItems($nav->getMenu());
 
     if ($user->isLoggedIn()) {
-      // For now, don't give logged-out users access to reports.
       $nav->addLabel(pht('Reports'));
       $nav->addFilter('report', pht('Reports'));
     }
@@ -66,24 +65,8 @@ abstract class SprintController extends PhabricatorController {
     return $nav;
   }
 
-  protected function buildApplicationCrumbs() {
-    $crumbs = $this->buildCrumbs('projects', '/project/');
-
-    $can_create = $this->hasApplicationCapability(
-        ProjectCreateProjectsCapability::CAPABILITY);
-
-    $crumbs->addAction(
-        id(new PHUIListItemView())
-            ->setName(pht('Create Project'))
-            ->setHref($this->getProjectsURI().'create/')
-            ->setIcon('fa-plus-square')
-            ->setDisabled(!$can_create)
-            ->setAppIcon('projects'));
-
-    return $crumbs;
-  }
-  protected function buildSprintApplicationCrumbs($can_create) {
-    $crumbs = $this->buildCrumbs('slowvote', $this->getApplicationURI());
+   protected function buildSprintApplicationCrumbs($can_create) {
+    $crumbs = $this->buildCrumbs('fa-bar-chart', $this->getApplicationURI());
 
     $crumbs->addAction(
         id(new PHUIListItemView())
@@ -98,13 +81,13 @@ abstract class SprintController extends PhabricatorController {
     $crumbs = array();
 
 
-      $crumbs[] = id(new PhabricatorCrumbView())
+      $crumbs[] = id(new PHUICrumbView())
           ->setHref($uri)
           ->setAural($sprite)
           ->setIcon($sprite);
 
 
-    $view = new PhabricatorCrumbsView();
+    $view = new PHUICrumbsView();
     foreach ($crumbs as $crumb) {
       $view->addCrumb($crumb);
     }
@@ -115,18 +98,18 @@ abstract class SprintController extends PhabricatorController {
   public function buildIconNavView(PhabricatorProject $project) {
     $id = $project->getID();
     $nav = $this->buildSprintIconNavView($project);
-    $nav->selectFilter("board/{$id}/");
+    $nav->selectFilter(null);
     return $nav;
   }
 
   public function buildSprintIconNavView(PhabricatorProject $project) {
-    $user = $this->getRequest()->getUser();
+    $viewer = $this->getViewer();
     $id = $project->getID();
     $picture = $project->getProfileImageURI();
     $name = $project->getName();
 
     $columns = id(new PhabricatorProjectColumnQuery())
-        ->setViewer($user)
+        ->setViewer($viewer)
         ->withProjectPHIDs(array($project->getPHID()))
         ->execute();
     if ($columns) {
@@ -137,14 +120,37 @@ abstract class SprintController extends PhabricatorController {
 
     $nav = new AphrontSideNavFilterView();
     $nav->setIconNav(true);
-    $nav->setBaseURI(new PhutilURI($this->getApplicationURI()));
-    $nav->addIcon("profile/{$id}/", $name, null, $picture);
-    $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire');
-    $nav->addIcon("sboard/{$id}/", pht('Sprint Board'), $board_icon);
+    if ($this->isSprint($project) !== false) {
+      $nav->setBaseURI(new PhutilURI($this->getApplicationURI()));
+      $nav->addIcon("profile/{$id}/", $name, null, $picture);
+      $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire');
+      $nav->addIcon("board/{$id}/", pht('Sprint Board'), $board_icon);
+    } else {
+      $nav->setBaseURI(new PhutilURI($this->getProjectsURI()));
+      $nav->addIcon("profile/{$id}/", $name, null, $picture);
+      $nav->addIcon("board/{$id}/", pht('Workboard'), $board_icon);
+    }
+    $class = 'PhabricatorManiphestApplication';
+    if (PhabricatorApplication::isClassInstalledForViewer($class, $viewer)) {
+      $phid = $project->getPHID();
+      $query_uri = urisprintf(
+          '/maniphest/?statuses=%s&allProjects=%s#R',
+          implode(',', ManiphestTaskStatus::getOpenStatusConstants()),
+          $phid);
+      $nav->addIcon(null, pht('Open Tasks'), 'fa-anchor', null, $query_uri);
+    }
+
     $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o');
     $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group');
     $nav->addIcon("edit/{$id}/", pht('Edit'), 'fa-pencil');
 
     return $nav;
+  }
+
+  protected function isSprint($object) {
+    $validator = new SprintValidator();
+    $issprint = call_user_func(array($validator, 'checkForSprint'),
+        array($validator, 'isSprint'), $object->getPHID());
+    return $issprint;
   }
 }

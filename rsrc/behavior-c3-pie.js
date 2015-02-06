@@ -13,6 +13,9 @@ JX.behavior('c3-pie', function(config) {
                 ['resolved', config.resolved]
             ],
             type: 'pie'
+        },
+        color: {
+            pattern: ['#1f77b4', '#D62728']
         }
     });
 });

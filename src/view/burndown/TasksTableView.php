@@ -9,6 +9,7 @@ final class TasksTableView {
   private $taskpoints;
   private $query;
 
+
   public function setProject ($project) {
     $this->project = $project;
     return $this;
@@ -164,7 +165,9 @@ final class TasksTableView {
     if ($reverse) {
       $rows = array_reverse($rows);
     }
-    $rows = array_map( function( $a ) { return $a['0']; }, $rows );
+
+    $a = array();
+    $rows = array_map(function($a) { return $a['0']; }, $rows);
     return $rows;
   }
 
@@ -259,20 +262,19 @@ final class TasksTableView {
     $date_created = phabricator_datetime($cdate, $this->viewer);
     $udate = $this->getTaskModifiedDate($task);
     $last_updated = phabricator_datetime($udate, $this->viewer);
-    $sprintpoints = id(new SprintPoints());
-    $status = $sprintpoints->getTaskStatus($task);
+    $status = $task->getStatus();
 
     $owner_link = $this->setOwnerLink($handles, $task);
     $priority = $this->getPriority($task);
     $priority_name = $this->getPriorityName($task);
 
-    if ($blocker === true) {
+    if ($blocker === true && $task->getStatus() == 'open') {
       $blockericon = $this->getIconforBlocker($ptasks);
     } else {
       $blockericon = '';
     }
 
-    if ($blocked === true) {
+    if ($blocked === true && $task->getStatus() == 'open') {
       $blockedicon = $this->getIconforBlocked();
     } else {
       $blockedicon = '';
@@ -287,7 +289,8 @@ final class TasksTableView {
                         ? 'phui-tag-core-closed'
                         : '',
                 ),
-                array ($this->buildTaskLink($task), $blockericon, $blockedicon))),
+                array ($this->buildTaskLink($task), $blockericon,
+                    $blockedicon,))),
         $cdate,
         $date_created,
         $udate,

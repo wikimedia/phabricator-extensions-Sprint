@@ -17,31 +17,28 @@ final class SprintControllerTest extends SprintTestCase {
 
   public function testgetCrumbs() {
     $projectobj = new PhabricatorProject();
-    $viewer = $this->generateNewTestUser();
-    $project = $projectobj->initializeNewProject($viewer);
     $dv = new SprintDataViewController();
     $app = new SprintApplication();
     $dv->setCurrentApplication($app);
     $can_create = true;
-    $crumbs = $dv->getCrumbs($project, $can_create);
-    $this->assertInstanceOf('PhabricatorCrumbsView', $crumbs);
+    $crumbs = $dv->getCrumbs($projectobj, $can_create);
+    $this->assertInstanceOf('PHUICrumbsView', $crumbs);
   }
 
-  public function testgetBurndownView() {
+  public function testgetSprintDataView() {
     $projectobj = new PhabricatorProject();
     $viewer = $this->generateNewTestUser();
-    $project = $projectobj->initializeNewProject($viewer);
     $request = new AphrontRequest('phab.wmde.de', '/project/sprint/view/18');
     $dv = new SprintDataViewController();
-    $burndownview = $dv->getBurndownView($request, $project, $viewer);
+    $burndownview = $dv->getSprintDataView($request, $projectobj, $viewer);
     $this->assertInstanceOf('SprintDataView', $burndownview);
   }
 
   public function testgetErrorBox() {
-    $e = new BurndownException();
+    $e = new Exception();
     $dv = new SprintDataViewController();
     $errorbox = $dv->getErrorBox($e);
-    $this->assertInstanceOf('AphrontErrorView', $errorbox);
+    $this->assertInstanceOf('PHUIErrorView', $errorbox);
   }
 
   public function testprocessRequestFail() {
@@ -49,6 +46,7 @@ final class SprintControllerTest extends SprintTestCase {
     $sprint = new SprintApplication();
     $dvcontroller->setCurrentApplication($sprint);
     $request = new AphrontRequest('phab.wmde.de', '/project/sprint/view/18');
+    $data = array();
     $data['id'] =  3;
     $request->setRequestdata($data);
     $viewer = $this->generateNewTestUser();

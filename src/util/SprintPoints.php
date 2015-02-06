@@ -33,6 +33,28 @@ private $tasks;
     return $points;
   }
 
+  public function sumAllTaskPoints() {
+    $points = null;
+    if (!empty($this->taskpoints)) {
+      $taskpoints = mpull($this->taskpoints, null, 'getObjectPHID');
+      foreach ($taskpoints as $key => $value) {
+        $points += $value->getfieldValue();
+      }
+    }
+    if (!isset($points)) {
+      $points = '0';
+    }
+    return $points;
+  }
+
+  public function sumTotalTasks() {
+    $total_tasks = null;
+    if (!empty($this->taskpoints)) {
+        $total_tasks += count($this->taskpoints);
+    }
+    return $total_tasks;
+  }
+
   public function getTaskStatus($task) {
     $status = $task->getStatus();
     return $status;

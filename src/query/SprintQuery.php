@@ -6,7 +6,6 @@ final class SprintQuery extends SprintDAO {
   private $project;
   private $project_phid;
 
-
   public function setProject ($project) {
     $this->project = $project;
     return $this;
@@ -67,7 +66,7 @@ final class SprintQuery extends SprintDAO {
     $points = null;
     $object = new ManiphestCustomFieldStorage();
     $corecustomfield = $object->loadRawDataWhere('objectPHID= %s AND
-    fieldIndex=%s', $task_phid, SprintConstants::CUSTOMFIELD_INDEX);
+    fieldIndex=%s', $task_phid, SprintConstants::POINTFIELD_INDEX);
     if (!empty($corecustomfield)) {
       foreach ($corecustomfield as $array) {
         $points = idx($array, 'fieldValue');
@@ -76,6 +75,32 @@ final class SprintQuery extends SprintDAO {
       $points = 0;
     }
     return $points;
+  }
+
+  public function getIsSprint() {
+    $object = new PhabricatorProjectCustomFieldStorage();
+    $boolfield = $object->loadRawDataWhere('objectPHID= %s AND
+    fieldIndex=%s', $this->project_phid, SprintConstants::SPRINTFIELD_INDEX);
+    if (!empty($boolfield)) {
+      foreach ($boolfield as $array) {
+        $issprint = idx($array, 'fieldValue');
+      }
+    } else {
+      $issprint = null;
+    }
+    return $issprint;
+  }
+
+  public function getSprintPHIDs() {
+    $sprint_phids = array();
+    $object = new PhabricatorProjectCustomFieldStorage();
+    $data = $object->loadRawDataWhere('fieldValue= %s AND
+    fieldIndex=%s', true, SprintConstants::SPRINTFIELD_INDEX);
+    $sprintfields = $object->loadAllFromArray($data);
+    foreach ($sprintfields as $key => $value) {
+        $sprint_phids[] = $value->getObjectPHID();
+      }
+    return $sprint_phids;
   }
 
   public function getXactions($tasks) {
@@ -87,15 +112,16 @@ final class SprintQuery extends SprintDAO {
     return $xactions;
   }
 
-  public function checkNull($start, $end, $tasks) {
-    $mword = SprintConstants::MAGIC_WORD;
+  public function checkNull($start, $end, $project, $tasks) {
     if (!$start OR !$end) {
-      throw new BurndownException("This project is not set up for Sprints.  "
-          . "Check that it has a start date and end date.  And has an "
-          . "'{$mword}' in the name.");
+      $projhelp = 'To do this go to the Project Edit Details Page';
+      throw new BurndownException("The project \"".$project->getName()
+          ."\" is not set up for Sprints because "
+          ."it has not been assigned a start date and end date. \n", $projhelp);
     }
     if (!$tasks) {
-      throw new BurndownException("This project has no tasks.");
+      $taskhelp = 'To add a task go to the Maniphest Query Page';
+      throw new BurndownException('This project has no tasks.', $taskhelp);
     }
   }
 
@@ -171,7 +197,7 @@ final class SprintQuery extends SprintDAO {
         WHERE fieldIndex = %s',
         $this->getCustomFieldObj()->getTableName(),
         $this->getCustomFieldJoins(),
-        SprintConstants::CUSTOMFIELD_INDEX);
+        SprintConstants::POINTFIELD_INDEX);
 
     $task_data = $task_dao->loadAllFromArray($data);
     return $task_data;
@@ -191,6 +217,39 @@ final class SprintQuery extends SprintDAO {
     $scope_phid = $this->project->getPHID();
     $events = $this->extractEvents($xactions, $scope_phid);
     return $events;
+  }
+
+  public function getProjectColumns() {
+    $columns = id(new PhabricatorProjectColumnQuery())
+        ->setViewer($this->viewer)
+        ->withProjectPHIDs(array($this->project_phid))
+        ->execute();
+    $columns = msort($columns, 'getSequence');
+    return $columns;
+  }
+
+  public function getColumnforPHID($column_phid) {
+    $column = id(new PhabricatorProjectColumnQuery())
+        ->setViewer($this->viewer)
+        ->withPHIDs(array($column_phid))
+        ->execute();
+    return $column;
+  }
+
+  public function getProjectColumnPositionforTask($tasks, $columns) {
+    if ($tasks) {
+        $positions = id(new PhabricatorProjectColumnPositionQuery())
+            ->setViewer($this->viewer)
+            ->withBoardPHIDs(array($this->project_phid))
+            ->withObjectPHIDs(mpull($tasks, 'getPHID'))
+            ->withColumns($columns)
+            ->needColumns(true)
+            ->execute();
+        $positions = mpull($positions, null, 'getObjectPHID');
+     } else {
+        $positions = array();
+    }
+    return $positions;
   }
 
   private function setXActionEventType ($xaction, $old, $new, $scope_phid) {
@@ -240,7 +299,7 @@ final class SprintQuery extends SprintDAO {
         $in_old_scope = array_key_exists($scope_phid, $old);
         $in_new_scope = array_key_exists($scope_phid, $new);
 
-        if ($in_new_scope) {
+        if ($in_new_scope ) {
           return 'task-add';
         } else if ($in_old_scope && !$in_new_scope) {
           // NOTE: We will miss some of these events, becuase we are only
