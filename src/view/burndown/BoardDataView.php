@@ -10,16 +10,7 @@ final class BoardDataView {
   }
 
   public function buildBoardDataTable() {
-    $coldata = array();
-    $board_columns = $this->board_data->buildBoardDataSet();
-    foreach ($board_columns as $column_phid => $tasks) {
-      $colname = $this->board_data->getColumnName($column_phid);
-      $task_count = count($tasks);
-      $task_points_total = $this->board_data->getTaskPointsSum($tasks);
-      $coldata[] = array(
-          $colname, $task_count, $task_points_total,
-        );
-    }
+    $coldata = $this->board_data->buildBoardDataSet();
     $table = id(new AphrontTableView($coldata))
         ->setHeaders(
             array(

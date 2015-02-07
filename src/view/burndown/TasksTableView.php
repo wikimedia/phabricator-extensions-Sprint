@@ -131,7 +131,7 @@ final class TasksTableView {
       }
 
       $ptasks = array();
-      $parentphid = null;
+      $phid = null;
       $blocker = false;
       if (isset($map[$task->getPHID()]['parent'])) {
         $blocker = true;
@@ -200,17 +200,19 @@ final class TasksTableView {
   private function buildTaskMap ($edges, $tasks) {
     $map = array();
     foreach ($tasks as $task) {
+      $phid = $task->getPHID();
       if ($parents =
-          $edges[$task->getPHID()][ ManiphestTaskDependedOnByTaskEdgeType::EDGECONST]) {
+          $edges[$phid][ ManiphestTaskDependedOnByTaskEdgeType::EDGECONST]) {
         foreach ($parents as $parent) {
-            if (isset($tasks[$parent['dst']]))
-            $map[$task->getPHID()]['parent'][] = $parent['dst'];
+            if (isset($tasks[$parent['dst']])) {
+              $map[$phid]['parent'][] = $parent['dst'];
+            }
         }
       } else if ($children =
-          $edges[$task->getPHID()][ManiphestTaskDependsOnTaskEdgeType::EDGECONST]) {
+          $edges[$phid][ManiphestTaskDependsOnTaskEdgeType::EDGECONST]) {
           foreach ($children as $child) {
             if (isset($tasks[$child['dst']])) {
-              $map[$task->getPHID()]['child'][] = $child['dst'];
+              $map[$phid]['child'][] = $child['dst'];
             }
           }
       }
@@ -221,18 +223,19 @@ final class TasksTableView {
   private function getHandles() {
     $handle_phids = array();
     foreach ($this->tasks as $task) {
-      $handle_phids[$task->getOwnerPHID()] = $task->getOwnerPHID();
+      $phid = $task->getOwnerPHID();
+      $handle_phids[$phid] = $phid;
     }
     $handles = $this->query->getViewerHandles($this->request, $handle_phids);
     return $handles;
   }
 
   private function setOwnerLink($handles, $task) {
-    // Get the owner object so we can render the owner username/link
-    $owner = $handles[$task->getOwnerPHID()];
+    $phid = $task->getOwnerPHID();
+    $owner = $handles[$phid];
 
     if ($owner instanceof PhabricatorObjectHandle) {
-      $owner_link = $task->getOwnerPHID() ? $owner->renderLink() : 'none assigned';
+      $owner_link = $phid ? $owner->renderLink() : 'none assigned';
     } else {
       $owner_link = 'none assigned';
     }
@@ -289,7 +292,7 @@ final class TasksTableView {
                 'a',
                 array(
                     'href' => '/'.$task->getMonogram(),
-                    'class' => $task->getStatus() !== 'open'
+                    'class' => $status !== 'open'
                         ? 'phui-tag-core-closed'
                         : '',
                 ),
@@ -311,6 +314,7 @@ final class TasksTableView {
 
   private function getIconforBlocker($ptasks) {
       $linktasks = array();
+      $links = null;
       foreach ($ptasks as $task) {
         $linktasks[] = $this->buildTaskLink($task);
         $links = implode('|  ', $linktasks);

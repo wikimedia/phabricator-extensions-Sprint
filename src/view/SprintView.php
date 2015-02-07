@@ -1,12 +1,11 @@
 <?php
 
 
-abstract class SprintView extends AphrontView
-{
-  public function renderReportFilters(array $tokens) {
+abstract class SprintView extends AphrontView {
+  public function renderReportFilters(array $tokens, $has_window, $user) {
 
     $form = id(new AphrontFormView())
-        ->setUser($this->user)
+        ->setUser($user)
         ->appendChild(
             id(new AphrontFormTokenizerControl())
                 ->setDatasource(new PhabricatorProjectDatasource())
@@ -14,6 +13,19 @@ abstract class SprintView extends AphrontView
                 ->setLimit(1)
                 ->setName('set_project')
                 ->setValue($tokens));
+
+    if ($has_window) {
+      list($window_str, , $window_error) = $this->getWindow();
+      $form
+          ->appendChild(
+              id(new AphrontFormTextControl())
+                  ->setLabel(pht('Recently Means'))
+                  ->setName('set_window')
+                  ->setCaption(
+                      pht('Configure the cutoff for the "Recently Closed" column.'))
+                  ->setValue($window_str)
+                  ->setError($window_error));
+    }
 
     $form
         ->appendChild(

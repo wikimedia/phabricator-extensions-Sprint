@@ -7,6 +7,7 @@ final class SprintColumnTransaction {
   private $query;
   private $taskpoints;
   private $events;
+  private $xquery;
 
   public function setViewer ($viewer) {
     $this->viewer = $viewer;
@@ -46,8 +47,6 @@ final class SprintColumnTransaction {
         ->setTaskPoints($this->taskpoints);
 
     foreach ($this->events as $event) {
-      $xaction = $xactions[$event['transactionPHID']];
-      $create_date = $event['created'];
       $modify_date = $event['modified'];
       $task_phid = $event['objectPHID'];
 
@@ -102,16 +101,12 @@ final class SprintColumnTransaction {
       switch ($new_col_name) {
         case SprintConstants::TYPE_CLOSED_STATUS_COLUMN:
           return 'close';
-          break;
         case SprintConstants::TYPE_REVIEW_STATUS_COLUMN:
           return 'review';
-          break;
         case SprintConstants::TYPE_DOING_STATUS_COLUMN:
           return 'doing';
-          break;
         case SprintConstants::TYPE_BACKLOG_STATUS_COLUMN:
           return 'backlog';
-          break;
         default:
           break;
       }
@@ -120,7 +115,8 @@ final class SprintColumnTransaction {
 
   public function setEvents($xactions) {
     assert_instances_of($xactions, 'ManiphestTransaction');
-
+    $old_col_name = null;
+    $new_col_name = null;
     $events = array();
     foreach ($xactions as $xaction) {
       $old_col_phid = idx($xaction->getOldValue(), 'columnPHIDs');

@@ -19,7 +19,7 @@ final class SprintDataViewController extends SprintController {
     }
 
     $error_box = null;
-    $burndown_view = null;
+    $sprintdata_view = null;
 
     try {
       $sprintdata_view = $this->getSprintDataView($request, $project, $viewer);

@@ -23,7 +23,8 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function buildApplicationMenu() {
-    return $this->buildSideNavView(true, $this->getUser(),$this->setApplicationURI())->getMenu();
+    return $this->buildSideNavView(true, $this->getUser(),
+        $this->setApplicationURI())->getMenu();
   }
 
   public function buildNavMenu() {
@@ -96,7 +97,6 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function buildIconNavView(PhabricatorProject $project) {
-    $id = $project->getID();
     $nav = $this->buildSprintIconNavView($project);
     $nav->selectFilter(null);
     return $nav;

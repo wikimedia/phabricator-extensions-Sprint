@@ -52,17 +52,17 @@ final class SprintReportOpenTasksView extends SprintView {
 
     $date = phabricator_date(time(), $this->user);
 
+    $user_task_view = new UserOpenTasksView();
+    $project_task_view = new ProjectOpenTasksView();
 
     if (($this->view) == 'user') {
        list($leftover, $leftover_closed, $base_link, $leftover_name,
            $col_header, $header, $result_closed, $result ) =
-           (new UserOpenTasksView())
-               ->execute($tasks, $recently_closed, $date);
-    } elseif (($this->view) == 'project') {
+           ($user_task_view->execute($tasks, $recently_closed, $date));
+    } else if (($this->view) == 'project') {
         list($leftover, $base_link, $leftover_name, $col_header, $header,
             $result_closed, $leftover_closed, $result ) =
-           (new ProjectOpenTasksView())
-                ->execute($tasks, $recently_closed, $date);
+           ($project_task_view->execute($tasks, $recently_closed, $date));
     } else {
       $result = array();
       $result_closed = array();
@@ -95,7 +95,8 @@ final class SprintReportOpenTasksView extends SprintView {
     if ($project_handle) {
       $tokens = array($project_handle);
     }
-    $filter = parent::renderReportFilters($tokens, $order, $reverse);
+    $filter = parent::renderReportFilters($tokens, $has_window = false,
+        $this->user);
 
     return array($filter, $panel);
   }
@@ -293,7 +294,7 @@ final class SprintReportOpenTasksView extends SprintView {
             'sigil' => 'has-tooltip',
             'meta'  => array(
                 'tip'  => pht('Closed after %s', $edate),
-                'size' => 260
+                'size' => 260,
             ),
         ),
         pht('Recently Closed'));
@@ -336,7 +337,7 @@ final class SprintReportOpenTasksView extends SprintView {
    * Load all the tasks that have been recently closed.
    */
   private function loadRecentlyClosedTasks() {
-    list(,, $window_epoch) = $this->getWindow();
+    list(, , $window_epoch) = $this->getWindow();
 
     $table = new ManiphestTask();
     $xtable = new ManiphestTransaction();
@@ -433,7 +434,7 @@ final class SprintReportOpenTasksView extends SprintView {
     return array($window_str, $window_epoch, $error);
   }
 
-  private function getProjectHandle($phids,$project_phid) {
+  private function getProjectHandle($phids, $project_phid) {
     $handles = $this->loadViewerHandles($phids);
     $project_handle = $handles[$project_phid];
     return $project_handle;

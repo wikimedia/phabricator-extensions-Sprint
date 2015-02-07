@@ -20,16 +20,7 @@ final class BoardDataPieView {
     require_celerity_resource('c3-css', 'sprint');
     require_celerity_resource('c3', 'sprint');
 
-    $coldata = array();
-    $board_columns = $this->board_data->buildBoardDataSet();
-    foreach ($board_columns as $column_phid => $tasks) {
-      $colname = $this->board_data->getColumnName($column_phid);
-      $task_count = count($tasks);
-      $task_points_total = $this->board_data->getTaskPointsSum($tasks);
-      $coldata[] = array(
-          $colname, $task_count, $task_points_total,
-      );
-    }
+    $coldata = $this->board_data->buildBoardDataSet();
     $done_points = '0';
     $backlog_points = '0';
     $doing_points = '0';
@@ -67,7 +58,8 @@ final class BoardDataPieView {
     $boardpie = phutil_tag('div',
             array(
                 'id' => 'c3-board-data-pie',
-                'style' => 'width: 400px; height:200px; padding-right: 200px; float: left;',
+                'style' => 'width: 400px; height:200px; padding-right: 200px;
+                float: left;',
             ), pht('Board'));
     $taskpie = phutil_tag('div',
             array(
@@ -82,4 +74,3 @@ final class BoardDataPieView {
     return $box;
   }
 }
-

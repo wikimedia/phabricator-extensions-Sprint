@@ -69,8 +69,7 @@ final class EventTableView {
             'Date',
             'Task',
             'Action',
-        )
-    );
+        ));
 
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Events related to this sprint'))
@@ -94,14 +93,15 @@ final class EventTableView {
             phutil_tag(
                 'a',
                 array(
-                    'href' => '/' . $task->getMonogram(),
+                    'href' => '/'.$task->getMonogram(),
                 ),
-                $task->getMonogram() . ': ' . $task->getTitle()),
+                $task->getMonogram().': '.$task->getTitle()),
             $event['title'],
         );
 //        $rows = $this->buildTableRow($event, $task);
  //       list ($stamp, $when, $task, $action) = $row[0];
- //       $row['sort'] = $this->setSortOrder($row, $order, $stamp, $when, $task, $action);
+ //       $row['sort'] = $this->setSortOrder($row, $order, $stamp, $when, $task,
+ //         $action);
  //       $rows[] = $row;
 
 //        $rows = isort($rows, 'sort');
@@ -122,15 +122,16 @@ final class EventTableView {
   }
 
   private function buildTableRow($event, $task) {
+    $row = array();
     $row[] = array(
         $event['epoch'],
         phabricator_datetime($event['epoch'], $this->viewer),
         phutil_tag(
             'a',
             array(
-                'href' => '/' . $task->getMonogram(),
+                'href' => '/'.$task->getMonogram(),
             ),
-            $task->getMonogram() . ': ' . $task->getTitle()),
+            $task->getMonogram().': '.$task->getTitle()),
         $event['title'],
     );
     return $row;

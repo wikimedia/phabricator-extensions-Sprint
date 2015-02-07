@@ -12,6 +12,7 @@ final class BoardDataProvider {
   private $taskpoints;
   private $query;
   private $stats;
+  private $timezone;
 
   public function setStart ($start) {
     $this->start = $start;
@@ -84,7 +85,21 @@ final class BoardDataProvider {
       $board_columns[$column->getPHID()] = $board_column;
 
     }
-    return $board_columns;
+    $coldata = $this->buildBoardColumnData($board_columns);
+    return $coldata;
+  }
+
+  private function buildBoardColumnData($board_columns) {
+    $coldata = array();
+    foreach ($board_columns as $column_phid => $tasks) {
+      $colname = $this->getColumnName($column_phid);
+      $task_count = count($tasks);
+      $task_points_total = $this->getTaskPointsSum($tasks);
+      $coldata[] = array(
+          $colname, $task_count, $task_points_total,
+      );
+    }
+    return $coldata;
   }
 
   private function buildColumnTasks($column, $task_map) {
@@ -94,6 +109,7 @@ final class BoardDataProvider {
   }
 
   public function getColumnName($column_phid) {
+    $name = null;
     $column = $this->query->getColumnforPHID($column_phid);
     foreach ($column as $obj) {
       $name = $obj->getDisplayName();

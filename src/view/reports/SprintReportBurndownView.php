@@ -33,13 +33,14 @@ final class SprintReportBurndownView extends SprintView {
     $project_phid = $this->request->getStr('project');
     if ($project_phid) {
       $phids = array($project_phid);
-      $handle = $this->getProjectHandle ($phids,$project_phid);
+      $handle = $this->getProjectHandle ($phids, $project_phid);
     }
     $tokens = array();
     if ($handle) {
       $tokens = $this->getTokens($handle);
     }
-    $filter = parent::renderReportFilters($tokens, $has_window = false);
+    $filter = parent::renderReportFilters($tokens, $has_window = false,
+        $this->user);
     return $filter;
   }
 
@@ -48,7 +49,7 @@ final class SprintReportBurndownView extends SprintView {
     return $tokens;
   }
 
-  private function getProjectHandle($phids,$project_phid) {
+  private function getProjectHandle($phids, $project_phid) {
     $query = id(new SprintQuery())
         ->setPHID($project_phid);
 
@@ -160,7 +161,7 @@ final class SprintReportBurndownView extends SprintView {
       if ($week_bucket != $last_week) {
         if ($week) {
           $rows[] = $this->formatBurnRow(
-              'Week of ' . phabricator_date($last_week_epoch, $this->user),
+              'Week of '.phabricator_date($last_week_epoch, $this->user),
               $week);
           $rowc[] = 'week';
         }
@@ -174,7 +175,8 @@ final class SprintReportBurndownView extends SprintView {
       if ($month_bucket != $last_month) {
         if ($month) {
           $rows[] = $this->formatBurnRow(
-              phabricator_format_local_time($last_month_epoch, $this->user, 'F, Y'),
+              phabricator_format_local_time($last_month_epoch,
+                  $this->user, 'F, Y'),
               $month);
           $rowc[] = 'month';
         }
@@ -183,7 +185,8 @@ final class SprintReportBurndownView extends SprintView {
         $last_month_epoch = $epoch;
       }
 
-      $rows[] = $this->formatBurnRow(phabricator_date($epoch, $this->user), $info);
+      $rows[] = $this->formatBurnRow(phabricator_date($epoch, $this->user),
+          $info);
       $rowc[] = null;
       $week['open'] += $info['open'];
       $week['close'] += $info['close'];
@@ -192,23 +195,24 @@ final class SprintReportBurndownView extends SprintView {
       $period['open'] += $info['open'];
       $period['close'] += $info['close'];
     }
-    return array ($rows,$rowc, $week, $month, $period);
+    return array ($rows, $rowc, $week, $month, $period);
   }
 
   private function renderCaption ($handle) {
       $inst = pht(
-          'NOTE: This table reflects tasks currently in ' .
-          'the project. If a task was opened in the past but added to ' .
-          'the project recently, it is counted on the day it was ' .
-          'opened, not the day it was categorized. If a task was part ' .
-          'of this project in the past but no longer is, it is not ' .
+          'NOTE: This table reflects tasks currently in '.
+          'the project. If a task was opened in the past but added to '.
+          'the project recently, it is counted on the day it was '.
+          'opened, not the day it was categorized. If a task was part '.
+          'of this project in the past but no longer is, it is not '.
           'counted at all.');
       $header = pht('Task Burn Rate for Project %s', $handle->renderLink());
       $caption = phutil_tag('p', array(), $inst);
    return array ($caption, $header);
   }
 
-  private function formatStatsTableHeaders($week, $month, $period, $rows,$rowc) {
+  private function formatStatsTableHeaders($week, $month, $period, $rows,
+                                           $rowc) {
      if ($week) {
       $rows[] = $this->formatBurnRow(
           pht('Week To Date'),
@@ -239,7 +243,7 @@ final class SprintReportBurndownView extends SprintView {
 
     if ($project_phid) {
       $phids = array($project_phid);
-      $handle = $this->getProjectHandle ($phids,$project_phid);
+      $handle = $this->getProjectHandle ($phids, $project_phid);
     }
 
     $data = $this->getXactionData($project_phid);
@@ -247,10 +251,12 @@ final class SprintReportBurndownView extends SprintView {
     $stats = $this->buildStatsfromEvents($data);
     $day_buckets = $this->buildDayBucketsfromEvents($data);
 
-    list ($rows,$rowc, $week, $month, $period) = $this->formatBucketRows ($stats, $day_buckets);
-    list ($rows, $rowc) = $this->formatStatsTableHeaders($week, $month, $period, $rows,$rowc);
+    list ($rows, $rowc, $week, $month, $period) =
+        $this->formatBucketRows($stats, $day_buckets);
+    list ($rows, $rowc) = $this->formatStatsTableHeaders($week, $month, $period,
+        $rows, $rowc);
 
-    $table = $this->StatsTableView($rows, $rowc);
+    $table = $this->statsTableView($rows, $rowc);
 
   if ($handle) {
     list ($caption, $header) = $this->renderCaption ($handle);
@@ -275,7 +281,7 @@ final class SprintReportBurndownView extends SprintView {
   /**
    * @param string[] $rowc
    */
-  private function StatsTableView($rows, $rowc) {
+  private function statsTableView($rows, $rowc) {
     $table = new AphrontTableView($rows);
     $table->setRowClasses($rowc);
     $table->setHeaders(

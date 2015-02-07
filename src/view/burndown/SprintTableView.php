@@ -1,18 +1,15 @@
 <?php
 
-final class SprintTableView
-{
+final class SprintTableView {
 
   /**
    * Format the Burndown data for display on the page.
    *
    * @returns PHUIObjectBoxView
    */
-  public function buildSprintTable($sprint_data, $before)
-  {
+  public function buildSprintTable($sprint_data, $before) {
     $tdata = array();
     $pdata = array();
-    $tasks_remaining = null;
 
     foreach ($sprint_data as $date) {
       $start_tasks = null;
@@ -27,9 +24,9 @@ final class SprintTableView
       if ($timestamp < $now) {
         if (!$tasks_before == 0) {
           $start_tasks = $before->getTasksForwardfromBefore();
-        } elseif (!$tasks_yesterday == 0) {
+        } else if (!$tasks_yesterday == 0) {
           $start_tasks = $date->getYesterdayTasksRemaining();
-        } elseif (!$today_tasks == 0) {
+        } else if (!$today_tasks == 0) {
           $start_tasks = $today_tasks;
         } else {
           $start_tasks = $tasks_remaining;
@@ -54,9 +51,9 @@ final class SprintTableView
       if ($timestamp < $now) {
         if (!$before_points == 0) {
           $start_points = $before_points;
-        } elseif (!$yesterday_points == 0) {
+        } else if (!$yesterday_points == 0) {
           $start_points = $yesterday_points;
-        } elseif (!$today_points == 0) {
+        } else if (!$today_points == 0) {
           $start_points = $today_points;
         } else {
           $start_points = $points_remaining;

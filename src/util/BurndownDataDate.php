@@ -4,7 +4,7 @@
  * @license GPL version 3
  */
 
-class BurndownDataDate {
+final class BurndownDataDate {
 
   private $date;
   private $tasks_added_today;
@@ -31,7 +31,6 @@ class BurndownDataDate {
 
   public function __construct($date) {
     $this->date = $date;
-    return $this;
   }
 
   public function setTasksAddedBefore () {
@@ -63,7 +62,7 @@ class BurndownDataDate {
   }
 
   public function setTasksAddedToday () {
-    return $this->tasks_added_today = $this->tasks_added_today +1;
+    return $this->tasks_added_today = $this->tasks_added_today + 1;
   }
 
   public function getTasksAddedToday () {
@@ -200,7 +199,7 @@ class BurndownDataDate {
 
   public function sumTasksTotal($current, $previous) {
     $current->tasks_total += $previous->tasks_total;
-    return $current->tasks_total ;
+    return $current->tasks_total;
   }
 
   public function sumPointsTotal($current, $previous) {
