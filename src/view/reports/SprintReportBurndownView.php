@@ -40,7 +40,7 @@ final class SprintReportBurndownView extends SprintView {
       $tokens = $this->getTokens($handle);
     }
     $filter = parent::renderReportFilters($tokens, $has_window = false,
-        $this->user);
+        $this->request, $this->user);
     return $filter;
   }
 

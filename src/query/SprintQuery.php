@@ -260,14 +260,11 @@ final class SprintQuery extends SprintDAO {
     return $positions;
   }
 
-  public function extractEvents($xactions, $scope_phid) {
+  public function extractEvents($xactions) {
     assert_instances_of($xactions, 'ManiphestTransaction');
 
     $events = array();
     foreach ($xactions as $xaction) {
-      $old = $xaction->getOldValue();
-      $new = $xaction->getNewValue();
-
         $events[] = array(
             'transactionPHID' => $xaction->getPHID(),
             'objectPHID' => $xaction->getObjectPHID(),
