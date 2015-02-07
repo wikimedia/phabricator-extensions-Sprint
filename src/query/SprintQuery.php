@@ -222,8 +222,7 @@ final class SprintQuery extends SprintDAO {
   }
 
   public function getEvents($xactions) {
-    $scope_phid = $this->project->getPHID();
-    $events = $this->extractEvents($xactions, $scope_phid);
+    $events = $this->extractEvents($xactions);
     return $events;
   }
 
