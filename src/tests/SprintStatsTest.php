@@ -1,5 +1,5 @@
 <?php
-final class SprintBuildStatsTest extends SprintTestCase {
+final class SprintStatsTest extends SprintTestCase {
 
 
   private $short_interval = 28800; // 8 hours
@@ -9,7 +9,7 @@ final class SprintBuildStatsTest extends SprintTestCase {
   private $year_interval = 29030400;  // 1 year
 
   public function testSetTimezone() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $expected_timezone = new DateTimeZone($viewer->getTimezoneIdentifier());
@@ -59,7 +59,7 @@ final class SprintBuildStatsTest extends SprintTestCase {
    * @dataProvider providerDateArray
    */
   public function testbuildTimeSeries($end) {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
@@ -69,7 +69,7 @@ final class SprintBuildStatsTest extends SprintTestCase {
   }
 
   public function testbuildBefore() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
@@ -79,79 +79,74 @@ final class SprintBuildStatsTest extends SprintTestCase {
   }
 
   public function testgetBurndownDate() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $date = 'Thu Jan 1';
     $date = $stats->getBurndownDate($date);
     $this->assertInstanceOf('BurndownDataDate', $date);
   }
 
   public function testsumSprintStats() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
     $now = $date->format('U');
     $end = $now + $this->week_interval*2;
     $timeseries = $stats->buildDateArray($now, $end, $timezone);
-    $before = $stats->buildBefore($now, $timezone);
-    $dates = $stats->sumSprintStats($timeseries, $before);
+    $dates = $stats->sumSprintStats($timeseries);
     $this->assertInstanceOf('BurndownDataDate', array_pop($dates));
   }
 
-  public function testsumTasksTotal() {
-    $stats = new SprintBuildStats;
+  public function testsumTotalTasks() {
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
     $now = $date->format('U');
     $end = $now + $this->week_interval*2;
     $timeseries = $stats->buildDateArray($now, $end, $timezone);
-    $before = $stats->buildBefore($now, $timezone);
-    $dates = $stats->sumTasksTotal($timeseries, $before);
+    $dates = $stats->sumTotalTasks($timeseries);
     $this->assertInstanceOf('BurndownDataDate', array_pop($dates));
   }
 
-  public function testsumPointsTotal() {
-    $stats = new SprintBuildStats;
+  public function testsumTotalPoints() {
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
     $now = $date->format('U');
     $end = $now + $this->week_interval*2;
     $timeseries = $stats->buildDateArray($now, $end, $timezone);
-    $before = $stats->buildBefore($now, $timezone);
-    $dates = $stats->sumPointsTotal($timeseries, $before);
+     $dates = $stats->sumTotalPoints($timeseries);
     $this->assertInstanceOf('BurndownDataDate', array_pop($dates));
   }
 
   public function testcalcPointsRemaining() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
     $now = $date->format('U');
     $end = $now + $this->week_interval*2;
     $timeseries = $stats->buildDateArray($now, $end, $timezone);
-    $before = $stats->buildBefore($now, $timezone);
-    $dates = $stats->calcPointsRemaining($timeseries, $before);
+    $dates = $stats->calcPointsRemaining($timeseries);
     $this->assertInstanceOf('BurndownDataDate', array_pop($dates));
   }
 
   public function testcalcTasksRemaining() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
     $now = $date->format('U');
     $end = $now + $this->week_interval*2;
     $timeseries = $stats->buildDateArray($now, $end, $timezone);
-    $before = $stats->buildBefore($now, $timezone);
-    $dates = $stats->calcTasksRemaining($timeseries, $before);
+    $dates = $stats->calcTasksRemaining($timeseries);
     $this->assertInstanceOf('BurndownDataDate', array_pop($dates));
   }
 
   public function testcomputeIdealPoints() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();
@@ -163,7 +158,7 @@ final class SprintBuildStatsTest extends SprintTestCase {
   }
 
   public function testbuildDataSet() {
-    $stats = new SprintBuildStats;
+    $stats = new SprintStats;
     $viewer = $this->generateNewTestUser();
     $timezone = $stats->setTimezone($viewer);
     $date = new DateTime();

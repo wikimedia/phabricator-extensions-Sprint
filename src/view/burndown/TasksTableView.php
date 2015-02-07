@@ -78,9 +78,8 @@ final class TasksTableView {
             'NumPriority',
             'Priority',
             'Points',
-            'Status'
-        )
-    );
+            'Status',
+        ));
     $table->setColumnVisibility(
         array(
             true,
@@ -103,11 +102,6 @@ final class TasksTableView {
   }
 
    /**
-   * This builds a tree of the tasks in this project. Due to the acyclic nature
-   * of tasks, we ntake some steps to reduce and call out duplication.
-   *
-   * We ignore any tasks not in this sprint.
-   *
    * @param string $order
    * @param integer $reverse
    * @return array
@@ -118,32 +112,33 @@ final class TasksTableView {
     $sprintpoints = id(new SprintPoints())
         ->setTaskPoints($this->taskpoints);
 
-    // We also collect the phids we need to fetch owner information
-    $handle_phids = array();
-    foreach ($this->tasks as $task) {
-       $handle_phids[$task->getOwnerPHID()] = $task->getOwnerPHID();
-    }
-    $handles = $this->query->getViewerHandles($this->request, $handle_phids);
+    $handles = $this->getHandles();
 
     $output = array();
     $rows = array();
     foreach ($this->tasks as $task) {
+      $blocked = false;
       if (isset($map[$task->getPHID()]['child'])) {
-        $blocked = true;
-      } else {
-        $blocked = false;
+        foreach (($map[$task->getPHID()]['child']) as $phid) {
+          $ctask = $this->getTaskforPHID($phid);
+          foreach ($ctask as $child) {
+            if (ManiphestTaskStatus::isOpenStatus($child->getStatus())) {
+              $blocked = true;
+              break;
+            }
+          }
+        }
       }
 
       $ptasks = array();
       $parentphid = null;
+      $blocker = false;
       if (isset($map[$task->getPHID()]['parent'])) {
         $blocker = true;
-        foreach (($map[$task->getPHID()]['parent']) as $parentphid) {
-          $ptask = $this->getTaskforPHID($parentphid);
+        foreach (($map[$task->getPHID()]['parent']) as $phid) {
+          $ptask = $this->getTaskforPHID($phid);
           $ptasks = array_merge($ptasks, $ptask);
         }
-      } else {
-        $blocker = false;
       }
 
       $points = $sprintpoints->getTaskPoints($task->getPHID());
@@ -202,8 +197,7 @@ final class TasksTableView {
     return $row['sort'];
   }
 
-  private function buildTaskMap ($edges, $tasks)
-  {
+  private function buildTaskMap ($edges, $tasks) {
     $map = array();
     foreach ($tasks as $task) {
       if ($parents =
@@ -212,7 +206,7 @@ final class TasksTableView {
             if (isset($tasks[$parent['dst']]))
             $map[$task->getPHID()]['parent'][] = $parent['dst'];
         }
-      } elseif ($children =
+      } else if ($children =
           $edges[$task->getPHID()][ManiphestTaskDependsOnTaskEdgeType::EDGECONST]) {
           foreach ($children as $child) {
             if (isset($tasks[$child['dst']])) {
@@ -222,6 +216,15 @@ final class TasksTableView {
       }
     }
     return $map;
+  }
+
+  private function getHandles() {
+    $handle_phids = array();
+    foreach ($this->tasks as $task) {
+      $handle_phids[$task->getOwnerPHID()] = $task->getOwnerPHID();
+    }
+    $handles = $this->query->getViewerHandles($this->request, $handle_phids);
+    return $handles;
   }
 
   private function setOwnerLink($handles, $task) {
@@ -247,7 +250,7 @@ final class TasksTableView {
   }
 
   private function getPriorityName($task) {
-    $priority_name = new ManiphestTaskPriority;
+    $priority_name = new ManiphestTaskPriority();
     return $priority_name->getTaskPriorityName($task->getPriority());
   }
 
@@ -267,14 +270,15 @@ final class TasksTableView {
     $owner_link = $this->setOwnerLink($handles, $task);
     $priority = $this->getPriority($task);
     $priority_name = $this->getPriorityName($task);
+    $is_open = ManiphestTaskStatus::isOpenStatus($task->getStatus());
 
-    if ($blocker === true && $task->getStatus() == 'open') {
+    if ($blocker === true && $is_open === true) {
       $blockericon = $this->getIconforBlocker($ptasks);
     } else {
       $blockericon = '';
     }
 
-    if ($blocked === true && $task->getStatus() == 'open') {
+    if ($blocked === true && $is_open === true) {
       $blockedicon = $this->getIconforBlocked();
     } else {
       $blockedicon = '';
@@ -284,7 +288,7 @@ final class TasksTableView {
         phutil_safe_html(phutil_tag(
                 'a',
                 array(
-                    'href' => '/' . $task->getMonogram(),
+                    'href' => '/'.$task->getMonogram(),
                     'class' => $task->getStatus() !== 'open'
                         ? 'phui-tag-core-closed'
                         : '',
@@ -339,15 +343,10 @@ final class TasksTableView {
     return $linktext;
   }
 
-  private function buildTaskMonogram($task) {
-    $monogram = '/'.$task->getMonogram().'/';
-    return $monogram;
-  }
-
-  private function getTaskforPHID($parentphid) {
+  private function getTaskforPHID($phid) {
     $task = id(new ManiphestTaskQuery())
         ->setViewer($this->viewer)
-        ->withPHIDs(array($parentphid))
+        ->withPHIDs(array($phid))
         ->execute();
     return $task;
   }

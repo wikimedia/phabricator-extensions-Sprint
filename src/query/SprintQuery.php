@@ -42,15 +42,29 @@ final class SprintQuery extends SprintDAO {
   }
 
   public function getStartDate($aux_fields) {
-    $start = idx($aux_fields, 'isdc:sprint:startdate')
-        ->getProxy()->getFieldValue();
-    return $start;
+      $start = idx($aux_fields, 'isdc:sprint:startdate')
+          ->getProxy()->getFieldValue();
+    if (is_null($start)) {
+      $help = 'To do this, go to the Project Edit Details Page';
+      throw new BurndownException("The project \"".$this->project->getName()
+          ."\" is not set up for Sprint because "
+          ."it has not been assigned a start date\n", $help);
+    } else {
+      return $start;
+    }
   }
 
   public function getEndDate($aux_fields) {
     $end = idx($aux_fields, 'isdc:sprint:enddate')
         ->getProxy()->getFieldValue();
-    return $end;
+    if (is_null($end)) {
+      $help = 'To do this, go to the Project Edit Details Page';
+      throw new BurndownException("The project \"".$this->project->getName()
+          ."\" is not set up for Sprint because "
+          ."it has not been assigned an end date\n", $help);
+    } else {
+      return $end;
+    }
   }
 
   public function getTasks() {
@@ -59,7 +73,15 @@ final class SprintQuery extends SprintDAO {
         ->withAnyProjects(array($this->project->getPHID()))
         ->needProjectPHIDs(true)
         ->execute();
-    return $tasks;
+    if (empty($tasks)) {
+      $help = "To Create a Task, go to the Sprint Board and select the "
+      ."column header menu";
+      throw new BurndownException("The project \"".$this->project->getName()
+          ."\" is not set up for Sprint because "
+          ."it has no tasks\n", $help);
+    } else {
+      return $tasks;
+    }
   }
 
   public function getStoryPointsForTask($task_phid)  {
@@ -110,19 +132,6 @@ final class SprintQuery extends SprintDAO {
         ->withObjectPHIDs($task_phids)
         ->execute();
     return $xactions;
-  }
-
-  public function checkNull($start, $end, $project, $tasks) {
-    if (!$start OR !$end) {
-      $projhelp = 'To do this go to the Project Edit Details Page';
-      throw new BurndownException("The project \"".$project->getName()
-          ."\" is not set up for Sprints because "
-          ."it has not been assigned a start date and end date. \n", $projhelp);
-    }
-    if (!$tasks) {
-      $taskhelp = 'To add a task go to the Maniphest Query Page';
-      throw new BurndownException('This project has no tasks.', $taskhelp);
-    }
   }
 
   public function getXActionObj () {

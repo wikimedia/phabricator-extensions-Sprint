@@ -15,19 +15,6 @@ abstract class SprintView extends AphrontView
                 ->setName('set_project')
                 ->setValue($tokens));
 
-    //if ($has_window) {
-    //  list($window_str, $ignored, $window_error) = $this->getWindow();
-    //  $form
-    //      ->appendChild(
-    //          id(new AphrontFormTextControl())
-    //              ->setLabel(pht('Recently Means'))
-    //              ->setName('set_window')
-    //              ->setCaption(
-    //                  pht('Configure the cutoff for the "Recently Closed" column.'))
-    //              ->setValue($window_str)
-    //              ->setError($window_error));
-    // }
-
     $form
         ->appendChild(
             id(new AphrontFormSubmitControl())

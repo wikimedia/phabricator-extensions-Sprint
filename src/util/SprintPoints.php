@@ -33,7 +33,7 @@ private $tasks;
     return $points;
   }
 
-  public function sumAllTaskPoints() {
+  public function sumTotalTaskPoints() {
     $points = null;
     if (!empty($this->taskpoints)) {
       $taskpoints = mpull($this->taskpoints, null, 'getObjectPHID');

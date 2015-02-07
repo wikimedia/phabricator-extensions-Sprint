@@ -36,10 +36,10 @@ final class SprintDataView extends SprintView
         ->setViewer($this->viewer)
         ->setPHID($this->project->getPHID());
 
-    $this->taskpoints = $query->getTaskData();
     $tasks = $query->getTasks();
+    $this->taskpoints = $query->getTaskData();
     $this->tasks = mpull($tasks, null, 'getPHID');
-    $stats = id(new SprintBuildStats());
+    $stats = id(new SprintStats());
 
     $this->setStartandEndDates($query);
     $this->setTimezone($stats);

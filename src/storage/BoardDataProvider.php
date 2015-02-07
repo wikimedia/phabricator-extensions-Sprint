@@ -145,9 +145,6 @@ final class BoardDataProvider {
 
   public function buildChartfromBoardData() {
 
-    $this->query->checkNull($this->start, $this->end, $this->project,
-        $this->tasks);
-
     $date_array = $this->stats->buildDateArray($this->start, $this->end,
         $this->timezone);
     $xactions = $this->getProjectColumnXactions();
