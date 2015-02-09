@@ -18,11 +18,9 @@ Then add some tasks to that project, and edit them to set some story points.
 You can also view a list of all Sprint enabled projects by going to the Sprint application main interface at 
 /project/sprint.
 
-<<<<<<< HEAD
 Tasks in Sprints have "Story Points"
 =======
 Only tasks in Sprints have "Story Points".
 
-![Alt text](/rsrc/images/Screenshot-1.jpg?raw=true "Sprint Extension Burndown View")
+![Alt text](rsrc/images/Screenshot-1.jpg?raw=true "Sprint Extension Burndown View")
 
->>>>>>> upstream/master
