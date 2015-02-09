@@ -2,7 +2,6 @@
 
 final class BoardDataPieView {
 
-  private $project;
   private $board_data;
 
   public function setBoardData ($board_data) {
@@ -10,17 +9,35 @@ final class BoardDataPieView {
     return $this;
   }
 
-  public function setProject($project) {
-    $this->project = $project;
-    return $this;
+  public function buildPieBox() {
+    $this->initBoardDataPie();
+    $this->initTaskStatusPie();
+    $project_name = $this->board_data->getProject()->getName();
+    $boardpie = phutil_tag('div',
+        array(
+            'id' => 'c3-board-data-pie',
+            'style' => 'width: 400px; height:200px; padding-right: 200px;
+                float: left;',
+        ), pht('Board'));
+    $taskpie = phutil_tag('div',
+        array(
+            'id' => 'pie',
+            'style' => 'width: 300px; height:200px; margin-left: 600px;',
+        ), pht('Task Status'));
+    $box = id(new PHUIObjectBoxView())
+        ->setHeaderText(pht('Progress Report for '.
+            $project_name))
+        ->appendChild($boardpie)
+        ->appendChild($taskpie);
+    return $box;
   }
 
-  public function buildBoardDataPie() {
+  private function initBoardDataPie() {
     require_celerity_resource('d3', 'sprint');
     require_celerity_resource('c3-css', 'sprint');
     require_celerity_resource('c3', 'sprint');
 
-    $coldata = $this->board_data->buildBoardDataSet();
+    $coldata = $this->board_data->getColumnData();
     $done_points = '0';
     $backlog_points = '0';
     $doing_points = '0';
@@ -53,24 +70,25 @@ final class BoardDataPieView {
         'Review' => $review_points,
         'Done' => $done_points,
     ), 'sprint');
+  }
 
+  private function initTaskStatusPie() {
+    $sprintpoints = id(new SprintPoints())
+        ->setTaskPoints($this->board_data->getTaskPoints())
+        ->setTasks($this->board_data->getTasks());
 
-    $boardpie = phutil_tag('div',
-            array(
-                'id' => 'c3-board-data-pie',
-                'style' => 'width: 400px; height:200px; padding-right: 200px;
-                float: left;',
-            ), pht('Board'));
-    $taskpie = phutil_tag('div',
-            array(
-                'id' => 'pie',
-                'style' => 'width: 300px; height:200px; margin-left: 600px;',
-            ), pht('Task Status'));
-    $box = id(new PHUIObjectBoxView())
-        ->setHeaderText(pht('Progress Report for '.
-            $this->project->getName()))
-        ->appendChild($boardpie)
-        ->appendChild($taskpie);
-    return $box;
+    list($task_open_status_sum, $task_closed_status_sum) = $sprintpoints
+        ->getStatusSums();
+
+    require_celerity_resource('d3', 'sprint');
+    require_celerity_resource('c3-css', 'sprint');
+    require_celerity_resource('c3', 'sprint');
+
+    $id = 'pie';
+    Javelin::initBehavior('c3-pie', array(
+        'hardpoint' => $id,
+        'open' => $task_open_status_sum,
+        'resolved' => $task_closed_status_sum,
+    ), 'sprint');
   }
 }

@@ -13,6 +13,9 @@ final class BoardDataProvider {
   private $query;
   private $stats;
   private $timezone;
+  private $timeseries;
+  private $chartdata;
+  private $coldata;
 
   public function setStart ($start) {
     $this->start = $start;
@@ -27,6 +30,18 @@ final class BoardDataProvider {
   public function setProject ($project) {
     $this->project = $project;
     return $this;
+  }
+
+  public function getProject () {
+    return $this->project;
+  }
+
+  public function getColumnData () {
+    return $this->coldata;
+  }
+
+  public function getChartData () {
+    return $this->chartdata;
   }
 
   public function setViewer ($viewer) {
@@ -44,14 +59,31 @@ final class BoardDataProvider {
     return $this;
   }
 
+  public function setTimeSeries ($timeseries) {
+    $this->timeseries = $timeseries;
+    return $this;
+  }
+
+  public function getTimeSeries () {
+    return $this->timeseries;
+  }
+
   public function setTasks ($tasks) {
     $this->tasks = $tasks;
     return $this;
   }
 
+  public function getTasks () {
+    return $this->tasks;
+  }
+
   public function setTaskPoints ($taskpoints) {
     $this->taskpoints = $taskpoints;
     return $this;
+  }
+
+  public function getTaskPoints() {
+    return $this->taskpoints;
   }
 
   public function setStats ($stats) {
@@ -64,7 +96,13 @@ final class BoardDataProvider {
     return $this;
   }
 
-  public function buildBoardDataSet() {
+  public function execute() {
+    $this->buildBoardDataSet();
+    $this->buildChartfromBoardData();
+    return $this;
+  }
+
+  private function buildBoardDataSet() {
     $board_columns = array();
     $columns = $this->query->getProjectColumns();
     $positions = $this->query->getProjectColumnPositionforTask($this->tasks,
@@ -85,8 +123,8 @@ final class BoardDataProvider {
       $board_columns[$column->getPHID()] = $board_column;
 
     }
-    $coldata = $this->buildBoardColumnData($board_columns);
-    return $coldata;
+    $this->coldata = $this->buildBoardColumnData($board_columns);
+    return $this;
   }
 
   private function buildBoardColumnData($board_columns) {
@@ -108,7 +146,7 @@ final class BoardDataProvider {
     return $column_tasks;
   }
 
-  public function getColumnName($column_phid) {
+  private function getColumnName($column_phid) {
     $name = null;
     $column = $this->query->getColumnforPHID($column_phid);
     foreach ($column as $obj) {
@@ -117,7 +155,7 @@ final class BoardDataProvider {
     return $name;
   }
 
-  public function getTaskPointsSum($tasks) {
+  private function getTaskPointsSum($tasks) {
     $points_sum = null;
     $taskpoints = mpull($this->taskpoints, null, 'getObjectPHID');
     $column_points = array_intersect_key($taskpoints, $tasks);
@@ -133,7 +171,7 @@ final class BoardDataProvider {
     return $points_sum;
   }
 
-  public function getProjectColumnXactions() {
+  private function getProjectColumnXactions() {
     $xactions = array();
     $scope_phid = $this->project->getPHID();
     $query = new PhabricatorFeedQuery();
@@ -159,7 +197,7 @@ final class BoardDataProvider {
     return $xactions;
   }
 
-  public function buildChartfromBoardData() {
+  private function buildChartfromBoardData() {
 
     $date_array = $this->stats->buildDateArray($this->start, $this->end,
         $this->timezone);
@@ -177,7 +215,7 @@ final class BoardDataProvider {
     $this->stats->setTaskPoints($this->taskpoints);
     $sprint_data = $this->stats->setSprintData($dates);
     $data = $this->stats->buildDataSet($sprint_data);
-    $data = $this->stats->transposeArray($data);
-    return $data;
+    $this->chartdata = $this->stats->transposeArray($data);
+    return $this;
   }
 }

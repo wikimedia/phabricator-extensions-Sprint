@@ -1,7 +1,6 @@
 <?php
 
-final class SprintDataView extends SprintView
-{
+final class SprintDataView extends SprintView {
 
   private $request;
   private $timezone;
@@ -57,37 +56,32 @@ final class SprintDataView extends SprintView
         ->setTimezone($this->timezone)
         ->setTaskPoints($this->taskpoints)
         ->setStats($stats)
-        ->setQuery($query);
-
-    $pie_chart_view = id(new C3PieView())
-        ->setTasks($this->tasks)
-        ->setTaskPoints($this->taskpoints)
-        ->setProject($this->project);
-    $task_pie = $pie_chart_view->buildC3Pie();
+        ->setQuery($query)
+        ->setTimeSeries($this->timeseries)
+        ->execute();
 
     $board_data_pie_view = id(new BoardDataPieView())
-        ->setBoardData($board_model)
-        ->setProject($this->project);
-    $pies = $board_data_pie_view->buildBoardDataPie();
+        ->setBoardData($board_model);
+    $pies = $board_data_pie_view->buildPieBox();
 
-    $board_data_table_view = id(new BoardDataView())
+    $board_data_table_view = id(new BoardDataTableView())
         ->setBoardData($board_model);
     $board_table = $board_data_table_view->buildBoardDataTable();
 
-    $board_chart_data = $board_model->buildChartfromBoardData();
-    $board_chart_view = id(new C3ChartView())
-        ->setChartData($board_chart_data)
-        ->setProject($this->project)
-        ->setTimeSeries($this->timeseries);
-    $board_chart = $board_chart_view->buildC3Chart();;
+    $board_chart_view = id(new BurndownChartView())
+        ->setChartData($board_model);
+    $board_chart = $board_chart_view->buildBurndownChart();
 
-    $tasks_table_view = id(new TasksTableView())
+    $task_table_model = id(new TaskTableDataProvider())
         ->setProject($this->project)
         ->setViewer($this->viewer)
         ->setRequest($this->request)
         ->setTasks($this->tasks)
         ->setTaskPoints($this->taskpoints)
-        ->setQuery($query);
+        ->setQuery($query)
+        ->execute();
+    $tasks_table_view = id(new TasksTableView())
+        ->setTableData($task_table_model);
     $tasks_table = $tasks_table_view->buildTasksTable();
 
     $event_table_view = id(new EventTableView())

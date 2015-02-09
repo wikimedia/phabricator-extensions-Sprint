@@ -1,6 +1,6 @@
 <?php
 
-final class BoardDataView {
+final class BoardDataTableView {
 
   private $board_data;
 
@@ -10,7 +10,7 @@ final class BoardDataView {
   }
 
   public function buildBoardDataTable() {
-    $coldata = $this->board_data->buildBoardDataSet();
+    $coldata = $this->board_data->getColumnData();
     $table = id(new AphrontTableView($coldata))
         ->setHeaders(
             array(
