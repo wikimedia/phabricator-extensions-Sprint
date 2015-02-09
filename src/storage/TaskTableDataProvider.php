@@ -11,6 +11,11 @@ final class TaskTableDataProvider {
   private $rows;
   private $order;
   private $reverse;
+  private $blocked;
+  private $blocker;
+  private $ptasks;
+  private $points;
+  private $handles;
 
 
   public function setProject ($project) {
@@ -63,47 +68,55 @@ final class TaskTableDataProvider {
     return $this->buildTaskTableData();
   }
 
+  private function checkForBlocked($task, $map) {
+    $blocked = false;
+    if (isset($map[$task->getPHID()]['child'])) {
+      foreach (($map[$task->getPHID()]['child']) as $phid) {
+        $ctask = $this->getTaskforPHID($phid);
+        foreach ($ctask as $child) {
+          if (ManiphestTaskStatus::isOpenStatus($child->getStatus())) {
+            $blocked = true;
+            break;
+          }
+        }
+      }
+     return $blocked;
+    }
+  }
+
+  private function checkForBlocker($task, $map) {
+    $ptasks = array();
+    $phid = null;
+    $blocker = false;
+    if (isset($map[$task->getPHID()]['parent'])) {
+      $blocker = true;
+      foreach (($map[$task->getPHID()]['parent']) as $phid) {
+        $ptask = $this->getTaskforPHID($phid);
+        $ptasks = array_merge($ptasks, $ptask);
+      }
+    }
+    return array ($blocker, $ptasks);
+  }
+
+
   private function buildTaskTableData() {
     $order = $this->request->getStr('order', 'name');
     list($this->order, $this->reverse) = AphrontTableView::parseSort($order);
     $edges = $this->query->getEdges($this->tasks);
+
     $map = $this->buildTaskMap($edges, $this->tasks);
     $sprintpoints = id(new SprintPoints())
         ->setTaskPoints($this->taskpoints);
 
-    $handles = $this->getHandles();
+    $this->handles = $this->getHandles();
 
-    $output = array();
     $rows = array();
     foreach ($this->tasks as $task) {
-      $blocked = false;
-      if (isset($map[$task->getPHID()]['child'])) {
-        foreach (($map[$task->getPHID()]['child']) as $phid) {
-          $ctask = $this->getTaskforPHID($phid);
-          foreach ($ctask as $child) {
-            if (ManiphestTaskStatus::isOpenStatus($child->getStatus())) {
-              $blocked = true;
-              break;
-            }
-          }
-        }
-      }
+      $this->blocked = $this->checkForBlocked($task, $map);
+      list ($this->blocker, $this->ptasks) = $this->checkForBlocker($task, $map);
+      $this->points = $sprintpoints->getTaskPoints($task->getPHID());
 
-      $ptasks = array();
-      $phid = null;
-      $blocker = false;
-      if (isset($map[$task->getPHID()]['parent'])) {
-        $blocker = true;
-        foreach (($map[$task->getPHID()]['parent']) as $phid) {
-          $ptask = $this->getTaskforPHID($phid);
-          $ptasks = array_merge($ptasks, $ptask);
-        }
-      }
-
-      $points = $sprintpoints->getTaskPoints($task->getPHID());
-
-      $row = $this->addTaskToTree($output, $blocked, $ptasks, $blocker,
-          $task, $handles, $points);
+      $row = $this->addTaskToTree($task);
       list ($task, $cdate, , $udate, , $owner_link, $numpriority, , $points,
           $status) = $row[0];
       $row['sort'] = $this->setSortOrder($row, $order, $task, $cdate, $udate,
@@ -120,7 +133,6 @@ final class TaskTableDataProvider {
       $rows = array_reverse($rows);
     }
 
-    $a = array();
     $this->rows = array_map(function($a) { return $a['0']; }, $rows);
     return $this;
   }
@@ -220,32 +232,30 @@ final class TaskTableDataProvider {
     return $task->getPriority();
   }
 
-  private function addTaskToTree($output, $blocked, $ptasks, $blocker,
-                                 $task, $handles, $points) {
-
+  private function addTaskToTree($task) {
     $cdate = $this->getTaskCreatedDate($task);
     $date_created = phabricator_datetime($cdate, $this->viewer);
     $udate = $this->getTaskModifiedDate($task);
     $last_updated = phabricator_datetime($udate, $this->viewer);
     $status = $task->getStatus();
 
-    $owner_link = $this->setOwnerLink($handles, $task);
+    $owner_link = $this->setOwnerLink($this->handles, $task);
     $priority = $this->getPriority($task);
     $priority_name = $this->getPriorityName($task);
     $is_open = ManiphestTaskStatus::isOpenStatus($task->getStatus());
 
-    if ($blocker === true && $is_open === true) {
-      $blockericon = $this->getIconforBlocker($ptasks);
+    if ($this->blocker === true && $is_open === true) {
+      $blockericon = $this->getIconforBlocker();
     } else {
       $blockericon = '';
     }
 
-    if ($blocked === true && $is_open === true) {
+    if ($this->blocked === true && $is_open === true) {
       $blockedicon = $this->getIconforBlocked();
     } else {
       $blockedicon = '';
     }
-
+    $output = array();
     $output[] = array(
         phutil_safe_html(phutil_tag(
             'a',
@@ -264,17 +274,17 @@ final class TaskTableDataProvider {
         $owner_link,
         $priority,
         $priority_name,
-        $points,
+        $this->points,
         $status,
     );
 
     return $output;
   }
 
-  private function getIconforBlocker($ptasks) {
+  private function getIconforBlocker() {
     $linktasks = array();
     $links = null;
-    foreach ($ptasks as $task) {
+    foreach ($this->ptasks as $task) {
       $linktasks[] = $this->buildTaskLink($task);
       $links = implode('|  ', $linktasks);
     }
