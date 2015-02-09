@@ -22,5 +22,5 @@ Tasks in Sprints have "Story Points"
 =======
 Only tasks in Sprints have "Story Points".
 
-![Alt text](rsrc/images/Screenshot-1.jpg?raw=true "Sprint Extension Burndown View")
+![Alt text](rsrc/images/Screenshot-1.png?raw=true "Sprint Extension Burndown View")
 
