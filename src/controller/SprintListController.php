@@ -1,70 +1,56 @@
 <?php
-/**
- * @author Michael Peters
- * @license GPL version 3
- */
 
 final class SprintListController extends SprintController {
 
   private $view;
+  private $request;
+  private $viewer;
 
   public function processRequest() {
-    $request = $this->getRequest();
-    $viewer = $request->getUser();
-    $nav = $this->buildNavMenu();
-    $sprint_phids = $this->getSprintPHIDs();
-    $projects = $this->loadAllSprints($viewer, $sprint_phids);
-    $this->view = $nav->selectFilter($this->view, 'list');
+    $this->request = $this->getRequest();
+    $this->viewer = $this->request->getUser();
 
-    $projects_table_view = id(new ProjectsTableView())
-        ->setProjects($projects)
-        ->setViewer($viewer)
-        ->setRequest($request);
+    $error_box = null;
+    $sprintlist_model = null;
+    $sprintlist_model = id(new SprintListDataProvider())
+        ->setViewer($this->viewer)
+        ->setRequest($this->request)
+        ->execute();
 
-    list ($rows, $order, $reverse) = $projects_table_view->getProjectRows();
-    $projects_table = $projects_table_view->buildProjectsTable($rows, $order,
-        $reverse, $nav);
+    try {
+      $sprintlist_table = id(new SprintListTableView())
+          ->setTableData($sprintlist_model)
+          ->buildProjectsTable();
+    } catch (Exception $e) {
+      $error_box = $this->getErrorBox($e);
+    }
+
 
     $can_create = $this->hasApplicationCapability(
         ProjectCreateProjectsCapability::CAPABILITY);
     $crumbs = $this->buildSprintApplicationCrumbs($can_create);
     $crumbs->addTextCrumb(pht('Sprint Burndown List'));
 
-
     $help = id(new PHUIBoxView())
         ->appendChild(phutil_tag('p', array(),
             'To have a project show up in this list, make sure that the'
             .'"Is Sprint" box has been checked in Project Edit Details'))
         ->addMargin(PHUI::MARGIN_LARGE);
-
+    $nav = $this->buildNavMenu();
+    $this->view = $nav->selectFilter($this->view, 'list');
     $nav->appendChild(
         array(
+            $error_box,
             $crumbs,
             $help,
-            $projects_table,
+            $sprintlist_table,
         ));
 
     return $this->buildApplicationPage(
-      array(
-          $nav,
-      ),
+      $nav,
       array(
         'title' => array(pht('Sprint List')),
         'device' => true,
       ));
-  }
-
-  private function getSprintPHIDs() {
-    $query = id(new SprintQuery());
-    $sprint_phids = $query->getSprintPHIDs();
-    return $sprint_phids;
-  }
-
-  private function loadAllSprints($viewer, $sprints) {
-    $projects = id(new PhabricatorProjectQuery())
-      ->setViewer($viewer)
-      ->withPHIDS($sprints)
-      ->execute();
-    return $projects;
   }
 }

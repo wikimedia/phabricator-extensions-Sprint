@@ -15,16 +15,6 @@ final class SprintControllerTest extends SprintTestCase {
     $this->assertInstanceOf('AphrontSideNavFilterView', $nav);
   }
 
-  public function testgetCrumbs() {
-    $projectobj = new PhabricatorProject();
-    $dv = new SprintDataViewController();
-    $app = new SprintApplication();
-    $dv->setCurrentApplication($app);
-    $can_create = true;
-    $crumbs = $dv->getCrumbs($projectobj, $can_create);
-    $this->assertInstanceOf('PHUICrumbsView', $crumbs);
-  }
-
   public function testgetSprintDataView() {
     $projectobj = new PhabricatorProject();
     $viewer = $this->generateNewTestUser();

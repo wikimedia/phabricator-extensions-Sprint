@@ -121,7 +121,13 @@ final class SprintQuery extends SprintDAO {
     foreach ($sprintfields as $key => $value) {
         $sprint_phids[] = $value->getObjectPHID();
       }
-    return $sprint_phids;
+    if (empty($sprint_phids)) {
+      $help = 'To Create a Sprint, go to /project/create/ and make sure that'
+          .' the "Is Sprint" box has been checked';
+      throw new BurndownException("There are no Sprints to show yet\n", $help);
+    } else {
+      return $sprint_phids;
+    }
   }
 
   public function getXactions($tasks) {

@@ -13,9 +13,9 @@ It also adds pie chart visualization of the relationships between points, tasks,
 
 To enable a project as a Sprint, simply select the "Is Sprint" checkbox in the Project Edit Details page.
 After a project is enabled as a Sprint, you must then enter a start and end date to define the period scope.
-Then add some tasks to that project, and edit them to set some story points. 
+Then add some tasks to that project, and edit them to set some story points.
 
-You can also view a list of all Sprint enabled projects by going to the Sprint application main interface at 
+You can also view a list of all Sprint enabled projects by going to the Sprint application main interface at
 /project/sprint.
 
 ####Tasks in Sprints have "Story Points"

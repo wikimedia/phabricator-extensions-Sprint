@@ -3,6 +3,9 @@
 final class SprintDataViewController extends SprintController {
 
   private $projectID;
+  private $request;
+  private $viewer;
+  private $project;
 
   public function willProcessRequest(array $data) {
     $this->projectID = $data['id'];
@@ -10,11 +13,10 @@ final class SprintDataViewController extends SprintController {
 
   public function processRequest() {
 
-    $request = $this->getRequest();
-    $viewer = $request->getUser();
-    $pid = $this->projectID;
-    $project = $this->loadProject($viewer, $pid);
-    if (!$project) {
+    $this->request = $this->getRequest();
+    $this->viewer = $this->request->getUser();
+    $this->project = $this->loadProject();
+    if (!$this->project) {
       return new Aphront404Response();
     }
 
@@ -22,67 +24,61 @@ final class SprintDataViewController extends SprintController {
     $sprintdata_view = null;
 
     try {
-      $sprintdata_view = $this->getSprintDataView($request, $project, $viewer);
+      $sprintdata_view = $this->getSprintDataView();
       } catch (Exception $e) {
       $error_box = $this->getErrorBox($e);
     }
 
     $can_create = $this->hasApplicationCapability(
         ProjectCreateProjectsCapability::CAPABILITY);
-    $crumbs = $this->getCrumbs($project, $can_create);
-    $nav = $this->buildIconNavView($project);
-    $nav->appendChild($crumbs);
-    $nav->appendChild($error_box);
-    $nav->appendChild($sprintdata_view);
+    $crumbs = $this->getCrumbs($can_create);
+    $nav = $this->buildIconNavView($this->project);
+    $nav->appendChild(
+        array($crumbs,
+              $error_box,
+              $sprintdata_view,));
 
     return $this->buildApplicationPage(
         array(
             $nav,
         ),
         array(
-            'title' => array(pht('Burndown'), $project->getName()),
+            'title' => array(pht('Burndown'), $this->project->getName()),
             'device' => true,
         ));
   }
 
-  public function loadProject($viewer, $pid) {
+  public function loadProject() {
     // Load the project we're looking at, based on the project ID in the URL.
     $project = id(new PhabricatorProjectQuery())
-        ->setViewer($viewer)
-        ->withIDs(array($pid))
+        ->setViewer($this->viewer)
+        ->withIDs(array($this->projectID))
         ->needImages(true)
         ->executeOne();
    return $project;
   }
 
-  public function getCrumbs($project, $can_create) {
-    $pid = $project->getID();
+  public function getCrumbs($can_create) {
 
     $crumbs = $this->buildSprintApplicationCrumbs($can_create);
     $crumbs->addTextCrumb(
-        $project->getName(),
-        $this->getApplicationURI().'profile/'.$pid);
+        $this->project->getName(),
+        $this->getApplicationURI().'profile/'.$this->projectID);
     $crumbs->addTextCrumb(pht('Burndown'));
     $crumbs->addAction(
         id(new PHUIListItemView())
             ->setName(pht('Sprint Board'))
-            ->setHref($this->getApplicationURI().'board/'.$pid)
+            ->setHref($this->getApplicationURI().'board/'.$this->projectID)
             ->setIcon('fa-columns'));
    return $crumbs;
   }
 
-  public function getSprintDataView($request, $project, $viewer) {
+  public function getSprintDataView() {
     $sprintdata_view = id(new SprintDataView())
-        ->setProject($project)
-        ->setViewer($viewer)
-        ->setRequest($request);
+        ->setProject($this->project)
+        ->setViewer($this->viewer)
+        ->setRequest($this->request);
     return $sprintdata_view;
   }
 
-  public function getErrorBox($e) {
-    $error_box = id(new PHUIErrorView())
-        ->setTitle(pht('Burndown could not be rendered for this project'))
-        ->setErrors(array($e->getMessage()));
-    return $error_box;
-  }
 }
