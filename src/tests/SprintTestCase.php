@@ -91,8 +91,8 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
       LiskDAO::beginIsolateAllLiskEffectsToCurrentProcess();
     }
 
-//    $this->env = new PhabricatorEnv();
-//    $this->env->initializeWebEnvironment();
+    $this->env = new PhabricatorEnv();
+    $this->env->initializeScriptEnvironment();
 
     // NOTE: While running unit tests, we act as though all applications are
     // installed, regardless of the install's configuration. Tests which need
@@ -104,6 +104,9 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
         array());
     $this->env->overrideEnvConfig(
         'phabricator.show-prototypes',
+        true);
+    $this->env->overrideEnvConfig(
+        'phabricator.serious-business',
         true);
 
     // Reset application settings to defaults, particularly policies.

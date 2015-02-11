@@ -1,6 +1,6 @@
 <?php
 
-final class SprintReportBurndownView extends SprintView {
+final class SprintReportBurnUpView extends SprintView {
 
   private $request;
 
@@ -15,6 +15,7 @@ final class SprintReportBurndownView extends SprintView {
   }
 
   public function render() {
+    require_celerity_resource('sprint-report-css', 'sprint');
     $filter = $this->BuildFilter();
     $chart = $this->buildBurnDownChart();
     $table = $this->buildStatsTable();
@@ -260,9 +261,9 @@ final class SprintReportBurndownView extends SprintView {
 
   if ($handle) {
     list ($caption, $header) = $this->renderCaption ($handle);
-    $caption = id(new AphrontErrorView())
+    $caption = id(new PHUIErrorView())
         ->appendChild($caption)
-        ->setSeverity(AphrontErrorView::SEVERITY_NOTICE);
+        ->setSeverity(PHUIErrorView::SEVERITY_NOTICE);
   } else {
     $header = pht('Task Burn Rate for All Tasks');
     $caption = null;
@@ -305,55 +306,53 @@ final class SprintReportBurndownView extends SprintView {
   private function buildBurnDownChart() {
     $project_phid = $this->request->getStr('project');
     $data = $this->getXactionData($project_phid);
-      $id = celerity_generate_unique_node_id();
-      $chart = phutil_tag(
-          'div',
-          array(
-              'id' => $id,
-              'style' => 'border: 1px solid #BFCFDA; '.
-                  'background-color: #fff; '.
-                  'margin: 8px 16px; '.
-                  'height: 400px; ',
-          ),
-          '');
+      $id = 'burnup chart';
+      $data = $this->buildSeries($data);
+      $stats = new SprintStats();
+      $data = $stats->transposeArray($data);
+    require_celerity_resource('d3', 'sprint');
+    require_celerity_resource('c3-css', 'sprint');
+    require_celerity_resource('c3', 'sprint');
 
-      list($burn_x, $burn_y) = $this->buildSeries($data);
-
-      require_celerity_resource('raphael-core');
-      require_celerity_resource('raphael-g');
-      require_celerity_resource('raphael-g-line');
-
-      Javelin::initBehavior('line-chart', array(
+      Javelin::initBehavior('burndown-report-chart', array(
           'hardpoint' => $id,
-          'x' => array(
-              $burn_x,
-          ),
-          'y' => array(
-              $burn_y,
-          ),
-          'xformat' => 'epoch',
-          'yformat' => 'int',
-      ));
+          'x' => $data[0],
+          'y' => $data[1],
+      ), 'sprint');
+
+    $chart = id(new PHUIObjectBoxView())
+        ->setHeaderText(pht('Burn Up Report'))
+        ->appendChild(phutil_tag('div',
+            array(
+                'id' => $id,
+                'style' => 'border: 1px solid #BFCFDA; '.
+                    'background-color: #fff; '.
+                    'margin: 8px 16px; '.
+                    'height: 400px; ',
+            ), ''));
 
       return $chart;
     }
 
-   private function buildSeries(array $data) {
-      $out = array();
-      $data = $this->addTaskStatustoData ($data);
+  private function buildSeries(array $data) {
+    $output = array(array(
+        pht('Dates'),
+        pht('Tasks'),
+    ),);
+      $tdata = $this->addTaskStatustoData ($data);
       $counter = 0;
-      foreach ($data as $key => $row) {
-        $t = (int)$row['dateCreated'];
+      foreach ($tdata as $key => $row) {
+        $t = (int)$row['dateCreated'] * 1000;
         if ($row['_is_close']) {
           --$counter;
-          $out[$t] = $counter;
         } else if ($row['_is_open']) {
           ++$counter;
-          $out[$t] = $counter;
         }
-      }
+        $output[] = array(
+        $t, $counter,);
 
-      return array(array_keys($out), array_values($out));
+      }
+      return $output;
     }
 
     /**

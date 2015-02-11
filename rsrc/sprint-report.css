@@ -1,0 +1,32 @@
+/**
+ * @provides sprint-report-css
+ */
+
+table.aphront-table-view tr.aggregate,
+table.aphront-table-view tr.alt-aggregate {
+    background: #8181F7;
+}
+
+table.aphront-table-view tr.month,
+table.aphront-table-view tr.alt-month {
+    background: #A9A9F5;
+}
+
+table.aphront-table-view tr.week,
+table.aphront-table-view tr.alt-week {
+    background: #CECEF6;
+}
+
+span.red {
+    color: #aa0000;
+    font-weight: bold;
+}
+
+span.green {
+    color: #00aa00;
+    font-weight: bold;
+}
+
+.aphront-panel-view-caption p {
+    padding: 6px 0 0;
+}

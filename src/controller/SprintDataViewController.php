@@ -7,12 +7,8 @@ final class SprintDataViewController extends SprintController {
   private $viewer;
   private $project;
 
-  public function willProcessRequest(array $data) {
-    $this->projectID = $data['id'];
-  }
-
-  public function processRequest() {
-
+  public function handleRequest(AphrontRequest $request) {
+    $this->projectID = $request->getURIData('id');
     $this->request = $this->getRequest();
     $this->viewer = $this->request->getUser();
     $this->project = $this->loadProject();

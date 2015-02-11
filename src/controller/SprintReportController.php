@@ -8,8 +8,7 @@ final class SprintReportController extends SprintController {
     $this->view = idx($data, 'view');
   }
 
-  public function processRequest() {
-    $request = $this->getRequest();
+  public function handleRequest(AphrontRequest $request) {
     $user = $request->getUser();
 
     if ($request->isFormPost()) {
@@ -27,7 +26,7 @@ final class SprintReportController extends SprintController {
 
     $nav = $this->buildNavMenu();
     $this->view = $nav->selectFilter($this->view, 'List');
-    require_celerity_resource('maniphest-report-css');
+
 
     switch ($this->view) {
       case 'list':
@@ -39,7 +38,7 @@ final class SprintReportController extends SprintController {
           ->setView($this->view);
         break;
       case 'burn':
-        $core = id(new SprintReportBurndownView())
+        $core = id(new SprintReportBurnUpView())
             ->setUser($user)
             ->setRequest($request);
         break;
@@ -62,4 +61,3 @@ final class SprintReportController extends SprintController {
         ));
   }
 }
-
