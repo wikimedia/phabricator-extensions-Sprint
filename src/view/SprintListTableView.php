@@ -10,7 +10,11 @@ final class SprintListTableView {
   }
 
   public function buildProjectsTable () {
-    $projects_table = id(new AphrontTableView($this->table_data->getRows()))
+    $id = 'list-table';
+    Javelin::initBehavior('sprint-table', array(
+        'hardpoint' => $id,
+    ), 'sprint');
+    $projects_table = id(new SprintTableView($this->table_data->getRows()))
         ->setHeaders(
             array(
                 'Sprint Name',
@@ -18,24 +22,8 @@ final class SprintListTableView {
                 'Start Date',
                 'End Date',
             ))
-        ->setColumnClasses(
-            array(
-                'left',
-                'left',
-                'left',
-                'left',
-            ))
-        ->makeSortable(
-            $this->table_data->getRequest()->getRequestURI(),
-            'order',
-            $this->table_data->getOrder(),
-            $this->table_data->getReverse(),
-            array(
-                'Name',
-                '',
-                'Start',
-                'End',
-            ));
+        ->setTableId('sprint-list')
+        ->setClassName('display');
 
     $projects_table = id(new PHUIBoxView())
         ->appendChild($projects_table)

@@ -56,14 +56,6 @@ final class TaskTableDataProvider {
     return $this->request;
   }
 
-  public function getOrder () {
-    return $this->order;
-  }
-
-  public function getReverse () {
-    return $this->reverse;
-  }
-
   public function execute() {
     return $this->buildTaskTableData();
   }
@@ -100,10 +92,7 @@ final class TaskTableDataProvider {
 
 
   private function buildTaskTableData() {
-    $order = $this->request->getStr('order', 'name');
-    list($this->order, $this->reverse) = AphrontTableView::parseSort($order);
     $edges = $this->query->getEdges($this->tasks);
-
     $map = $this->buildTaskMap($edges, $this->tasks);
     $sprintpoints = id(new SprintPoints())
         ->setTaskPoints($this->taskpoints);
@@ -117,55 +106,11 @@ final class TaskTableDataProvider {
       $this->points = $sprintpoints->getTaskPoints($task->getPHID());
 
       $row = $this->addTaskToTree($task);
-      list ($task, $cdate, , $udate, , $owner_link, $numpriority, , $points,
-          $status) = $row[0];
-      $row['sort'] = $this->setSortOrder($row, $order, $task, $cdate, $udate,
-          $owner_link, $numpriority, $points, $status);
       $rows[] = $row;
-    }
-    $rows = isort($rows, 'sort');
-
-    foreach ($rows as $k => $row) {
-      unset($rows[$k]['sort']);
-    }
-
-    if ($this->reverse) {
-      $rows = array_reverse($rows);
     }
 
     $this->rows = array_map(function($a) { return $a['0']; }, $rows);
     return $this;
-  }
-
-  private function setSortOrder ($row, $order, $task, $cdate, $udate,
-                                 $owner_link, $numpriority, $points, $status) {
-    switch ($order) {
-      case 'Task':
-        $row['sort'] = $task;
-        break;
-      case 'Date Created':
-        $row['sort'] = $cdate;
-        break;
-      case 'Last Update':
-        $row['sort'] = $udate;
-        break;
-      case 'Assigned to':
-        $row['sort'] = $owner_link;
-        break;
-      case 'Priority':
-        $row['sort'] = $numpriority;
-        break;
-      case 'Points':
-        $row['sort'] = $points;
-        break;
-      case 'Status':
-        $row['sort'] = $status;
-        break;
-      default:
-        $row['sort'] = -$numpriority;
-        break;
-    }
-    return $row['sort'];
   }
 
   private function buildTaskMap ($edges, $tasks) {
@@ -234,9 +179,9 @@ final class TaskTableDataProvider {
 
   private function addTaskToTree($task) {
     $cdate = $this->getTaskCreatedDate($task);
-    $date_created = phabricator_datetime($cdate, $this->viewer);
+    $date_created = phabricator_date($cdate, $this->viewer);
     $udate = $this->getTaskModifiedDate($task);
-    $last_updated = phabricator_datetime($udate, $this->viewer);
+    $last_updated = phabricator_date($udate, $this->viewer);
     $status = $task->getStatus();
 
     $owner_link = $this->setOwnerLink($this->handles, $task);

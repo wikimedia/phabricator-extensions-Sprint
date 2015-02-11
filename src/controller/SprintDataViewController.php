@@ -35,9 +35,7 @@ final class SprintDataViewController extends SprintController {
               $sprintdata_view,));
 
     return $this->buildApplicationPage(
-        array(
-            $nav,
-        ),
+        $nav,
         array(
             'title' => array(pht('Burndown'), $this->project->getName()),
             'device' => true,

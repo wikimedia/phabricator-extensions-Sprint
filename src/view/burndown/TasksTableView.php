@@ -16,8 +16,9 @@ final class TasksTableView {
    * @returns PHUIObjectBoxView
    */
   public function buildTasksTable() {
-
-    $table = id(new AphrontTableView($this->table_data->getRows()))
+    Javelin::initBehavior('tasks-table', array(
+    ), 'sprint');
+    $table = id(new SprintTableView($this->table_data->getRows()))
         ->setHeaders(
             array(
                 pht('Task'),
@@ -30,25 +31,10 @@ final class TasksTableView {
                 pht('Priority'),
                 pht('Points'),
                 pht('Status'),
-            ));
-    $table->makeSortable(
-        $this->table_data->getRequest()->getRequestURI(),
-        'order',
-        $this->table_data->getOrder(),
-        $this->table_data->getReverse(),
-        array(
-            'Task',
-            'Epoch Created',
-            'Date Created',
-            'Epoch Updated',
-            'Last Update',
-            'Assigned to',
-            'NumPriority',
-            'Priority',
-            'Points',
-            'Status',
-        ));
-    $table->setColumnVisibility(
+            ))
+        ->setTableId('tasks-list')
+        ->setClassName('display')
+        ->setColumnVisibility(
         array(
             true,
             false,

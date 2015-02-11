@@ -23,14 +23,6 @@ final class SprintListDataProvider {
     return $this->request;
   }
 
-  public function getOrder () {
-    return $this->order;
-  }
-
-  public function getReverse () {
-    return $this->reverse;
-  }
-
   public function getRows () {
     return $this->rows;
   }
@@ -51,31 +43,7 @@ final class SprintListDataProvider {
     return $sprints;
   }
 
-  private function setSortOrder($row, $project_name, $order, $start, $end) {
-    switch ($order) {
-      case 'Name':
-        $row['sort'] = $project_name;
-        break;
-      case 'Burndown':
-        $row['sort'] = null;
-        break;
-      case 'Start':
-        $row['sort'] = $start;
-        break;
-      case 'End':
-        $row['sort'] = $end;
-        break;
-      case 'name':
-      default:
-        $row['sort'] = -$start;
-        break;
-    }
-    return $row['sort'];
-  }
-
   private function buildSprintListData() {
-    $order = $this->request->getStr('order', 'name');
-    list($this->order, $this->reverse) = AphrontTableView::parseSort($order);
     $query = id(new SprintQuery())
         ->setViewer($this->viewer);
 
@@ -90,19 +58,9 @@ final class SprintListDataProvider {
       $project_name = $project->getName();
 
       $row = $this->buildRowSet($project_id, $project_name, $start, $end);
-      list ($project_id, $project_name, $start, $end) = $row[0];
-      $row['sort'] = $this->setSortOrder($row, $order, $project_id,
-          $project_name, $start, $end);
       $rows[] = $row;
     }
 
-    $rows = isort($rows, 'sort');
-    foreach ($rows as $k => $row) {
-      unset($rows[$k]['sort']);
-    }
-    if ($this->reverse) {
-      $rows = array_reverse($rows);
-    }
     $this->rows = array_map(function($a) { return $a['0']; }, $rows);
     return $this;
   }

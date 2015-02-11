@@ -63,6 +63,7 @@ phutil_register_library_map(array(
     'SprintReportOpenTasksView' => 'view/reports/SprintReportOpenTasksView.php',
     'SprintStats' => 'storage/SprintStats.php',
     'SprintStatsTest' => 'tests/SprintStatsTest.php',
+    'SprintTableView' => 'view/SprintTableView.php',
     'SprintTaskStoryPointsField' => 'customfield/SprintTaskStoryPointsField.php',
     'SprintTestCase' => 'tests/SprintTestCase.php',
     'SprintValidator' => 'util/SprintValidator.php',
@@ -115,6 +116,7 @@ phutil_register_library_map(array(
     'SprintReportController' => 'SprintController',
     'SprintReportOpenTasksView' => 'SprintView',
     'SprintStatsTest' => 'SprintTestCase',
+    'SprintTableView' => 'AphrontView',
     'SprintTaskStoryPointsField' => array(
       'ManiphestCustomField',
       'PhabricatorStandardCustomFieldInterface',
