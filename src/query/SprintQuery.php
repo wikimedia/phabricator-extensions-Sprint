@@ -45,7 +45,7 @@ final class SprintQuery extends SprintDAO {
       $start = idx($aux_fields, 'isdc:sprint:startdate')
           ->getProxy()->getFieldValue();
     if (is_null($start)) {
-      $help = 'To do this, go to the Project Edit Details Page';
+      $help = pht('To do this, go to the Project Edit Details Page');
       throw new BurndownException("The project \"".$this->project->getName()
           ."\" is not set up for Sprint because "
           ."it has not been assigned a start date\n", $help);
@@ -58,7 +58,7 @@ final class SprintQuery extends SprintDAO {
     $end = idx($aux_fields, 'isdc:sprint:enddate')
         ->getProxy()->getFieldValue();
     if (is_null($end)) {
-      $help = 'To do this, go to the Project Edit Details Page';
+      $help = pht('To do this, go to the Project Edit Details Page');
       throw new BurndownException("The project \"".$this->project->getName()
           ."\" is not set up for Sprint because "
           ."it has not been assigned an end date\n", $help);
@@ -74,8 +74,8 @@ final class SprintQuery extends SprintDAO {
         ->needProjectPHIDs(true)
         ->execute();
     if (empty($tasks)) {
-      $help = 'To Create a Task, go to the Sprint Board and select the '
-      .'column header menu';
+      $help = pht('To Create a Task, go to the Sprint Board and select the '
+      .'column header menu');
       throw new BurndownException("The project \"".$this->project->getName()
           ."\" is not set up for Sprint because "
           ."it has no tasks\n", $help);
@@ -122,8 +122,8 @@ final class SprintQuery extends SprintDAO {
         $sprint_phids[] = $value->getObjectPHID();
       }
     if (empty($sprint_phids)) {
-      $help = 'To Create a Sprint, go to /project/create/ and make sure that'
-          .' the "Is Sprint" box has been checked';
+      $help = pht('To Create a Sprint, go to /project/create/ and make sure that'
+          .' the "Is Sprint" box has been checked');
       throw new BurndownException("There are no Sprints to show yet\n", $help);
     } else {
       return $sprint_phids;
@@ -238,7 +238,13 @@ final class SprintQuery extends SprintDAO {
         ->withProjectPHIDs(array($this->project_phid))
         ->execute();
     $columns = msort($columns, 'getSequence');
-    return $columns;
+    if (!$columns) {
+      $help = pht('To Create a Sprint Board, go to the Project profile page'
+          .' and select the Sprint Board icon from the left side bar');
+      throw new BurndownException("There is no Sprint Board yet\n", $help);
+    } else {
+      return $columns;
+    }
   }
 
   public function getColumnforPHID($column_phid) {

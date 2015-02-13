@@ -86,18 +86,6 @@ final class SprintTableView extends AphrontView {
     return $this;
   }
 
-  /**
-   * Parse a sorting parameter:
-   *
-   *   list($sort, $reverse) = AphrontTableView::parseSortParam($sort_param);
-   *
-   * @param string  Sort request parameter.
-   * @return pair   Sort value, sort direction.
-   */
-  public static function parseSort($sort) {
-    return array(ltrim($sort, '-'), preg_match('/^-/', $sort));
-  }
-
   public function render() {
     require_celerity_resource('aphront-table-view-css');
     require_celerity_resource('jquery', 'sprint');
@@ -150,31 +138,6 @@ final class SprintTableView extends AphrontView {
           $classes[] = 'aphront-table-view-nodevice';
         }
 
-        if ($sort_values[$col_num] !== null) {
-          $classes[] = 'aphront-table-view-sortable';
-
-          $sort_value = $sort_values[$col_num];
-          $sort_glyph_class = 'aphront-table-down-sort';
-          if ($sort_value == $this->sortSelected) {
-            if ($this->sortReverse) {
-              $sort_glyph_class = 'aphront-table-up-sort';
-            } else if (!$this->sortReverse) {
-              $sort_value = '-'.$sort_value;
-            }
-            $classes[] = 'aphront-table-view-sortable-selected';
-          }
-
-          $sort_glyph = phutil_tag(
-              'span',
-              array(
-                  'class' => $sort_glyph_class,
-              ),
-              '');
-
-          $header = phutil_tag(
-              'thead');
-         }
-
         if ($classes) {
           $class = implode(' ', $classes);
         } else {
@@ -204,12 +167,6 @@ final class SprintTableView extends AphrontView {
     }
 
     foreach ($col_classes as $key => $value) {
-
-      if (($sort_values[$key] !== null) &&
-          ($sort_values[$key] == $this->sortSelected)) {
-        $value = trim($value.' sorted-column');
-      }
-
       if ($value !== null) {
         $col_classes[$key] = $value;
       }
@@ -277,12 +234,13 @@ final class SprintTableView extends AphrontView {
     }
 
     if ($this->tableId !== null) {
-      $tableId = $this->tableId;
+      $table_id = $this->tableId;
     } else {
-      $tableId = celerity_generate_unique_node_id();
+      $table_id = celerity_generate_unique_node_id();
     }
 
-    $html = phutil_tag('table', array('class' => $table_class, 'id' => $tableId), $table);
+    $html = phutil_tag('table', array('class' => $table_class,
+        'id' => $table_id,), $table);
     return phutil_tag_div('aphront-table-wrap', $html);
   }
 
