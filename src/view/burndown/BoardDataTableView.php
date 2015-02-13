@@ -2,15 +2,15 @@
 
 final class BoardDataTableView {
 
-  private $board_data;
+  private $boardData;
 
   public function setBoardData ($board_data) {
-    $this->board_data = $board_data;
+    $this->boardData = $board_data;
     return $this;
   }
 
   public function buildBoardDataTable() {
-    $coldata = $this->board_data->getColumnData();
+    $coldata = $this->boardData->getColumnData();
     $table = id(new AphrontTableView($coldata))
         ->setHeaders(
             array(

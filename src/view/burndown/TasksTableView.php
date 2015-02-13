@@ -2,11 +2,11 @@
 
 final class TasksTableView {
 
-  private $table_data;
+  private $tableData;
 
 
   public function setTableData ($table_data) {
-    $this->table_data = $table_data;
+    $this->tableData = $table_data;
     return $this;
   }
 
@@ -18,7 +18,7 @@ final class TasksTableView {
   public function buildTasksTable() {
     Javelin::initBehavior('tasks-table', array(
     ), 'sprint');
-    $table = id(new SprintTableView($this->table_data->getRows()))
+    $table = id(new SprintTableView($this->tableData->getRows()))
         ->setHeaders(
             array(
                 pht('Task'),

@@ -41,7 +41,7 @@ final class SprintColumnTransaction {
     return $xactions;
   }
 
-  public function parseEvents($dates, $xactions) {
+  public function parseEvents($dates) {
 
     $sprintpoints = id(new SprintPoints())
         ->setTaskPoints($this->taskpoints);
@@ -57,12 +57,10 @@ final class SprintColumnTransaction {
 
        switch ($event['type']) {
           case 'close':
-            // A task was closed, mark it as done
             $this->closeTasksToday($date, $dates);
             $this->closePointsToday($date, $points, $dates);
             break;
           case 'reopen':
-            // A task was reopened, subtract from done
             $this->reopenedTasksToday($date, $dates);
             $this->reopenedPointsToday($date, $points, $dates);
             break;

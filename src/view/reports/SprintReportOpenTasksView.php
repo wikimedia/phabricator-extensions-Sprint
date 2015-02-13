@@ -95,7 +95,7 @@ final class SprintReportOpenTasksView extends SprintView {
     if ($project_handle) {
       $tokens = array($project_handle);
     }
-    $filter = parent::renderReportFilters($tokens, $has_window = false,
+    $filter = $this->renderReportFilters($tokens, $has_window = false,
         $this->request, $this->user);
 
     return array($filter, $panel);

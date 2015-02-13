@@ -102,7 +102,8 @@ final class TaskTableDataProvider {
     $rows = array();
     foreach ($this->tasks as $task) {
       $this->blocked = $this->checkForBlocked($task, $map);
-      list ($this->blocker, $this->ptasks) = $this->checkForBlocker($task, $map);
+      list ($this->blocker, $this->ptasks) = $this->checkForBlocker($task,
+          $map);
       $this->points = $sprintpoints->getTaskPoints($task->getPHID());
 
       $row = $this->addTaskToTree($task);

@@ -36,8 +36,8 @@ final class SprintTableView extends AphrontView {
     return $this;
   }
 
-  public function setTableId($tableId) {
-    $this->tableId = $tableId;
+  public function setTableId($table_id) {
+    $this->tableId = $table_id;
     return $this;
   }
 

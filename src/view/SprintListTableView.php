@@ -2,10 +2,10 @@
 
 final class SprintListTableView {
 
-  private $table_data;
+  private $tableData;
 
   public function setTableData ($table_data) {
-    $this->table_data = $table_data;
+    $this->tableData = $table_data;
     return $this;
   }
 
@@ -14,7 +14,7 @@ final class SprintListTableView {
     Javelin::initBehavior('sprint-table', array(
         'hardpoint' => $id,
     ), 'sprint');
-    $projects_table = id(new SprintTableView($this->table_data->getRows()))
+    $projects_table = id(new SprintTableView($this->tableData->getRows()))
         ->setHeaders(
             array(
                 'Sprint Name',

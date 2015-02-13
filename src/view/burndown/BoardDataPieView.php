@@ -2,17 +2,17 @@
 
 final class BoardDataPieView {
 
-  private $board_data;
+  private $boardData;
 
   public function setBoardData ($board_data) {
-    $this->board_data = $board_data;
+    $this->boardData = $board_data;
     return $this;
   }
 
   public function buildPieBox() {
     $this->initBoardDataPie();
     $this->initTaskStatusPie();
-    $project_name = $this->board_data->getProject()->getName();
+    $project_name = $this->boardData->getProject()->getName();
     $boardpie = phutil_tag('div',
         array(
             'id' => 'c3-board-data-pie',
@@ -37,7 +37,7 @@ final class BoardDataPieView {
     require_celerity_resource('c3-css', 'sprint');
     require_celerity_resource('c3', 'sprint');
 
-    $coldata = $this->board_data->getColumnData();
+    $coldata = $this->boardData->getColumnData();
     $done_points = '0';
     $backlog_points = '0';
     $doing_points = '0';
@@ -74,8 +74,8 @@ final class BoardDataPieView {
 
   private function initTaskStatusPie() {
     $sprintpoints = id(new SprintPoints())
-        ->setTaskPoints($this->board_data->getTaskPoints())
-        ->setTasks($this->board_data->getTasks());
+        ->setTaskPoints($this->boardData->getTaskPoints())
+        ->setTasks($this->boardData->getTasks());
 
     list($task_open_status_sum, $task_closed_status_sum) = $sprintpoints
         ->getStatusSums();
