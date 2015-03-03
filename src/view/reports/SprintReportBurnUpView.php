@@ -17,8 +17,14 @@ final class SprintReportBurnUpView extends SprintView {
   public function render() {
     require_celerity_resource('sprint-report-css', 'sprint');
     $filter = $this->BuildFilter();
-    $chart = $this->buildBurnDownChart();
-    $table = $this->buildStatsTable();
+    if ($this->request->getStr('project')) {
+      $chart = $this->buildBurnDownChart();
+      $table = $this->buildStatsTable();
+    } else {
+      $chart = null;
+      $table = null;
+    }
+
     return array($filter, $chart, $table);
   }
 

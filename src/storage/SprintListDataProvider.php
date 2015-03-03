@@ -81,7 +81,9 @@ final class SprintListDataProvider {
                 'href'  => '/project/sprint/view/'.$project_id,
              ),
             $this->getEditProjectDetailsIcon()),
+        $start,
         phabricator_datetime($start, $this->viewer),
+        $end,
         phabricator_datetime($end, $this->viewer),
     );
 

@@ -12,23 +12,32 @@ final class BoardDataPieView {
   public function buildPieBox() {
     $this->initBoardDataPie();
     $this->initTaskStatusPie();
+    $this->initTaskPriorityPie();
     $project_name = $this->boardData->getProject()->getName();
     $boardpie = phutil_tag('div',
         array(
             'id' => 'c3-board-data-pie',
-            'style' => 'width: 400px; height:200px; padding-right: 200px;
+            'style' => 'width: 225px; height:200px; padding-left: 50px;
                 float: left;',
         ), pht('Board'));
     $taskpie = phutil_tag('div',
         array(
             'id' => 'pie',
-            'style' => 'width: 300px; height:200px; margin-left: 600px;',
+            'style' => 'width: 225px; height:200px; padding-left: 225px;
+            float: left;',
         ), pht('Task Status'));
+    $priority_pie = phutil_tag('div',
+        array(
+            'id' => 'priority-pie',
+            'style' => 'width: 500px; height:200px; padding-left: 75px;
+            margin-left: 900px;',
+        ), pht('Task Priority'));
     $box = id(new PHUIObjectBoxView())
-        ->setHeaderText(pht('Progress Report for '.
+        ->setHeaderText(pht('Points Allocation Report for '.
             $project_name))
         ->appendChild($boardpie)
-        ->appendChild($taskpie);
+        ->appendChild($taskpie)
+        ->appendChild($priority_pie);
     return $box;
   }
 
@@ -89,6 +98,43 @@ final class BoardDataPieView {
         'hardpoint' => $id,
         'open' => $task_open_status_sum,
         'resolved' => $task_closed_status_sum,
+    ), 'sprint');
+  }
+
+  private function initTaskPriorityPie() {
+    $sprintpoints = id(new SprintPoints())
+        ->setTaskPoints($this->boardData->getTaskPoints())
+        ->setTasks($this->boardData->getTasks());
+
+    $task_priority_sum = $sprintpoints
+        ->getPrioritySums();
+
+    if (isset($task_priority_sum['Wishlist'])) {
+      $lowest_priority = $task_priority_sum['Wishlist'];
+    } else if (isset($task_priority_sum['Needs Volunteer'])) {
+      $lowest_priority = $task_priority_sum['Needs Volunteer'];
+    } else {
+      $lowest_priority = null;
+    }
+
+    require_celerity_resource('d3', 'sprint');
+    require_celerity_resource('c3-css', 'sprint');
+    require_celerity_resource('c3', 'sprint');
+
+    $id = 'priority-pie';
+    Javelin::initBehavior('priority-pie', array(
+        'hardpoint' => $id,
+        'Wishlist' => $lowest_priority,
+        'Normal' => (isset($task_priority_sum['Normal'])) ?
+            $task_priority_sum['Normal']: null,
+        'High' => (isset($task_priority_sum['High'])) ?
+            $task_priority_sum['High']: null,
+        'Unbreak' => (isset($task_priority_sum['Unbreak Now!'])) ?
+            $task_priority_sum['Unbreak Now!']: null,
+        'Triage' => (isset($task_priority_sum['Needs Triage'])) ?
+            $task_priority_sum['Needs Triage']: null,
+        'Low' => (isset($task_priority_sum['Low'])) ?
+            $task_priority_sum['Low']: null,
     ), 'sprint');
   }
 }

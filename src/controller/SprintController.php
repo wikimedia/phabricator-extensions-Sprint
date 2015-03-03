@@ -124,6 +124,7 @@ abstract class SprintController extends PhabricatorController {
       $nav->addIcon("profile/{$id}/", $name, null, $picture);
       $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire');
       $nav->addIcon("board/{$id}/", pht('Sprint Board'), $board_icon);
+      $nav->addIcon('.', pht('Sprint List'), 'fa-bar-chart');
     } else {
       $nav->setBaseURI(new PhutilURI($this->getProjectsURI()));
       $nav->addIcon("profile/{$id}/", $name, null, $picture);
@@ -141,11 +142,10 @@ abstract class SprintController extends PhabricatorController {
 
     $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o');
     $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group');
-    $nav->addIcon("edit/{$id}/", pht('Edit'), 'fa-pencil');
+    $nav->addIcon("details/{$id}/", pht('Edit Details'), 'fa-pencil');
 
     return $nav;
   }
-
   protected function isSprint($object) {
     $validator = new SprintValidator();
     $issprint = call_user_func(array($validator, 'checkForSprint'),

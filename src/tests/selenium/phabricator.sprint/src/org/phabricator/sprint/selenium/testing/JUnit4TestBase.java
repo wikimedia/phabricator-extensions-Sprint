@@ -66,7 +66,7 @@ public abstract class JUnit4TestBase {
       logger.info("<<< Finished " + description);
     }
   };
-
+  
   public WebDriver getWrappedDriver() {
     return storedDriver.get();
   }

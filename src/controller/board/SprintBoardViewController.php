@@ -109,7 +109,11 @@ final class SprintBoardViewController
 
     $query_key = $request->getURIData('queryKey');
     if (!$query_key) {
-      $query_key = 'all';
+        if ($is_sprint == true) {
+            $query_key = 'all';
+        } else {
+            $query_key = 'open';
+        }
     }
     $this->queryKey = $query_key;
 
@@ -297,7 +301,6 @@ final class SprintBoardViewController
               ->setCanEdit($can_edit)
               ->getItem());
         }
-
       }
       $panel->setCards($cards);
       $board->addPanel($panel);

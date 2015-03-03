@@ -22,7 +22,7 @@ public class LabsTestEnvironment implements TestEnvironment {
   public static void main(String[] args) {
     new LabsTestEnvironment();
   }
-
+  
   private String getServingHost() {
     Browser browser = Browser.detect();
     if (browser == Browser.android) {

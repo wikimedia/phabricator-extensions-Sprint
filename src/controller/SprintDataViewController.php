@@ -7,6 +7,13 @@ final class SprintDataViewController extends SprintController {
   private $viewer;
   private $project;
 
+  public function buildIconNavView(PhabricatorProject $project) {
+    $id = $project->getID();
+    $nav = parent::buildIconNavView($project);
+    $nav->selectFilter("burn/{$id}/");
+    return $nav;
+  }
+
   public function handleRequest(AphrontRequest $request) {
     $this->projectID = $request->getURIData('id');
     $this->request = $this->getRequest();

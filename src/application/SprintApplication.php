@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Michael Peters
+ * @author Christopher Johnson
  * @license GPL version 3
  */
 
@@ -25,12 +26,6 @@ final class SprintApplication extends PhabricatorApplication {
   public function getEventListeners() {
     return array(
       new BurndownActionMenuEventListener(),
-    );
-  }
-
-  public function getFactObjectsForAnalysis() {
-    return array(
-        new ManiphestTransaction(),
     );
   }
 

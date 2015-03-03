@@ -19,7 +19,9 @@ final class SprintListTableView {
             array(
                 'Sprint Name',
                 'Burndown',
+                'Epoch Start',
                 'Start Date',
+                'Epoch End',
                 'End Date',
             ))
         ->setTableId('sprint-list')

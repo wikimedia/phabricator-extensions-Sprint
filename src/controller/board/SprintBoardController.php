@@ -12,4 +12,11 @@ abstract class SprintBoardController
   protected function getProject() {
     return $this->project;
   }
+
+  public function buildIconNavView(PhabricatorProject $project) {
+        $id = $project->getID();
+        $nav = parent::buildIconNavView($project);
+        $nav->selectFilter("board/{$id}/");
+        return $nav;
+  }
 }

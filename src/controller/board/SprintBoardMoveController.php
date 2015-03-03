@@ -1,7 +1,7 @@
 <?php
 
 final class SprintBoardMoveController
-  extends PhabricatorProjectController {
+  extends SprintBoardController {
 
   private $id;
 
@@ -32,6 +32,7 @@ final class SprintBoardMoveController
     if (!$project) {
       return new Aphront404Response();
     }
+    $is_sprint = $this->isSprint($project);
 
     $object = id(new PhabricatorObjectQuery())
       ->setViewer($viewer)
@@ -165,13 +166,22 @@ final class SprintBoardMoveController
         ->withPHIDs(array($object->getOwnerPHID()))
         ->executeOne();
     }
-    $card = id(new SprintBoardTaskCard())
-      ->setViewer($viewer)
-      ->setTask($object)
-      ->setProject($project)
-      ->setOwner($owner)
-      ->setCanEdit(true)
-      ->getItem();
+    if ($is_sprint == true) {
+      $card = id(new SprintBoardTaskCard())
+          ->setProject($project)
+          ->setViewer($viewer)
+          ->setTask($object)
+          ->setOwner($owner)
+          ->setCanEdit(true)
+          ->getItem();
+    } else {
+      $card = id(new ProjectBoardTaskCard())
+          ->setViewer($viewer)
+          ->setTask($object)
+          ->setOwner($owner)
+          ->setCanEdit(true)
+          ->getItem();
+    }
 
     return id(new AphrontAjaxResponse())->setContent(
       array('task' => $card));

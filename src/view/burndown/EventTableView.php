@@ -55,7 +55,7 @@ final class EventTableView {
         ->setClassName('display')
        ->setColumnVisibility(
         array(
-            false,
+            true,
             true,
             true,
             true,

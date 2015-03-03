@@ -55,27 +55,7 @@ final class SprintBoardTaskCard {
     return $this->canEdit;
   }
 
-  public function getUserImage() {
-    $ownername = $this->owner->getName();
-    $ownerlink = '/p/'.$ownername.'/';
-    $image_uri = $this->owner->getImageURI();
-
-    $sigil = 'has-tooltip';
-    $meta  = array(
-        'tip' => pht($ownername),
-        'size' => 200,
-        'align' => 'E',);
-    $image = id(new PHUIIconView())
-        ->addSigil($sigil)
-        ->setMetadata($meta)
-        ->setHref($ownerlink)
-        ->setImage($image_uri)
-        ->setHeadSize(PHUIIconView::HEAD_SMALL);
-
-  return $image;
-  }
-
-  public function getPointList() {
+  private function getCardAttributes() {
       $pointslabel = 'Points:';
       $pointsvalue = phutil_tag(
           'dd',
@@ -101,13 +81,6 @@ final class SprintBoardTaskCard {
           ));
     }
 
-  protected function isSprint($object) {
-    $validator = new SprintValidator();
-    $issprint = call_user_func(array($validator, 'checkForSprint'),
-        array($validator, 'isSprint'), $object->getPHID());
-    return $issprint;
-  }
-
   public function getItem() {
     require_celerity_resource('phui-workboard-view-css', 'sprint');
 
@@ -115,7 +88,6 @@ final class SprintBoardTaskCard {
         ->setProject($this->project)
         ->setViewer($this->viewer);
     $task = $this->getTask();
-    $owner = $this->getOwner();
     $task_phid = $task->getPHID();
     $can_edit = $this->getCanEdit();
     $this->points = $query->getStoryPointsForTask($task_phid);
@@ -124,6 +96,12 @@ final class SprintBoardTaskCard {
     $color_map = ManiphestTaskPriority::getColorMap();
     $bar_color = idx($color_map, $task->getPriority(), 'grey');
 
+    if (!(is_null($this->owner))) {
+      $ownerimage = $this->renderHandleIcon($this->owner);
+    } else {
+      $ownerimage = null;
+    }
+
     $card = id(new PHUIObjectItemView())
       ->setObjectName('T'.$task->getID())
       ->setHeader($task->getTitle())
@@ -131,6 +109,7 @@ final class SprintBoardTaskCard {
       ->setHref('/T'.$task->getID())
       ->addSigil('project-card')
       ->setDisabled($task->isClosed())
+      ->setImageIcon($ownerimage)
       ->setMetadata(
         array(
           'objectPHID' => $task_phid,
@@ -144,16 +123,27 @@ final class SprintBoardTaskCard {
                 ->addSigil('edit-project-card')
                 ->setHref('/project/sprint/board/task/edit/'.$task->getID()
                     .'/'))
-      ->setBarColor($bar_color);
-
-    if ($this->isSprint($this->project) !== false) {
-      $card->addAttribute($this->getPointList());
-      if ($owner) {
-        $card->setImageIcon($this->getUserImage());
-      }
-    }
+      ->setBarColor($bar_color)
+      ->addAttribute($this->getCardAttributes());
 
     return $card;
   }
 
+  private function renderHandleIcon(PhabricatorObjectHandle $handle) {
+    $ownername = $handle->getName();
+    $ownerlink = '/p/'.$ownername.'/';
+    $image_uri = 'background-image: url('.$handle->getImageURI().')';
+    $sigil = 'has-tooltip';
+    $meta  = array(
+        'tip' => pht($ownername),
+        'size' => 200,
+        'align' => 'E',);
+    $image = id(new SprintHandleIconView())
+        ->addSigil($sigil)
+        ->setMetadata($meta)
+        ->setHref($ownerlink)
+        ->setIconStyle($image_uri);
+
+    return $image;
+  }
 }
