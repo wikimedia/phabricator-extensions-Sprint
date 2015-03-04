@@ -25,11 +25,16 @@ Only tasks in Sprints have "Story Points".
 
 =======
 **INSTALLATION**
+
 To install the Sprint extension:
+
 1. update your phabricator and libphutil to HEAD
-2. run git clone https://github.com/wikimedia/phabricator-extensions-Sprint.git in the /srv/phab/libext directory
+2. run git clone https://github.com/wikimedia/phabricator-extensions-Sprint.git /srv/phab/libext/Sprint
 3. from /srv/phabricator/bin run ./config set load-libraries '{"sprint":"/srv/phab/libext/Sprint/src"}'
 
  **BUGS**
- Report issues by creating a task here https://phabricator.wikimedia.org/maniphest/task/create/ and add the
- phabricator-sprint-extension project.
+
+ Report issues by creating a task here:
+
+  https://phabricator.wikimedia.org/maniphest/task/create/
+  and then add the phabricator-sprint-extension project.
