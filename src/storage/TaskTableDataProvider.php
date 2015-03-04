@@ -9,8 +9,6 @@ final class TaskTableDataProvider {
   private $taskpoints;
   private $query;
   private $rows;
-  private $order;
-  private $reverse;
   private $blocked;
   private $blocker;
   private $ptasks;

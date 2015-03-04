@@ -696,7 +696,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
 
     $field_list->appendFieldsToForm($form);
 
-    require_celerity_resource('phui-error-view-css');
+    require_celerity_resource('phui-info-view-css');
 
     Javelin::initBehavior('project-create', array(
       'tokenizerID' => $project_tokenizer_id,
