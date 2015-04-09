@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Michael Peters
+ * @author Christopher Johnson
  * @license GPL version 3
  */
 
@@ -72,7 +73,7 @@ abstract class SprintController extends PhabricatorController {
     $crumbs->addAction(
         id(new PHUIListItemView())
             ->setName(pht('Create Sprint'))
-            ->setHref($this->getProjectsURI().'create/')
+            ->setHref('/conduit/method/sprint.create/')
             ->setIcon('fa-calendar')
             ->setDisabled(!$can_create));
 
@@ -154,7 +155,7 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function getErrorBox($e) {
-    $error_box = id(new PHUIErrorView())
+    $error_box = id(new PHUIInfoView())
         ->setTitle(pht('Burndown could not be rendered for this project'))
         ->setErrors(array($e->getMessage()));
     return $error_box;

@@ -14,7 +14,7 @@
 }
 
 .phui-card-list-value {
-color: {$darkgreytext};
+    color: {$darkgreytext};
 }
 
 .device-desktop .phui-card-list-value {
@@ -25,10 +25,10 @@ color: {$darkgreytext};
 }
 
 .phui-card-list-key {
-color: {$bluetext};
-font-weight: bold;
-overflow: hidden;
-white-space: nowrap;
+    color: {$bluetext};
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .device-desktop .phui-card-list-key {
@@ -44,6 +44,6 @@ white-space: nowrap;
     padding: 0 16px;
     margin-bottom: 8px;
     width: auto;
-    word-break: break-word;
+    word-break: break-all;
     float: none;
 }

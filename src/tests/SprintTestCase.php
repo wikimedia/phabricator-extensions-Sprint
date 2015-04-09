@@ -1,5 +1,5 @@
 <?php
-// require_once '/srv/phab/libext/Sprint/scripts/__init_script__.php';
+// require_once '/srv/phab/webroot-static/Sprint/scripts/__init_script__.php';
 
 abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 

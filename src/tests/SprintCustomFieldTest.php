@@ -1,55 +1,55 @@
 <?php
 final class SprintCustomFieldTest extends SprintTestCase {
 
-  public function testgetBeginFieldName()  {
+  public function testgetBeginFieldName() {
     $subclassname = new SprintBeginDateField();
     $fieldname = $subclassname->getFieldName();
     $this->assertEquals($fieldname, 'Sprint Start Date');
   }
 
-  public function testgetBeginFieldKey()  {
+  public function testgetBeginFieldKey() {
     $subclassname = new SprintBeginDateField();
     $fieldname = $subclassname->getFieldKey();
     $this->assertEquals($fieldname, 'isdc:sprint:startdate');
   }
 
-  public function testgetBeginFieldDescription()  {
+  public function testgetBeginFieldDescription() {
     $subclassname = new SprintBeginDateField();
     $fieldname = $subclassname->getFieldDescription();
     $this->assertEquals($fieldname, 'When a sprint starts');
   }
 
-  public function testgetStoryPointsFieldName()  {
+  public function testgetStoryPointsFieldName() {
     $subclassname = new SprintTaskStoryPointsField();
     $fieldname = $subclassname->getFieldName();
     $this->assertEquals($fieldname, 'Story Points');
   }
 
-  public function testgetStoryPointsFieldKey()  {
+  public function testgetStoryPointsFieldKey() {
     $subclassname = new SprintTaskStoryPointsField();
     $fieldname = $subclassname->getFieldKey();
     $this->assertEquals($fieldname, 'isdc:sprint:storypoints');
   }
 
-  public function testgetStoryPointsFieldDescription()  {
+  public function testgetStoryPointsFieldDescription() {
     $subclassname = new SprintTaskStoryPointsField();
     $fieldname = $subclassname->getFieldDescription();
     $this->assertEquals($fieldname, 'Estimated story points for this task');
   }
 
-  public function testgetEndFieldName()  {
+  public function testgetEndFieldName() {
     $subclassname = new SprintEndDateField();
     $fieldname = $subclassname->getFieldName();
     $this->assertEquals($fieldname, 'Sprint End Date');
   }
 
-  public function testgetEndFieldKey()  {
+  public function testgetEndFieldKey() {
     $subclassname = new SprintEndDateField();
     $fieldname = $subclassname->getFieldKey();
     $this->assertEquals($fieldname, 'isdc:sprint:enddate');
   }
 
-  public function testgetEndFieldDescription()  {
+  public function testgetEndFieldDescription() {
     $subclassname = new SprintEndDateField();
     $fieldname = $subclassname->getFieldDescription();
     $this->assertEquals($fieldname, 'When a sprint ends');
@@ -90,8 +90,7 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $mock->getFieldKey();
   }
 
-  public function testnewDateControl()
-  {
+  public function testnewDateControl() {
     $classname = 'SprintProjectCustomField';
     $datecontrol = new AphrontFormDateControl();
     $proxy = new PhabricatorStandardCustomFieldDate();
@@ -110,8 +109,7 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $this->assertEquals('AphrontFormDateControl', get_class($control));
   }
 
-  public function testrenderDateProxyPropertyViewValue()
-  {
+  public function testrenderDateProxyPropertyViewValue() {
     $classname = 'SprintProjectCustomField';
     $datefield = new PhabricatorStandardCustomFieldDate();
 
@@ -129,8 +127,7 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $this->assertEquals('PhabricatorStandardCustomFieldDate', get_class($proxy));
   }
 
-  public function testrenderDateProxyEditControl()
-  {
+  public function testrenderDateProxyEditControl() {
     $classname = 'SprintProjectCustomField';
     $datefield = new PhabricatorStandardCustomFieldDate();
 
@@ -148,8 +145,7 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $this->assertEquals('PhabricatorStandardCustomFieldDate', get_class($proxy));
   }
 
-  public function testrenderPropertyViewValue()
-  {
+  public function testrenderPropertyViewValue() {
     $classname = 'SprintProjectCustomField';
     $proxy =  new PhabricatorStandardCustomFieldDate();
     $handles = array();
@@ -167,8 +163,7 @@ final class SprintCustomFieldTest extends SprintTestCase {
     $this->assertSame($proxy, $mock->renderPropertyViewValue($handles));
   }
 
-  public function testgetStandardCustomFieldNamespace()
-  {
+  public function testgetStandardCustomFieldNamespace() {
     $classname = 'SprintProjectCustomField';
 
     $mock = $this->getMockBuilder($classname)

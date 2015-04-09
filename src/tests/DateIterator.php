@@ -9,29 +9,30 @@ class DateIterator implements Iterator {
     $this->array = $dates;
   }
 
-  function rewind() {
+  public function rewind() {
     var_dump(__METHOD__);
     $this->position = 0;
   }
 
-  function current() {
+  public function current() {
     var_dump(__METHOD__);
     return $this->array[$this->position];
   }
 
-  function key() {
+  public function key() {
     var_dump(__METHOD__);
     return $this->position;
   }
 
-  function next() {
+  public function next() {
     var_dump(__METHOD__);
     ++$this->position;
   }
 
-  function valid() {
+  public function valid() {
     var_dump(__METHOD__);
     return isset($this->array[$this->position]);
   }
 
 }
+

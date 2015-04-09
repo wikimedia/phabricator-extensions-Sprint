@@ -91,6 +91,8 @@ final class SprintTableView extends AphrontView {
     require_celerity_resource('jquery', 'sprint');
     require_celerity_resource('dataTables-css', 'sprint');
     require_celerity_resource('dataTables', 'sprint');
+    require_celerity_resource('dataTables.tableTools', 'sprint');
+    require_celerity_resource('tableTools-css', 'sprint');
 
     $table = array();
 

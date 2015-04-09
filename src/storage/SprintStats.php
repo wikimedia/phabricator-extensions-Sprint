@@ -23,9 +23,9 @@ final class SprintStats {
   public function buildDateArray($start, $end, DateTimeZone $timezone) {
     $dates = array();
     $period = new DatePeriod(
-        id(new DateTime("@" . $start, $timezone))->setTime(2, 0),
+        id(new DateTime('@'.$start, $timezone))->setTime(2, 0),
         new DateInterval('P1D'), // 1 day interval
-        id(new DateTime("@" . $end, $timezone))->modify('+1 day')->setTime(17, 0));
+        id(new DateTime('@'.$end, $timezone))->modify('+1 day')->setTime(17, 0));
 
     foreach ($period as $day) {
       $dates[$day->format('D M j')] = $this->getBurndownDate(
@@ -36,7 +36,7 @@ final class SprintStats {
   }
 
   public function buildBefore($start, $timezone) {
-    $before = id(new DateTime("@" . $start, $timezone))->modify('-1 day')->setTime(2, 0);
+    $before = id(new DateTime('@'.$start, $timezone))->modify('-1 day')->setTime(2, 0);
     return $this->getBurndownDate($before->format('D M j'));
   }
 
@@ -111,7 +111,7 @@ final class SprintStats {
 
   public function calcTasksRemaining($dates) {
     $first = true;
-    $previous = new BurndownDataDate($date=null);
+    $previous = new BurndownDataDate($date = null);
     $sprintpoints = id(new SprintPoints())
         ->setTaskPoints($this->taskpoints);
     $tasks_total = $sprintpoints->sumTotalTasks();
@@ -163,7 +163,7 @@ final class SprintStats {
         pht('Remaining Points'),
         pht('Ideal Points'),
         pht('Points Closed Today'),
-    ));
+    ),);
 
     foreach ($dates as $key => $date) {
       $data[] = array(

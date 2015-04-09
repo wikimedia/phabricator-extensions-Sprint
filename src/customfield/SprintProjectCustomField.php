@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Michael Peters
+ * @author Christopher Johnson
  * @license GPL version 3
  */
 
@@ -9,7 +10,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
 
 
   protected function isSprint() {
-    $validator = new SprintValidator;
+    $validator = new SprintValidator();
     $issprint = call_user_func(array($validator, 'checkForSprint'),
         array($validator, 'isSprint'), $this->getObject()->getPHID());
     return $issprint;
@@ -33,7 +34,7 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
         ->setApplicationField($obj)
         ->setFieldConfig(array(
             'name' => $name,
-            'description' => $description
+            'description' => $description,
         ));
     $this->setProxy($dateproxy);
     return $dateproxy;

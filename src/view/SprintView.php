@@ -7,13 +7,13 @@ abstract class SprintView extends AphrontView {
 
     $form = id(new AphrontFormView())
         ->setUser($user)
-        ->appendChild(
+        ->appendControl(
             id(new AphrontFormTokenizerControl())
                 ->setDatasource(new PhabricatorProjectDatasource())
                 ->setLabel(pht('Project'))
                 ->setLimit(1)
                 ->setName('set_project')
-                ->setValue($tokens));
+                ->setValue(mpull($tokens, 'getPHID')));
 
     if ($has_window) {
       list($window_str, , $window_error) = $this->getWindow($request);

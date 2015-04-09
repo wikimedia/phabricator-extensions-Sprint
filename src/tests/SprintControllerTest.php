@@ -28,7 +28,7 @@ final class SprintControllerTest extends SprintTestCase {
     $e = new Exception();
     $dv = new SprintDataViewController();
     $errorbox = $dv->getErrorBox($e);
-    $this->assertInstanceOf('PHUIErrorView', $errorbox);
+    $this->assertInstanceOf('PHUIInfoView', $errorbox);
   }
 
   public function testhandleRequestDataViewController() {

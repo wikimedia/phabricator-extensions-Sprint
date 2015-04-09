@@ -32,12 +32,14 @@ final class BoardDataPieView {
             'style' => 'width: 500px; height:200px; padding-left: 75px;
             margin-left: 900px;',
         ), pht('Task Priority'));
+
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Points Allocation Report for '.
             $project_name))
         ->appendChild($boardpie)
         ->appendChild($taskpie)
         ->appendChild($priority_pie);
+
     return $box;
   }
 

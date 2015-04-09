@@ -4,7 +4,7 @@ final class UserOpenTasksView extends OpenTasksView {
   /**
    * @param string $date
    */
-  public function execute( $tasks, $recently_closed, $date) {
+  public function execute($tasks, $recently_closed, $date) {
     $result = mgroup($tasks, 'getOwnerPHID');
     $leftover = idx($result, '', array());
     unset($result['']);
@@ -20,3 +20,4 @@ final class UserOpenTasksView extends OpenTasksView {
     return array ( $leftover, $leftover_closed, $base_link, $leftover_name, $col_header, $header, $result_closed, $result );
   }
 }
+

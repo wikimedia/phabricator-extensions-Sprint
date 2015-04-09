@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Michael Peters
+ * @author Christopher Johnson
  * @license GPL version 3
  */
 

@@ -41,7 +41,7 @@ public class SprintTestCase extends JUnit4TestBase {
 		driver.get(pages.SprintProjectList);
 		WebElement div = driver.findElement(By.id(elementId));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content mlb"));
+		assertThat(attribute, equalTo("phabricator-nav-content plb"));
 		System.out.print("SprintListController is executed\n");
 	}
 
@@ -78,7 +78,7 @@ public class SprintTestCase extends JUnit4TestBase {
 		driver.get((pages.SprintProjectBoard) + projectId + "/column/" + boardColumnId + "/");
 		WebElement div = driver.findElement(By.id("UQ0_3"));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content mlb"));
+		assertThat(attribute, equalTo("phabricator-nav-content plb"));
 		System.out.print("/project/sprint/board/<id>/column/<columnid> route to SprintBoardColumnDetailController is executed\n");
 		driver.quit();
 	}
@@ -116,9 +116,9 @@ public class SprintTestCase extends JUnit4TestBase {
 	@Test
 	public void test09() {
 		driver.get((pages.SprintProjectReport) + "burn/");
-		WebElement table = driver.findElement(By.tagName("table"));
-		String attribute = table.getAttribute("class");
-		assertThat(attribute, equalTo("aphront-table-view"));
+		WebElement div = driver.findElement(By.xpath("//div[contains(@class, 'aphront-form-control')]"));
+		String attribute = div.getAttribute("class");
+		assertThat(attribute, equalTo("aphront-form-control grouped aphront-form-control-tokenizer"));
 		System.out.print("/project/sprint/report/burn route to SprintDataViewController Burn View is executed\n");
 		driver.quit();
 	}
@@ -126,9 +126,9 @@ public class SprintTestCase extends JUnit4TestBase {
 	@Test
 	public void test10() {
 		driver.get((pages.SprintPhabricatorProjectFeed) + projectId);
-		WebElement div = driver.findElement(By.id("UQ0_2"));
+		WebElement div = driver.findElement(By.xpath("//div[contains(@class, 'phui-feed-story-head')]"));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content mlb"));
+		assertThat(attribute, equalTo("phui-feed-story-head"));
 		System.out.print("/project/sprint/feed/<id> route to PhabricatorProjectFeedController is executed\n");
 		driver.quit();
 	}
@@ -138,7 +138,7 @@ public class SprintTestCase extends JUnit4TestBase {
 		driver.get((pages.SprintProjectProfile) + projectId);
 		WebElement div = driver.findElement(By.id("UQ0_3"));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content mlb"));
+		assertThat(attribute, equalTo("phabricator-nav-content plb"));
 		System.out.print("/project/sprint/profile/<id> route to SprintProjectProfileController is executed\n");
 		driver.quit();
 	}

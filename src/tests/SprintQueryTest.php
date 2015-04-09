@@ -1,14 +1,12 @@
 <?php
 final class SprintQueryTest extends SprintTestCase {
 
-  public function getRequestObject()
-  {
+  public function getRequestObject() {
     $r = new AphrontRequest('example.com', '/');
     return $r;
   }
 
-  public function testRequestSetUser()
-  {
+  public function testRequestSetUser() {
     $r = new AphrontRequest('example.com', '/');
     $user = $this->generateNewTestUser();
     $r->setUser($user);
@@ -17,8 +15,7 @@ final class SprintQueryTest extends SprintTestCase {
   }
 
 
-  public function PHIDProvider()
-  {
+  public function PHIDProvider() {
     return array(
         'PHID-PROJ-mp777tqnkvivubj26ufu',
     );
@@ -56,3 +53,4 @@ final class SprintQueryTest extends SprintTestCase {
 //  }
 
 }
+

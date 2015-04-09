@@ -267,9 +267,9 @@ final class SprintReportBurnUpView extends SprintView {
 
   if ($handle) {
     list ($caption, $header) = $this->renderCaption ($handle);
-    $caption = id(new PHUIErrorView())
+    $caption = id(new PHUIInfoView())
         ->appendChild($caption)
-        ->setSeverity(PHUIErrorView::SEVERITY_NOTICE);
+        ->setSeverity(PHUIInfoView::SEVERITY_NOTICE);
   } else {
     $header = pht('Task Burn Rate for All Tasks');
     $caption = null;
@@ -278,7 +278,7 @@ final class SprintReportBurnUpView extends SprintView {
     $panel = new PHUIObjectBoxView();
     $panel->setHeaderText($header);
     if ($caption) {
-      $panel->setErrorView($caption);
+      $panel->setInfoView($caption);
     }
     $panel->appendChild($table);
 

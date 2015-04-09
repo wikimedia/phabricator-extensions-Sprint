@@ -40,19 +40,19 @@ table.dataTable thead .sorting {
     *cursor: hand;
 }
 table.dataTable thead .sorting {
-    background: url(/rsrc/images/sort_both.png) no-repeat center right;
+    background: url(/rsrc/libext/sort_both.png) no-repeat center right;
 }
 table.dataTable thead .sorting_asc {
-    background: url(/rsrc/images/sort_asc.png) no-repeat center right;
+    background: url(/rsrc/libext/sort_asc.png) no-repeat center right;
 }
 table.dataTable thead .sorting_desc {
-    background: url(/rsrc/images/sort_desc.png) no-repeat center right;
+    background: url(/rsrc/libext/sort_desc.png) no-repeat center right;
 }
 table.dataTable thead .sorting_asc_disabled {
-    background: url(/rsrc/images/sort_asc_disabled.png) no-repeat center right;
+    background: url(/rsrc/libext/sort_asc_disabled.png) no-repeat center right;
 }
 table.dataTable thead .sorting_desc_disabled {
-    background: url(/rsrc/images/sort_desc_disabled.png) no-repeat center right;
+    background: url(/rsrc/libext/sort_desc_disabled.png) no-repeat center right;
 }
 table.dataTable tbody tr {
     background-color: white;
@@ -304,6 +304,7 @@ table.dataTable td {
     clear: both;
     *zoom: 1;
     zoom: 1;
+    overflow-x: scroll;
 }
 .dataTables_wrapper .dataTables_length {
     float: left;

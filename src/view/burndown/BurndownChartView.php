@@ -36,7 +36,7 @@ final class BurndownChartView {
         ->appendChild(phutil_tag('div',
             array(
                 'id' => 'chart',
-                'style' => 'width: 100%; height:400px',
+                'style' => 'width: 100%; height:450px',
             ), ''));
 
     return $chart;

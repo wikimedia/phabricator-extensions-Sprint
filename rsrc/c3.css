@@ -6,6 +6,7 @@
 
 .c3 svg {
   font: 10px sans-serif;
+  overflow-x:scroll;
 }
 .c3 path, .c3 line {
   fill: none;
