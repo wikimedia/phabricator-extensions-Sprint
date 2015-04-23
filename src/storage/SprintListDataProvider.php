@@ -5,8 +5,6 @@ final class SprintListDataProvider {
   private $request;
   private $sprint_phids;
   private $sprints;
-  private $order;
-  private $reverse;
   private $rows;
 
   public function setViewer ($viewer) {

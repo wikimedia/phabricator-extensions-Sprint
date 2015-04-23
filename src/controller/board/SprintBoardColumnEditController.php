@@ -155,9 +155,7 @@ final class SprintBoardColumnEditController
     $nav->appendChild($form_box);
 
     return $this->buildApplicationPage(
-      array(
         $nav,
-      ),
       array(
         'title' => $title,
       ));

@@ -62,9 +62,7 @@ final class SprintBoardColumnDetailController
     $nav->appendChild($timeline);
 
     return $this->buildApplicationPage(
-      array(
         $nav,
-      ),
       array(
         'title' => $title,
       ));

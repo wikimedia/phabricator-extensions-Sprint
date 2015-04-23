@@ -1,7 +1,7 @@
 Release Notes
 ==================
-Phabricator Sprint Extension 0.7.2.0
-2015-02-12
+Phabricator Sprint Extension release/2015-04-22
+2015-04-22
 
 ####Description
 - The burndown chart now gets its data from the board.  The board columns define the sprint task status.
@@ -38,6 +38,8 @@ Hovering over a Blocker flag shows a tool-tip that indicates the Blocked tasks.
 - the task table, the events table and the Sprint Burndown List table are now equipped with pagination, search
 filtering and column ordering.
 
+- Exporting of table data to CSV is enabled.
+
 - the default Maniphest Burn Up report has been improved for Sprint.  It can be accessed from the Sprint
 application page side bar.
 
@@ -48,6 +50,8 @@ application page side bar.
 - T88727 Remove Sprint Burndown Chart Dependency on Maniphest Task Status
 - T85455 show avatar of assigned to field on cards displayed in workboard
 - T86947 Improve sprint extension's burndown exception error page with name and link
+- T89275 Implement serialization for Sprint Data
+- T95079 Add conduit methods for Sprint Creation
 
 ####Bug Fixes
 - T78585 Accessing sprint project URLs requires being logged in
@@ -68,8 +72,8 @@ application page side bar.
 - T77602 Closed Tasks added to Sprint and not reopened add points to points remaining
 - T78263 Subtasks do not appear in Tasks for this Sprint List
 - T87335 Can't run storage upgrade if using sprint extension
-
-####Future
-- Serialization of Sprint Data for export
-- interface for user-defined column to status mapping
+- T90661 Sprint extension may be causing weirdness with task views (open vs. all)
+- T91213 BurnUp Chart does not load on phabricator.wikimedia.org (unfiltered data stream to the D3 JS too large)
+- T89876 Long task names do not wrap in DataTable column for Task table
+- T91042 The icons for Sprint Board and Burndown view don't display an active blue on gray state
 

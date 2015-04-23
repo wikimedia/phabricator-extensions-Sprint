@@ -75,13 +75,13 @@ abstract class SprintProjectCustomField extends PhabricatorProjectCustomField
    * @param string $time
    */
   public function renderDateProxyEditControl($dateproxy, $time) {
-    $issprint = $this->isSprint();
+//    $issprint = $this->isSprint();
 
-    if ($issprint && $dateproxy) {
+//    if ($issprint && $dateproxy) {
         return $this->newDateControl($dateproxy, $time);
-    } else {
-      return null;
-    }
+//    } else {
+//      return null;
+//    }
    }
 
   public function renderPropertyViewLabel() {

@@ -33,9 +33,13 @@ final class EventTableView {
   }
 
   public function buildEventTable($start, $end) {
-    Javelin::initBehavior('events-table', array(
-    ), 'sprint');
     $rows = $this->buildEventsTree($start, $end);
+    if (empty($rows)) {
+      return null;
+    } else {
+      Javelin::initBehavior('events-table', array(
+      ), 'sprint');
+    }
     $table = id(new SprintTableView($rows))
         ->setHeaders(
             array(
