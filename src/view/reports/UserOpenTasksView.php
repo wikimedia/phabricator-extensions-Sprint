@@ -20,4 +20,3 @@ final class UserOpenTasksView extends OpenTasksView {
     return array ( $leftover, $leftover_closed, $base_link, $leftover_name, $col_header, $header, $result_closed, $result );
   }
 }
-

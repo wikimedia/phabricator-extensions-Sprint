@@ -53,6 +53,8 @@ final class SprintApplication extends PhabricatorApplication {
               => 'SprintBoardTaskEditController',
               'board/task/create/'
               => 'SprintBoardTaskEditController',
+              'board/batch/'
+              => 'SprintBoardBatchEditController',
             // these are for board filters and column queries
               'board/(?P<id>[1-9]\d*)/'.
               '(?P<filter>filter/)?'.
@@ -113,6 +115,7 @@ final class SprintApplication extends PhabricatorApplication {
         ManiphestEditPoliciesCapability::CAPABILITY => array(),
         ManiphestEditPriorityCapability::CAPABILITY => array(),
         ManiphestEditProjectsCapability::CAPABILITY => array(),
+        ManiphestBulkEditCapability::CAPABILITY => array(),
     );
   }
 }

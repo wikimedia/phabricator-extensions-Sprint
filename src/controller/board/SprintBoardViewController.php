@@ -165,7 +165,10 @@ final class SprintBoardViewController
     $task_query = $engine->buildQueryFromSavedQuery($saved);
 
     $tasks = $task_query
-      ->addWithAllProjects(array($project->getPHID()))
+        ->withEdgeLogicPHIDs(
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+            PhabricatorQueryConstraint::OPERATOR_AND,
+            array($project->getPHID()))
       ->setOrderBy(ManiphestTaskQuery::ORDER_PRIORITY)
       ->setViewer($viewer)
       ->execute();
@@ -254,8 +257,11 @@ final class SprintBoardViewController
 
       $batch_ids = mpull($batch_tasks, 'getID');
       $batch_ids = implode(',', $batch_ids);
-
-      $batch_uri = new PhutilURI('/maniphest/batch/');
+      if ($is_sprint == true) {
+        $batch_uri = new PhutilURI('/project/sprint/board/batch/');
+      } else {
+        $batch_uri = new PhutilURI('/maniphest/batch/');
+      }
       $batch_uri->setQueryParam('board', $this->id);
       $batch_uri->setQueryParam('batch', $batch_ids);
       return id(new AphrontRedirectResponse())
@@ -269,25 +275,29 @@ final class SprintBoardViewController
       ->setID($board_id);
 
     if ($is_sprint == true) {
-      Javelin::initBehavior(
-          'sprint-boards',
-          array(
+      $behavior_config = array(
               'boardID' => $board_id,
               'projectPHID' => $project->getPHID(),
               'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
               'createURI' => '/project/sprint/board/task/create/',
               'order' => $this->sortKey,
-          ), 'sprint');
+          );
+      $this->initSprintBehavior(
+          'sprint-boards',
+          $behavior_config);
+      $this->addExtraQuickSandConfig(array('boardConfig' => $behavior_config));
     } else {
+      $behavior_config = array(
+          'boardID' => $board_id,
+          'projectPHID' => $project->getPHID(),
+          'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
+          'createURI' => '/maniphest/task/create/',
+          'order' => $this->sortKey,
+      );
       $this->initBehavior(
           'project-boards',
-          array(
-              'boardID' => $board_id,
-              'projectPHID' => $project->getPHID(),
-              'moveURI' => $this->getApplicationURI('move/'.$project->getID().'/'),
-              'createURI' => '/maniphest/task/create/',
-              'order' => $this->sortKey,
-          ));
+          $behavior_config);
+      $this->addExtraQuickSandConfig(array('boardConfig' => $behavior_config));
     }
 
     $this->handles = ManiphestTaskListView::loadTaskHandles($viewer, $tasks);
@@ -365,10 +375,6 @@ final class SprintBoardViewController
       $board->addPanel($panel);
     }
 
-    Javelin::initBehavior(
-      'boards-dropdown',
-      array());
-
     $sort_menu = $this->buildSortMenu(
       $viewer,
       $sort_key);
@@ -406,9 +412,7 @@ final class SprintBoardViewController
     $nav->appendChild($board_box);
 
     return $this->buildApplicationPage(
-      array(
         $nav,
-      ),
       array(
         'title' => pht('%s Board', $project->getName()),
         'showFooter' => false,
@@ -768,6 +772,13 @@ final class SprintBoardViewController
     $base->setQueryParam('hidden', $this->showHidden ? 'true' : null);
 
     return $base;
+  }
+
+  public function initSprintBehavior($name, $config = array()) {
+    Javelin::initBehavior(
+        $name,
+        $config,
+        'sprint');
   }
 
 }

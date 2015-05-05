@@ -49,7 +49,7 @@ final class SprintQuery extends SprintDAO {
  //     throw new BurndownException("The project \"".$this->project->getName()
  //         ."\" is not set up for Sprint because "
  //         ."it has not been assigned a start date\n", $help);
-    return PhabricatorTime::getNow();
+    return PhabricatorTime::getNow() - 1209600;
     } else {
       return $start;
     }
@@ -72,7 +72,10 @@ final class SprintQuery extends SprintDAO {
   public function getTasks() {
     $tasks = id(new ManiphestTaskQuery())
         ->setViewer($this->viewer)
-        ->withAnyProjects(array($this->project->getPHID()))
+        ->withEdgeLogicPHIDs(
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+            PhabricatorQueryConstraint::OPERATOR_OR,
+            array($this->project->getPHID()))
         ->needProjectPHIDs(true)
         ->execute();
     if (empty($tasks)) {

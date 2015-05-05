@@ -2,7 +2,7 @@
  * @provides javelin-behavior-sprint-boards
  */
 
-JX.behavior('sprint-boards', function(config) {
+JX.behavior('sprint-boards', function(config, statics) {
 
     function finditems(col) {
         return JX.DOM.scry(col, 'li', 'project-card');
@@ -44,8 +44,8 @@ JX.behavior('sprint-boards', function(config) {
             'project-panel-over-limit': over_limit
         };
         var panel = JX.DOM.findAbove(col, 'div', 'workpanel');
-        for (var k in panel_map) {
-            JX.DOM.alterClass(panel, k, !!panel_map[k]);
+        for (var p in panel_map) {
+            JX.DOM.alterClass(panel, p, !!panel_map[p]);
         }
 
         var color_map = {
@@ -53,8 +53,8 @@ JX.behavior('sprint-boards', function(config) {
             'phui-tag-shade-blue': (sum > 0 && !over_limit),
             'phui-tag-shade-red': (over_limit)
         };
-        for (var k in color_map) {
-            JX.DOM.alterClass(data.countTagNode, k, !!color_map[k]);
+        for (var c in color_map) {
+            JX.DOM.alterClass(data.countTagNode, c, !!color_map[c]);
         }
     }
 
@@ -65,7 +65,7 @@ JX.behavior('sprint-boards', function(config) {
     }
 
     function getcolumns() {
-        return JX.DOM.scry(JX.$(config.boardID), 'ul', 'project-column');
+        return JX.DOM.scry(JX.$(statics.boardID), 'ul', 'project-column');
     }
 
     function colsort(u, v) {
@@ -87,7 +87,7 @@ JX.behavior('sprint-boards', function(config) {
 
     function getcontainer() {
         return JX.DOM.find(
-            JX.$(config.boardID),
+            JX.$(statics.boardID),
             'div',
             'aphront-multi-column-view');
     }
@@ -160,9 +160,9 @@ JX.behavior('sprint-boards', function(config) {
             data.beforePHID = before_phid;
         }
 
-        data.order = config.order;
+        data.order = statics.order;
 
-        var workflow = new JX.Workflow(config.moveURI, data)
+        var workflow = new JX.Workflow(statics.moveURI, data)
             .setHandler(function(response) {
                 onresponse(response, item, list);
             });
@@ -170,36 +170,12 @@ JX.behavior('sprint-boards', function(config) {
         workflow.start();
     }
 
-    var lists = [];
-    var ii;
-    var cols = getcolumns();
-
-    for (ii = 0; ii < cols.length; ii++) {
-        var list = new JX.DraggableList('project-card', cols[ii])
-            .setFindItemsHandler(JX.bind(null, finditems, cols[ii]));
-
-        list.listen('didSend', JX.bind(list, onupdate, cols[ii]));
-        list.listen('didReceive', JX.bind(list, onupdate, cols[ii]));
-
-        list.listen('didDrop', JX.bind(null, ondrop, list));
-
-        list.listen('didBeginDrag', JX.bind(null, onbegindrag));
-        list.listen('didEndDrag', JX.bind(null, onenddrag));
-
-        lists.push(list);
-
-        onupdate(cols[ii]);
-    }
-
-    for (ii = 0; ii < lists.length; ii++) {
-        lists[ii].setGroup(lists);
-    }
-
-    var onedit = function(column, r) {
+    function onedit(column, r) {
         var new_card = JX.$H(r.tasks).getNode();
         var new_data = JX.Stratcom.getData(new_card);
         var items = finditems(column);
         var edited = false;
+        var remove_index = null;
 
         for (var ii = 0; ii < items.length; ii++) {
             var item = items[ii];
@@ -208,6 +184,9 @@ JX.behavior('sprint-boards', function(config) {
             var phid = data.objectPHID;
 
             if (phid == new_data.objectPHID) {
+                if (r.data.removeFromBoard) {
+                    remove_index = ii;
+                }
                 items[ii] = new_card;
                 data = new_data;
                 edited = true;
@@ -222,57 +201,147 @@ JX.behavior('sprint-boards', function(config) {
             new_data.sort = r.data.sortMap[new_data.objectPHID] || new_data.sort;
         }
 
+        if (remove_index !== null) {
+            items.splice(remove_index, 1);
+        }
+
         items.sort(colsort);
 
         JX.DOM.setContent(column, items);
 
         onupdate(column);
-    };
+    }
 
-    JX.Stratcom.listen(
-        'click',
-        ['edit-project-card'],
-        function(e) {
-            e.kill();
-            var column = e.getNode('project-column');
-            var request_data = {
-                responseType: 'card',
-                columnPHID: JX.Stratcom.getData(column).columnPHID,
-                order: config.order
-            };
-            new JX.Workflow(e.getNode('tag:a').href, request_data)
-                .setHandler(JX.bind(null, onedit, column))
-                .start();
-        });
+    function update_statics(update_config) {
+        statics.boardID = update_config.boardID;
+        statics.projectPHID = update_config.projectPHID;
+        statics.order = update_config.order;
+        statics.moveURI = update_config.moveURI;
+        statics.createURI = update_config.createURI;
+    }
 
-    JX.Stratcom.listen(
-        'click',
-        ['column-add-task'],
-        function (e) {
+    function init_board() {
+        var lists = [];
+        var ii;
+        var cols = getcolumns();
 
-            // We want the 'boards-dropdown-menu' behavior to see this event and
-            // close the dropdown, but don't want to follow the link.
-            e.prevent();
+        for (ii = 0; ii < cols.length; ii++) {
+            var list = new JX.DraggableList('project-card', cols[ii])
+                .setFindItemsHandler(JX.bind(null, finditems, cols[ii]));
 
-            var column_phid = e.getNodeData('column-add-task').columnPHID;
-            var request_data = {
-                responseType: 'card',
-                columnPHID: column_phid,
-                projects: config.projectPHID,
-                order: config.order
-            };
-            var cols = getcolumns();
-            var ii;
-            var column;
-            for (ii = 0; ii < cols.length; ii++) {
-                if (JX.Stratcom.getData(cols[ii]).columnPHID == column_phid) {
-                    column = cols[ii];
-                    break;
+            list.listen('didSend', JX.bind(list, onupdate, cols[ii]));
+            list.listen('didReceive', JX.bind(list, onupdate, cols[ii]));
+
+            list.listen('didDrop', JX.bind(null, ondrop, list));
+
+            list.listen('didBeginDrag', JX.bind(null, onbegindrag));
+            list.listen('didEndDrag', JX.bind(null, onenddrag));
+
+            lists.push(list);
+
+            onupdate(cols[ii]);
+        }
+
+        for (ii = 0; ii < lists.length; ii++) {
+            lists[ii].setGroup(lists);
+        }
+
+        JX.Stratcom.listen(
+            'click',
+            ['edit-project-card'],
+            function(e) {
+                e.kill();
+                var column = e.getNode('project-column');
+                var request_data = {
+                    responseType: 'card',
+                    columnPHID: JX.Stratcom.getData(column).columnPHID,
+                    order: statics.order
+                };
+                new JX.Workflow(e.getNode('tag:a').href, request_data)
+                    .setHandler(JX.bind(null, onedit, column))
+                    .start();
+            });
+
+        JX.Stratcom.listen(
+            'click',
+            ['column-add-task'],
+            function (e) {
+
+                // We want the 'boards-dropdown-menu' behavior to see this event and
+                // close the dropdown, but don't want to follow the link.
+                e.prevent();
+
+                var column_phid = e.getNodeData('column-add-task').columnPHID;
+                var request_data = {
+                    responseType: 'card',
+                    columnPHID: column_phid,
+                    projects: statics.projectPHID,
+                    order: statics.order
+                };
+                var cols = getcolumns();
+                var ii;
+                var column;
+                for (ii = 0; ii < cols.length; ii++) {
+                    if (JX.Stratcom.getData(cols[ii]).columnPHID == column_phid) {
+                        column = cols[ii];
+                        break;
+                    }
                 }
+                new JX.Workflow(statics.createURI, request_data)
+                    .setHandler(JX.bind(null, onedit, column))
+                    .start();
+            });
+
+        JX.Stratcom.listen('click', 'boards-dropdown-menu', function(e) {
+            var data = e.getNodeData('boards-dropdown-menu');
+            if (data.menu) {
+                return;
             }
-            new JX.Workflow(config.createURI, request_data)
-                .setHandler(JX.bind(null, onedit, column))
-                .start();
+
+            e.kill();
+
+            var list = JX.$H(data.items).getFragment().firstChild;
+
+            var button = e.getNode('boards-dropdown-menu');
+            data.menu = new JX.PHUIXDropdownMenu(button);
+            data.menu.setContent(list);
+            data.menu.open();
+
+            JX.DOM.listen(list, 'click', 'tag:a', function(e) {
+                if (!e.isNormalClick()) {
+                    return;
+                }
+                data.menu.close();
+            });
         });
+
+        JX.Stratcom.listen(
+            'quicksand-redraw',
+            null,
+            function (e) {
+                var data = e.getData();
+                if (!data.newResponse.boardConfig) {
+                    return;
+                }
+                var new_config;
+                if (data.fromServer) {
+                    new_config = data.newResponse.boardConfig;
+                    statics.boardConfigCache[data.newResponseID] = new_config;
+                } else {
+                    new_config = statics.boardConfigCache[data.newResponseID];
+                    statics.boardID = new_config.boardID;
+                }
+                update_statics(new_config);
+            });
+        return true;
+    }
+
+    if (!statics.setup) {
+        update_statics(config);
+        var current_page_id = JX.Quicksand.getCurrentPageID();
+        statics.boardConfigCache = {};
+        statics.boardConfigCache[current_page_id] = config;
+        statics.setup = init_board();
+    }
 
 });

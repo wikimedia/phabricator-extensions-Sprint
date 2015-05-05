@@ -1,0 +1,74 @@
+/**
+ * @provides sprintui-object-box-css
+ */
+
+.sprintui-object-box {
+    position: relative;
+    overflow-x: scroll;
+    overflow-y:hidden;
+}
+
+div.phui-object-box.phui-object-box-flush {
+    margin-top: 0;
+}
+
+.phui-object-box .phui-header-shell {
+    padding: 4px 5px 4px 12px;
+border-bottom: 1px solid {$lightblueborder};
+border-top: none;
+}
+
+.phui-object-box .phui-header-image {
+    margin: 1px 8px -7px -7px;
+}
+
+.phui-object-box .phui-header-shell h1 {
+    text-shadow: 0 1px #fff;
+    padding: 8px 0;
+}
+
+.phui-object-box .phui-header-shell + .phui-info-view {
+    margin: 0;
+    border-width: 0;
+border-bottom: 1px solid {$lightblueborder};
+}
+
+.device-phone .phui-object-box {
+    margin: 8px 8px 0 8px;
+}
+
+.phui-box-border.phui-object-box-lightgreen {
+border: 1px solid {$lightgreenborder};
+border-bottom: 1px solid {$greenborder};
+}
+
+.phui-box-border.phui-object-box-lightgreen .phui-action-header {
+border-bottom: 1px solid {$lightgreenborder};
+}
+
+.phui-box-border.phui-object-box-lightblue {
+border: 1px solid {$lightblueborder};
+border-bottom: 1px solid {$blueborder};
+}
+
+.phui-box-border.phui-object-box-lightblue .phui-action-header {
+border-bottom: 1px solid {$lightblueborder};
+}
+
+.phui-box-border.phui-object-box-lightred {
+border: 1px solid {$lightredborder};
+border-bottom: 1px solid {$redborder};
+}
+
+.phui-box-border.phui-object-box-lightred .phui-action-header {
+border-bottom: 1px solid {$lightredborder};
+}
+
+.phui-box-border.phui-object-box-lightviolet {
+border: 1px solid {$lightvioletborder};
+border-bottom: 1px solid {$violetborder};
+}
+
+.phui-box-border.phui-object-box-lightviolet .phui-action-header {
+border-bottom: 1px solid {$lightvioletborder};
+}

@@ -391,7 +391,10 @@ final class SprintReportOpenTasksView extends SprintView {
     $query = id(new ManiphestTaskQuery())
         ->setViewer($user)
         ->needProjectPHIDs(true)
-        ->withAnyProjects($phids)
+        ->withEdgeLogicPHIDs(
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+            PhabricatorQueryConstraint::OPERATOR_OR,
+            $phids)
         ->withStatuses(ManiphestTaskStatus::getOpenStatusConstants());
     $tasks = $query->execute();
     return $tasks;

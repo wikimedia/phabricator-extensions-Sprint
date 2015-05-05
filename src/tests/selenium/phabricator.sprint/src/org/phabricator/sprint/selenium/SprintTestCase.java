@@ -76,9 +76,9 @@ public class SprintTestCase extends JUnit4TestBase {
 	@Test
 	public void test05() {
 		driver.get((pages.SprintProjectBoard) + projectId + "/column/" + boardColumnId + "/");
-		WebElement div = driver.findElement(By.id("UQ0_3"));
+		WebElement div = driver.findElement(By.xpath("//div[contains(@class, 'phui-property-list-actions')]"));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content plb"));
+		assertThat(attribute, equalTo("phui-property-list-actions"));
 		System.out.print("/project/sprint/board/<id>/column/<columnid> route to SprintBoardColumnDetailController is executed\n");
 		driver.quit();
 	}
@@ -136,9 +136,9 @@ public class SprintTestCase extends JUnit4TestBase {
 	@Test
 	public void test11() {
 		driver.get((pages.SprintProjectProfile) + projectId);
-		WebElement div = driver.findElement(By.id("UQ0_3"));
+		WebElement div = driver.findElement(By.xpath("//div[contains(@class, 'phui-property-list-actions')]"));
 		String attribute = div.getAttribute("class");
-		assertThat(attribute, equalTo("phabricator-nav-content plb"));
+		assertThat(attribute, equalTo("phui-property-list-actions"));
 		System.out.print("/project/sprint/profile/<id> route to SprintProjectProfileController is executed\n");
 		driver.quit();
 	}

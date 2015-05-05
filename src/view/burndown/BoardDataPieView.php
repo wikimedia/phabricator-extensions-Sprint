@@ -33,7 +33,7 @@ final class BoardDataPieView {
             margin-left: 900px;',
         ), pht('Task Priority'));
 
-    $box = id(new PHUIObjectBoxView())
+    $box = id(new SprintUIObjectBoxView())
         ->setHeaderText(pht('Points Allocation Report for '.
             $project_name))
         ->appendChild($boardpie)
