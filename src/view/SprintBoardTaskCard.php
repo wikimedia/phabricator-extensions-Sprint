@@ -137,7 +137,8 @@ final class SprintBoardTaskCard {
     $meta  = array(
         'tip' => pht($ownername),
         'size' => 200,
-        'align' => 'E',);
+        'align' => 'E',
+    );
     $image = id(new SprintHandleIconView())
         ->addSigil($sigil)
         ->setMetadata($meta)

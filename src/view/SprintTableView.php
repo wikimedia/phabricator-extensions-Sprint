@@ -242,7 +242,8 @@ final class SprintTableView extends AphrontView {
     }
 
     $html = phutil_tag('table', array('class' => $table_class,
-        'id' => $table_id,), $table);
+        'id' => $table_id,
+    ), $table);
     return phutil_tag_div('aphront-table-wrap', $html);
   }
 

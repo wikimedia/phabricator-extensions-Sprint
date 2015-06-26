@@ -47,7 +47,7 @@ final class SprintBoardBatchEditController extends ManiphestController {
 
     $actions = $request->getStr('actions');
     if ($actions) {
-      $actions = json_decode($actions, true);
+      $actions = phutil_json_decode($actions);
     }
 
     if ($request->isFormPost() && is_array($actions)) {

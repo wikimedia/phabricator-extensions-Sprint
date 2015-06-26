@@ -30,9 +30,10 @@ final class SprintApplication extends PhabricatorApplication {
   }
 
   public function getRoutes() {
-
-    return array(
-            // this is the default application route controller
+    $enable_board = PhabricatorEnv::getEnvConfig('sprint.enable-sprint-board');
+    if ($enable_board == true) {
+      return array(
+        // this is the default application route controller
           '/project/sprint/' => array(
               '' => 'SprintListController',
             // these are forked controllers for the Sprint Board
@@ -65,9 +66,10 @@ final class SprintApplication extends PhabricatorApplication {
               'profile/(?P<id>[1-9]\d*)/'
               => 'SprintProjectProfileController',
               'report/list/' => 'SprintListController',
+              'report/history/' => 'SprintHistoryController',
               'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
               'view/(?P<id>\d+)/' => 'SprintDataViewController',
-              // all routes following point to default controllers
+            // all routes following point to default controllers
               'archive/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectArchiveController',
               'details/(?P<id>[1-9]\d*)/'
@@ -86,12 +88,63 @@ final class SprintApplication extends PhabricatorApplication {
               'update/(?P<id>[1-9]\d*)/(?P<action>[^/]+)/'
               => 'PhabricatorProjectUpdateController',
           ),
-          // primary tag route override
+        // primary tag route override
           '/tag/' => array(
               '(?P<slug>[^/]+)/' => 'SprintProjectViewController',
               '(?P<slug>[^/]+)/board/' => 'SprintBoardViewController',
           ),
       );
+    } else {
+      return array(
+        // this is the default application route controller
+          '/project/sprint/' => array(
+              '' => 'SprintListController',
+              'board/(?P<projectID>[1-9]\d*)/' => array(
+                  'edit/(?:(?P<id>\d+)/)?'
+                  => 'PhabricatorProjectBoardColumnEditController',
+                  'hide/(?:(?P<id>\d+)/)?'
+                  => 'PhabricatorProjectBoardColumnHideController',
+                  'column/(?:(?P<id>\d+)/)?'
+                  => 'PhabricatorProjectBoardColumnDetailController',
+                  'import/'
+                  => 'PhabricatorProjectBoardImportController',
+                  'reorder/'
+                  => 'PhabricatorProjectBoardReorderController',
+              ),
+            // these are for board filters and column queries
+              'board/(?P<id>[1-9]\d*)/'.
+              '(?P<filter>filter/)?'.
+              '(?:query/(?P<queryKey>[^/]+)/)?'
+              => 'PhabricatorProjectBoardViewController',
+            // these are native Sprint application controllers
+              'burn/(?P<id>\d+)/' => 'SprintDataViewController',
+              'profile/(?P<id>[1-9]\d*)/'
+              => 'SprintProjectProfileController',
+              'report/list/' => 'SprintListController',
+              'report/history/' => 'SprintHistoryController',
+              'report/(?:(?P<view>\w+)/)?' => 'SprintReportController',
+              'view/(?P<id>\d+)/' => 'SprintDataViewController',
+            // all routes following point to default controllers
+              'archive/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectArchiveController',
+              'details/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditDetailsController',
+              'feed/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectFeedController',
+              'icon/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditIconController',
+              'members/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectMembersEditController',
+              'members/(?P<id>[1-9]\d*)/remove/'
+              => 'PhabricatorProjectMembersRemoveController',
+              'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
+              'picture/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectEditPictureController',
+              'update/(?P<id>[1-9]\d*)/(?P<action>[^/]+)/'
+              => 'PhabricatorProjectUpdateController',
+          ),
+      );
+    }
   }
 
   protected function getCustomCapabilities() {

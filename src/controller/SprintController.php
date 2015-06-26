@@ -24,8 +24,8 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function buildApplicationMenu() {
-    return $this->buildSideNavView(true, $this->getUser(),
-        $this->setApplicationURI())->getMenu();
+      return $this->buildSideNavView($this->getUser(),
+          $this->setApplicationURI(), true)->getMenu();
   }
 
   public function buildNavMenu() {
@@ -37,27 +37,40 @@ abstract class SprintController extends PhabricatorController {
         ->addFilter('project', pht('By Project'))
         ->addFilter('user', pht('By User'))
         ->addLabel(pht('Burn Up'))
-        ->addFilter('burn', pht('Burn Up Rate'));
+        ->addFilter('burn', pht('Burn Up Rate'))
+        ->addFilter('history', pht('Task Project History'));
     return $nav;
   }
 
   /**
    * @param PhutilURI $uri
    */
-  public function buildSideNavView($for_app = false, $user, $uri) {
-
+  public function buildSideNavView($viewer, $uri, $for_app = false) {
+    $request = $this->getRequest();
+    $id = $request->getURIData('id');
+    $slug = $request->getURIData('slug');
+    if ($slug) {
+      $id = $this->getProjectIDfromSlug($slug, $viewer);
+    }
     $nav = new AphrontSideNavFilterView();
     $nav->setBaseURI($uri);
 
     if ($for_app) {
-      $nav->addFilter('create', pht('Create Task'));
+      if ($id) {
+        $nav->addFilter("profile/{$id}/", pht('Profile'));
+        $nav->addFilter("board/{$id}/", pht('Workboard'));
+        $nav->addFilter("members/{$id}/", pht('Members'));
+        $nav->addFilter("feed/{$id}/", pht('Feed'));
+        $nav->addFilter("details/{$id}/", pht('Edit Details'));
+      }
+      $nav->addFilter('create', pht('Create Project'));
     }
 
-    id(new ManiphestTaskSearchEngine())
-        ->setViewer($user)
+    id(new PhabricatorProjectSearchEngine())
+        ->setViewer($viewer)
         ->addNavigationItems($nav->getMenu());
 
-    if ($user->isLoggedIn()) {
+    if ($viewer->isLoggedIn()) {
       $nav->addLabel(pht('Reports'));
       $nav->addFilter('report', pht('Reports'));
     }
@@ -94,6 +107,15 @@ abstract class SprintController extends PhabricatorController {
     }
 
     return $view;
+  }
+
+  public function getProjectIDfromSlug($slug, $viewer) {
+    $project = id(new PhabricatorProjectQuery())
+        ->setViewer($viewer)
+        ->withSlugs(array($slug))
+        ->executeOne();
+    $id = $project->getID();
+    return $id;
   }
 
   public function buildIconNavView(PhabricatorProject $project) {
@@ -135,8 +157,7 @@ abstract class SprintController extends PhabricatorController {
     if (PhabricatorApplication::isClassInstalledForViewer($class, $viewer)) {
       $phid = $project->getPHID();
       $query_uri = urisprintf(
-          '/maniphest/?statuses=%s&allProjects=%s#R',
-          implode(',', ManiphestTaskStatus::getOpenStatusConstants()),
+          '/maniphest/?statuses=open()&projects=%s#R',
           $phid);
       $nav->addIcon(null, pht('Open Tasks'), 'fa-anchor', null, $query_uri);
     }

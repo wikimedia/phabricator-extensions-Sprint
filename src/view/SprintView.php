@@ -39,6 +39,7 @@ abstract class SprintView extends AphrontView {
     return $filter;
   }
 
+
   public function getWindow($request) {
     $window_str = $request->getStr('window', '12 AM 7 days ago');
 
@@ -66,5 +67,35 @@ abstract class SprintView extends AphrontView {
     }
 
     return array($window_str, $window_epoch, $error);
+  }
+
+  public function buildFilter($request) {
+    $handle = null;
+    $project_phid = $request->getStr('project');
+    if ($project_phid) {
+      $phids = array($project_phid);
+      $handle = $this->getProjectHandle ($phids, $project_phid, $request);
+    }
+    $tokens = array();
+    if ($handle) {
+      $tokens = $this->getTokens($handle);
+    }
+    $filter = $this->renderReportFilters($tokens, $has_window = false,
+        $request, $this->user);
+    return $filter;
+  }
+
+  private function getTokens($handle) {
+    $tokens = array($handle);
+    return $tokens;
+  }
+
+  public function getProjectHandle($phids, $project_phid, $request) {
+    $query = id(new SprintQuery())
+        ->setPHID($project_phid);
+
+    $handles = $query->getViewerHandles($request, $phids);
+    $handle = $handles[$project_phid];
+    return $handle;
   }
 }

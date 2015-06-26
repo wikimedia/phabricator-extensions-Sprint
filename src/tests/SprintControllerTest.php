@@ -7,14 +7,6 @@ final class SprintControllerTest extends SprintTestCase {
     $this->assertTrue($stub->shouldAllowPublic());
   }
 
-  public function testbuildSideNavView() {
-    $stub = $this->getMockForAbstractClass('SprintController');
-    $user = $this->generateNewTestUser();
-    $uri = new PhutilURI('/project/sprint/');
-    $nav = $stub->buildSideNavView($for_app = false, $user, $uri);
-    $this->assertInstanceOf('AphrontSideNavFilterView', $nav);
-  }
-
   public function testgetSprintDataView() {
     $projectobj = new PhabricatorProject();
     $viewer = $this->generateNewTestUser();

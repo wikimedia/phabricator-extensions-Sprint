@@ -137,7 +137,7 @@ final class SprintStats {
     $total_business_days = 0;
     foreach ($dates as $key => $date) {
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
-      if ($day_of_week != 0 AND $day_of_week != 6) {
+      if ($day_of_week != 0 && $day_of_week != 6) {
         $total_business_days++;
       }
     }
@@ -147,7 +147,7 @@ final class SprintStats {
       $date->setPointsIdealRemaining($date->getPointsTotal());
 
       $day_of_week = id(new DateTime($date->getDate()))->format('w');
-      if ($day_of_week != 0 AND $day_of_week != 6) {
+      if ($day_of_week != 0 && $day_of_week != 6) {
         $elapsed_business_days++;
       }
 

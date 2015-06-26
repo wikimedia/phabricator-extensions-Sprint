@@ -16,7 +16,7 @@ final class SprintReportBurnUpView extends SprintView {
 
   public function render() {
     require_celerity_resource('sprint-report-css', 'sprint');
-    $filter = $this->BuildFilter();
+    $filter = parent::BuildFilter($this->request);
     if ($this->request->getStr('project')) {
       $chart = $this->buildBurnDownChart();
       $table = $this->buildStatsTable();
@@ -35,37 +35,7 @@ final class SprintReportBurnUpView extends SprintView {
     return $data;
   }
 
-  private function buildFilter() {
-    $handle = null;
-    $project_phid = $this->request->getStr('project');
-    if ($project_phid) {
-      $phids = array($project_phid);
-      $handle = $this->getProjectHandle ($phids, $project_phid);
-    }
-    $tokens = array();
-    if ($handle) {
-      $tokens = $this->getTokens($handle);
-    }
-    $filter = parent::renderReportFilters($tokens, $has_window = false,
-        $this->request, $this->user);
-    return $filter;
-  }
-
-  private function getTokens($handle) {
-    $tokens = array($handle);
-    return $tokens;
-  }
-
-  private function getProjectHandle($phids, $project_phid) {
-    $query = id(new SprintQuery())
-        ->setPHID($project_phid);
-
-    $handles = $query->getViewerHandles($this->request, $phids);
-    $handle = $handles[$project_phid];
-    return $handle;
-  }
-
- private function addTaskStatustoData ($data) {
+  private function addTaskStatustoData ($data) {
    foreach ($data as $key => $row) {
 
      // NOTE: Hack to avoid json_decode().
@@ -250,7 +220,7 @@ final class SprintReportBurnUpView extends SprintView {
 
     if ($project_phid) {
       $phids = array($project_phid);
-      $handle = $this->getProjectHandle ($phids, $project_phid);
+      $handle = parent::getProjectHandle ($phids, $project_phid, $this->request);
     }
 
     $data = $this->getXactionData($project_phid);
@@ -355,7 +325,8 @@ final class SprintReportBurnUpView extends SprintView {
           ++$counter;
         }
         $output[] = array(
-        $t, $counter,);
+        $t, $counter,
+        );
 
       }
       return $output;

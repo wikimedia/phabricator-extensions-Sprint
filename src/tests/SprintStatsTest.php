@@ -34,7 +34,7 @@ final class SprintStatsTest extends SprintTestCase {
    * @param string $now
    */
   public function short_date($now) {
-    $short = array($now + $this->short_interval,$now + $this->short_interval*2,$now + $this->short_interval*3, $now + $this->short_interval*4, $now + $this->short_interval*5);
+    $short = array($now + $this->short_interval, $now + $this->short_interval * 2, $now + $this->short_interval * 3, $now + $this->short_interval * 4, $now + $this->short_interval * 5);
     return $short;
   }
 
@@ -42,7 +42,7 @@ final class SprintStatsTest extends SprintTestCase {
    * @param string $now
    */
   public function medium_date($now) {
-    $medium = array($now + $this->day_interval,$now + $this->day_interval*2, $now + $this->day_interval*3,$now + $this->day_interval*4, $now + $this->day_interval*5);
+    $medium = array($now + $this->day_interval, $now + $this->day_interval * 2, $now + $this->day_interval * 3, $now + $this->day_interval * 4, $now + $this->day_interval * 5);
     return $medium;
   }
 
@@ -50,7 +50,7 @@ final class SprintStatsTest extends SprintTestCase {
    * @param string $now
    */
   public function long_date($now) {
-    $long = array($now + $this->week_interval,$now + $this->week_interval*2, $now + $this->week_interval*4,$this->multi_month_interval, $this->year_interval);
+    $long = array($now + $this->week_interval, $now + $this->week_interval * 2, $now + $this->week_interval * 4, $this->multi_month_interval, $this->year_interval);
     return $long;
   }
 
@@ -170,4 +170,3 @@ final class SprintStatsTest extends SprintTestCase {
     $this->assertEquals($series, $data[0]);
   }
 }
-

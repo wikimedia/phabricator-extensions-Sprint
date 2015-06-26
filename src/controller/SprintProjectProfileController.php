@@ -67,6 +67,7 @@ final class SprintProjectProfileController
         $nav,
       array(
         'title' => $project->getName(),
+        'pageObjects' => array($project->getPHID()),
       ));
   }
 

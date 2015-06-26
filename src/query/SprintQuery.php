@@ -89,6 +89,26 @@ final class SprintQuery extends SprintDAO {
     }
   }
 
+  public function getTasksforProject($project) {
+    $tasks = id(new ManiphestTaskQuery())
+        ->setViewer($this->viewer)
+        ->withEdgeLogicPHIDs(
+            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+            PhabricatorQueryConstraint::OPERATOR_OR,
+            array($project))
+        ->needProjectPHIDs(true)
+        ->execute();
+    return $tasks;
+  }
+
+  public function getAllTasks() {
+    $tasks = id(new ManiphestTaskQuery())
+        ->setViewer($this->viewer)
+        ->needProjectPHIDs(true)
+        ->execute();
+    return $tasks;
+  }
+
   public function getStoryPointsForTask($task_phid) {
     $points = null;
     $object = new ManiphestCustomFieldStorage();
@@ -140,6 +160,23 @@ final class SprintQuery extends SprintDAO {
     $xactions = id(new ManiphestTransactionQuery())
         ->setViewer($this->viewer)
         ->withObjectPHIDs($task_phids)
+        ->execute();
+    return $xactions;
+  }
+
+  public function getEdgeXactions($tasks) {
+    $xactions = id(new ManiphestTransactionQuery())
+        ->setViewer($this->viewer)
+        ->withTransactionTypes(array(PhabricatorTransactions::TYPE_EDGE))
+        ->withObjectPHIDs($tasks)
+        ->execute();
+    return $xactions;
+  }
+
+  public function getXactionsforProject($projectPHID) {
+    $xactions = id(new ManiphestTransactionQuery())
+        ->setViewer($this->viewer)
+        ->withObjectPHIDs($projectPHID)
         ->execute();
     return $xactions;
   }
@@ -227,7 +264,8 @@ final class SprintQuery extends SprintDAO {
     $edges = id(new PhabricatorEdgeQuery())
         ->withSourcePHIDs(array_keys($tasks))
         ->withEdgeTypes(array( ManiphestTaskDependsOnTaskEdgeType::EDGECONST,
-            ManiphestTaskDependedOnByTaskEdgeType::EDGECONST,))
+            ManiphestTaskDependedOnByTaskEdgeType::EDGECONST,
+        ))
         ->execute();
     return $edges;
   }
@@ -276,6 +314,24 @@ final class SprintQuery extends SprintDAO {
     return $positions;
   }
 
+  public function getProjectNamefromPHID ($phid) {
+      $project = id(new PhabricatorProjectQuery())
+          ->setViewer(PhabricatorUser::getOmnipotentUser())
+          ->withPHIDs(array($phid))
+          ->executeOne();
+        $name = $project->getName();
+      return $name;
+  }
+
+  public function getTaskNamefromPHID ($phid) {
+    $task = id(new ManiphestTaskQuery())
+        ->setViewer(PhabricatorUser::getOmnipotentUser())
+        ->withPHIDs(array($phid))
+        ->executeOne();
+    $name = $task->getMonogram();
+    return $name;
+  }
+
   public function extractEvents($xactions) {
     assert_instances_of($xactions, 'ManiphestTransaction');
 
@@ -293,5 +349,90 @@ final class SprintQuery extends SprintDAO {
     $events = isort($events, 'epoch');
 
     return $events;
+  }
+
+  public function getTaskHistory($project_phid) {
+    $all_task_phids = null;
+    $project_added_map = null;
+    $project_removed_map = null;
+    $task_added_proj_log = null;
+    $task_removed_proj_log = null;
+    $task_proj_log = null;
+
+    if ($project_phid) {
+      $tasks = $this->getTasksforProject($project_phid);
+
+      if ($tasks) {
+        foreach ($tasks as $task) {
+          $all_task_phids[] = $task->getPHID();
+        }
+        $all_xactions = $this->getEdgeXactions($all_task_phids);
+
+        foreach ($all_xactions as $xaction) {
+          $new = $xaction->getNewValue();
+          $old = $xaction->getOldValue();
+          $oldtype = ipull($old, 'type');
+          $newtype = ipull($new, 'type');
+          $add_diff = array_diff_key($newtype, $oldtype);
+          $rem_diff = array_diff_key($oldtype, $newtype);
+          if (!$rem_diff && $add_diff) {
+            foreach ($add_diff as $key => $value) {
+              if ($value == '41') {
+                $project_added_map[$key][] = $xaction;
+              }
+            }
+          } else {
+            foreach ($rem_diff as $key => $value) {
+              if ($value == '41') {
+                $project_removed_map[$key][] = $xaction;
+              }
+            }
+          }
+        }
+      }
+
+      if ($project_added_map) {
+        $distinct_projects = array_unique($project_added_map, SORT_REGULAR);
+        foreach ($distinct_projects as $project => $proj_xactions) {
+          foreach ($proj_xactions as $proj_xaction) {
+            $task_added_proj_log[] = array(
+                'projectadded' => true,
+                'projectremoved' => false,
+                'projPHID' => $project,
+                'projName' => $this->getProjectNamefromPHID($project),
+                'transactionPHID' => $proj_xaction->getPHID(),
+                'objectPHID' => $proj_xaction->getObjectPHID(),
+                'taskName' => $this->getTaskNamefromPHID($proj_xaction->getObjectPHID()),
+                'createdEpoch' => $proj_xaction->getDateCreated(),
+            );
+          }
+        }
+      }
+
+      if ($project_removed_map) {
+        $distinct_removed = array_unique($project_removed_map, SORT_REGULAR);
+        foreach ($distinct_removed as $project => $proj_xactions) {
+          foreach ($proj_xactions as $proj_xaction) {
+            $task_removed_proj_log[] = array(
+                'projectadded' => false,
+                'projectremoved' => true,
+                'projPHID' => $project,
+                'projName' => $this->getProjectNamefromPHID($project),
+                'transactionPHID' => $proj_xaction->getPHID(),
+                'objectPHID' => $proj_xaction->getObjectPHID(),
+                'taskName' => $this->getTaskNamefromPHID($proj_xaction->getObjectPHID()),
+                'createdEpoch' => $proj_xaction->getDateCreated(),
+            );
+          }
+        }
+      }
+
+      if ($task_added_proj_log && $task_removed_proj_log) {
+        $task_proj_log = array_merge($task_added_proj_log, $task_removed_proj_log);
+      }
+      return $task_proj_log;
+    } else {
+      return null;
+    }
   }
 }

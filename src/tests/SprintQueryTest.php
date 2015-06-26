@@ -53,4 +53,3 @@ final class SprintQueryTest extends SprintTestCase {
 //  }
 
 }
-

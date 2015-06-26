@@ -35,7 +35,7 @@ To install the Sprint extension:
 3. from the /srv/phab/phabricator/bin directory
 - run ./config set load-libraries '{"sprint":"/srv/phab/libext/Sprint/src"}'
 4. create a symlink to link static files from the Sprint extension in the phabricator /webroot/rsrc directory:
-- ln -s /srv/phab/libext/Sprint/rsrc/webroot-static /srv/phab/phabricator/webroot/rsrc/libext
+- ln -s /srv/phab/libext/Sprint/rsrc/webroot-static /srv/phab/phabricator/webroot/rsrc/sprint
 
 **BUGS**
 

@@ -174,23 +174,18 @@ final class BoardDataProvider {
   private function getProjectColumnXactions() {
     $xactions = array();
     $scope_phid = $this->project->getPHID();
-    $query = new PhabricatorFeedQuery();
-    $query->setFilterPHIDs(
-        array(
-            $scope_phid,
-        ));
+    $task_phids = mpull($this->tasks, 'getPHID');
+    $query = new ManiphestTransactionQuery();
+    $query->withTransactionTypes(array(ManiphestTransaction::TYPE_PROJECT_COLUMN));
+    $query->withObjectPHIDs($task_phids);
     $query->setViewer($this->viewer);
-    $stories = $query->execute();
-    foreach ($stories as $xaction) {
-      $xaction_date = $xaction->getEpoch();
+    $col_xactions = $query->execute();
+    foreach ($col_xactions as $xaction) {
+      $xaction_date = $xaction->getDateCreated();
       if ($xaction_date >= $this->start && $xaction_date <= $this->end) {
-        $xaction = $xaction->getPrimaryTransaction();
-        switch ($xaction->getTransactionType()) {
-          case ManiphestTransaction::TYPE_PROJECT_COLUMN:
+        $newval = $xaction->getNewValue();
+        if ($newval['projectPHID'] == $scope_phid) {
             $xactions[] = $xaction;
-            break;
-          default:
-            break;
         }
       }
     }

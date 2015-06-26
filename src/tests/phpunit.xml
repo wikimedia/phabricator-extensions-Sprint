@@ -31,4 +31,3 @@
         <log type="testdox-text" target="/tmp/testdox.txt"/>
     </logging>
 </phpunit>
-

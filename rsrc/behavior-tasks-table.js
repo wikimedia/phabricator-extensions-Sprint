@@ -20,7 +20,7 @@ JX.behavior('tasks-table', function (config) {
             ],
             "dom": 'T<"clear">lfrtip',
             "tableTools": {
-                "sSwfPath": "/rsrc/libext/copy_csv_xls.swf",
+                "sSwfPath": "/rsrc/sprint/copy_csv_xls.swf",
                 "aButtons": [
                     {
                         "sExtends": "copy",

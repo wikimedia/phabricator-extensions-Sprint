@@ -210,7 +210,8 @@ final class TaskTableDataProvider {
                     : '',
             ),
             array ($this->buildTaskLink($task), $blockericon,
-                $blockedicon,))),
+                $blockedicon,
+            ))),
         $cdate,
         $date_created,
         $udate,
@@ -237,7 +238,8 @@ final class TaskTableDataProvider {
     $meta  = array(
         'tip' => pht('Blocks: '.$links),
         'size' => 500,
-        'align' => 'E',);
+        'align' => 'E',
+    );
     $image = id(new PHUIIconView())
         ->addSigil($sigil)
         ->setMetadata($meta)

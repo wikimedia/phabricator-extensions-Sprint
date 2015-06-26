@@ -37,7 +37,8 @@ final class ProjectOpenTasksView extends OpenTasksView {
     $header = pht('Open Tasks by Project and Priority (%s)', $date);
 
     return array ($leftover, $base_link, $leftover_name, $col_header, $header,
-        $result_closed, $leftover_closed, $result, );
+        $result_closed, $leftover_closed, $result,
+    );
   }
 
 }

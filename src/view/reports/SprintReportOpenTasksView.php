@@ -43,7 +43,7 @@ final class SprintReportOpenTasksView extends SprintView {
 
     if ($project_phid) {
       $phids = array($project_phid);
-      $project_handle = $this->getProjectHandle($phids, $project_phid);
+      $project_handle = $this->getProjectHandle($phids, $project_phid, $this->request);
       $tasks = $this->getOpenTasksforProject($this->user, $phids);
     } else {
       $tasks = $this->getOpenTasks($this->user);
@@ -406,12 +406,6 @@ final class SprintReportOpenTasksView extends SprintView {
         ->needProjectPHIDs(true)
         ->withStatuses(ManiphestTaskStatus::getOpenStatusConstants());
     return $query;
-  }
-
-  private function getProjectHandle($phids, $project_phid) {
-    $handles = $this->loadViewerHandles($phids);
-    $project_handle = $handles[$project_phid];
-    return $project_handle;
   }
 
   private function renderOldest(array $tasks) {

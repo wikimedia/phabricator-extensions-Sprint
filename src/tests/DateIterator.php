@@ -35,4 +35,3 @@ class DateIterator implements Iterator {
   }
 
 }
-
