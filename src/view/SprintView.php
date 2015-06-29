@@ -49,7 +49,7 @@ abstract class SprintView extends AphrontView {
     // time windows like "3 PM", rather than assuming the server timezone.
 
     $window_epoch = PhabricatorTime::parseLocalTime($window_str, $this->user);
-    if (!$window_epoch) {
+    if ($window_epoch === null) {
       $error = 'Invalid';
       $window_epoch = time() - (60 * 60 * 24 * 7);
     }

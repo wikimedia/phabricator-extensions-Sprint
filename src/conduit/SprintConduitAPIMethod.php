@@ -13,7 +13,7 @@ abstract class SprintConduitAPIMethod extends ConduitAPIMethod {
 
   protected function buildProjectInfoDictionaries(array $projects) {
     assert_instances_of($projects, 'PhabricatorProject');
-    if (!$projects) {
+    if (empty($projects)) {
       return array();
     }
 

@@ -16,7 +16,7 @@ final class SprintReportBurnUpView extends SprintView {
 
   public function render() {
     require_celerity_resource('sprint-report-css', 'sprint');
-    $filter = parent::BuildFilter($this->request);
+    $filter = $this->BuildFilter($this->request);
     if ($this->request->getStr('project')) {
       $chart = $this->buildBurnDownChart();
       $table = $this->buildStatsTable();
@@ -220,7 +220,7 @@ final class SprintReportBurnUpView extends SprintView {
 
     if ($project_phid) {
       $phids = array($project_phid);
-      $handle = parent::getProjectHandle ($phids, $project_phid, $this->request);
+      $handle = $this->getProjectHandle ($phids, $project_phid, $this->request);
     }
 
     $data = $this->getXactionData($project_phid);

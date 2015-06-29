@@ -92,7 +92,7 @@ final class SprintUIObjectBoxView extends AphrontView {
   }
 
   public function setFormErrors(array $errors, $title = null) {
-    if ($errors) {
+    if (!empty($errors)) {
       $this->formErrors = id(new PHUIInfoView())
           ->setTitle($title)
           ->setErrors($errors);
@@ -192,7 +192,7 @@ final class SprintUIObjectBoxView extends AphrontView {
       foreach ($ex->getErrors() as $error) {
         $messages[] = $error->getMessage();
       }
-      if ($messages) {
+      if (!empty($messages)) {
         $exception_errors = id(new PHUIInfoView())
             ->setErrors($messages);
       }
@@ -205,8 +205,8 @@ final class SprintUIObjectBoxView extends AphrontView {
     $default_key = 'tab.default';
 
     // Find the selected tab, or select the first tab if none are selected.
-    if ($this->tabs) {
-      $selected_tab = null;
+    $selected_tab = null;
+    if (!empty($this->tabs)) {
       foreach ($this->tabs as $key => $tab) {
         if ($tab->getSelected()) {
           $selected_tab = $key;
@@ -256,7 +256,7 @@ final class SprintUIObjectBoxView extends AphrontView {
     }
 
     $tabs = null;
-    if ($this->tabs) {
+    if (!empty($this->tabs)) {
       $tabs = id(new PHUIListView())
           ->setType(PHUIListView::NAVBAR_LIST);
       foreach ($this->tabs as $tab) {
@@ -287,7 +287,7 @@ final class SprintUIObjectBoxView extends AphrontView {
         ->addMargin(PHUI::MARGIN_LARGE_RIGHT)
         ->addClass('sprintui-object-box');
 
-    if ($this->tabs) {
+    if (!empty($this->tabs)) {
       $content->addSigil('sprintui-object-box');
       $content->setMetadata(
           array(

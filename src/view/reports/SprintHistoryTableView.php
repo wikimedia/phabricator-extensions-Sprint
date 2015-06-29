@@ -18,7 +18,7 @@ final class SprintHistoryTableView extends SprintView {
 
   public function render() {
     require_celerity_resource('sprint-report-css', 'sprint');
-    $filter = parent::BuildFilter($this->request);
+    $filter = $this->BuildFilter($this->request);
     if ($this->request->getStr('project')) {
       $table = $this->buildProjectsTable();
     } else {
