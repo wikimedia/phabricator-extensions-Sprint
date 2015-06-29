@@ -119,7 +119,6 @@ final class SprintProjectProfileController
               ->setWorkflow(true));
     }
 
-    $action = null;
     if (!$project->isUserMember($viewer->getPHID())) {
       $can_join = PhabricatorPolicyFilter::hasCapability(
         $viewer,

@@ -357,7 +357,6 @@ final class SprintQuery extends SprintDAO {
     $project_removed_map = null;
     $task_added_proj_log = null;
     $task_removed_proj_log = null;
-    $task_proj_log = null;
 
     if ($project_phid) {
       $tasks = $this->getTasksforProject($project_phid);
@@ -430,7 +429,7 @@ final class SprintQuery extends SprintDAO {
       if (!empty($task_added_proj_log) && !empty($task_removed_proj_log)) {
         $task_proj_log = array_merge($task_added_proj_log, $task_removed_proj_log);
         return $task_proj_log;
-      } else if (!empty($task_add_proj_log) && empty($task_removed_proj_log)) {
+      } else if (!empty($task_added_proj_log) && empty($task_removed_proj_log)) {
         return $task_added_proj_log;
       } else {}
     } else {

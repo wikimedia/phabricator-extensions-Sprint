@@ -70,7 +70,6 @@ final class SprintHandleIconView extends AphrontTagView {
   }
 
   protected function getTagAttributes() {
-    $style = null;
     $classes = array();
     $classes[] = 'phui-object-item-handle-icon';
 

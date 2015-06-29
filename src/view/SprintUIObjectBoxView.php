@@ -230,7 +230,7 @@ final class SprintUIObjectBoxView extends AphrontView {
         $i++;
       }
 
-      if ($this->tabs && $key != $default_key) {
+      if (!empty($this->tabs) && $key != $default_key) {
         $tab_id = celerity_generate_unique_node_id();
         $tab_map[$key] = $tab_id;
 
@@ -248,7 +248,7 @@ final class SprintUIObjectBoxView extends AphrontView {
             ),
             $group);
       } else {
-        if ($this->tabs) {
+        if (!empty($this->tabs)) {
           $group->addClass('phui-property-group-noninitial');
         }
         $property_lists[] = $group;
