@@ -302,10 +302,8 @@ table.dataTable td {
 .dataTables_wrapper {
     position: relative;
     clear: both;
-    *zoom: 1;
-    zoom: 1;
-    overflow-x: scroll;
 }
+
 .dataTables_wrapper .dataTables_length {
     float: left;
 }

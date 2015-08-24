@@ -44,7 +44,7 @@ final class SprintDataView extends SprintView {
     $this->setTimezone($stats);
     $this->setBefore($stats);
     $this->setTimeSeries($stats);
-    $this->setEvents($query);
+
 
     $show_burndown = PhabricatorEnv::getEnvConfig('sprint.show-burndown');
     $show_pies = PhabricatorEnv::getEnvConfig('sprint.show-pies');
@@ -110,6 +110,7 @@ final class SprintDataView extends SprintView {
 
     $show_events = PhabricatorEnv::getEnvConfig('sprint.show-events-table');
     if ($show_events == true) {
+      $this->setEvents($query);
       $event_table_view = id(new EventTableView())
           ->setProject($this->project)
           ->setViewer($this->viewer)

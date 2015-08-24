@@ -1,6 +1,6 @@
 <?php
 
-final class BoardDataTableView {
+final class BoardDataTableView extends Phobject{
 
   private $boardData;
 
@@ -21,7 +21,7 @@ final class BoardDataTableView {
 
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Board Column List'))
-        ->appendChild($table);
+        ->setTable($table);
     return $box;
   }
 }

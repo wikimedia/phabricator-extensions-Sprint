@@ -2,12 +2,12 @@
 
 final class SprintReportOpenTasksView extends SprintView {
 
-    protected $user;
+    protected $viewer;
     private $request;
     private $view;
 
-  public function setUser (PhabricatorUser $user) {
-    $this->user = $user;
+  public function setUser (PhabricatorUser $viewer) {
+    $this->user = $viewer;
     return $this;
   }
 
@@ -52,13 +52,13 @@ final class SprintReportOpenTasksView extends SprintView {
 
     $date = phabricator_date(time(), $this->user);
 
-    $user_task_view = new UserOpenTasksView();
+    $viewer_task_view = new UserOpenTasksView();
     $project_task_view = new ProjectOpenTasksView();
 
     if (($this->view) == 'user') {
        list($leftover, $leftover_closed, $base_link, $leftover_name,
            $col_header, $header, $result_closed, $result ) =
-           ($user_task_view->execute($tasks, $recently_closed, $date));
+           ($viewer_task_view->execute($tasks, $recently_closed, $date));
     } else if (($this->view) == 'project') {
         list($leftover, $base_link, $leftover_name, $col_header, $header,
             $result_closed, $leftover_closed, $result ) =
@@ -89,7 +89,7 @@ final class SprintReportOpenTasksView extends SprintView {
         $reverse);
     $panel = new PHUIObjectBoxView();
     $panel->setHeaderText($header);
-    $panel->appendChild($table);
+    $panel->setTable($table);
 
     $tokens = array();
     if ($project_handle) {
@@ -376,20 +376,20 @@ final class SprintReportOpenTasksView extends SprintView {
   }
 
   /**
-   * @param PhabricatorUser $user
+   * @param PhabricatorUser $viewer
    */
-  private function getOpenTasks($user) {
-    $query = $this->openStatusQuery($user);
+  private function getOpenTasks($viewer) {
+    $query = $this->openStatusQuery($viewer);
     $tasks = $query->execute();
     return $tasks;
   }
 
   /**
-   * @param PhabricatorUser $user
+   * @param PhabricatorUser $viewer
    */
-  private function getOpenTasksforProject($user, $phids) {
+  private function getOpenTasksforProject($viewer, $phids) {
     $query = id(new ManiphestTaskQuery())
-        ->setViewer($user)
+        ->setViewer($viewer)
         ->needProjectPHIDs(true)
         ->withEdgeLogicPHIDs(
             PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
@@ -400,9 +400,9 @@ final class SprintReportOpenTasksView extends SprintView {
     return $tasks;
   }
 
-  private function openStatusQuery($user) {
+  private function openStatusQuery($viewer) {
     $query = id(new ManiphestTaskQuery())
-        ->setViewer($user)
+        ->setViewer($viewer)
         ->needProjectPHIDs(true)
         ->withStatuses(ManiphestTaskStatus::getOpenStatusConstants());
     return $query;

@@ -1,6 +1,6 @@
 <?php
 
-final class SprintPoints {
+final class SprintPoints extends Phobject {
 
 private $taskpoints;
 private $task_open_status_sum;

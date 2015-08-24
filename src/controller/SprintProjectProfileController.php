@@ -8,10 +8,10 @@ final class SprintProjectProfileController
   }
 
   public function handleRequest(AphrontRequest $request) {
-    $user = $request->getUser();
+    $viewer = $request->getViewer();
 
     $query = id(new PhabricatorProjectQuery())
-      ->setViewer($user)
+      ->setViewer($viewer)
       ->needMembers(true)
       ->needWatchers(true)
       ->needImages(true)
@@ -36,7 +36,7 @@ final class SprintProjectProfileController
 
     $header = id(new PHUIHeaderView())
       ->setHeader($project->getName())
-      ->setUser($user)
+      ->setUser($viewer)
       ->setPolicyObject($project)
       ->setImage($picture);
 
@@ -73,7 +73,7 @@ final class SprintProjectProfileController
 
   private function buildActionListView(PhabricatorProject $project) {
     $request = $this->getRequest();
-    $viewer = $request->getUser();
+    $viewer = $request->getViewer();
 
     $id = $project->getID();
 
@@ -165,7 +165,7 @@ final class SprintProjectProfileController
     PhabricatorProject $project,
     PhabricatorActionListView $actions) {
     $request = $this->getRequest();
-    $viewer = $request->getUser();
+    $viewer = $request->getViewer();
 
     $view = id(new PHUIPropertyListView())
       ->setUser($viewer)

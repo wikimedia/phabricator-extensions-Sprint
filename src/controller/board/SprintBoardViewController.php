@@ -18,7 +18,7 @@ final class SprintBoardViewController
   }
 
   public function handleRequest(AphrontRequest $request) {
-    $viewer = $request->getUser();
+    $viewer = $request->getViewer();
     $id = $request->getURIData('id');
 
     $show_hidden = $request->getBool('hidden');
@@ -395,7 +395,7 @@ final class SprintBoardViewController
       $project->getName());
 
     $header = id(new PHUIHeaderView())
-      ->setHeader(pht('%s Workboard', $header_link))
+      ->setHeader($header_link)
       ->setUser($viewer)
       ->setNoBackground(true)
       ->addActionLink($sort_menu)
@@ -403,12 +403,16 @@ final class SprintBoardViewController
       ->addActionLink($manage_menu)
       ->setPolicyObject($project);
 
+    $header_box = id(new PHUIBoxView())
+        ->appendChild($header)
+        ->addClass('project-board-header');
+
     $board_box = id(new PHUIBoxView())
       ->appendChild($board)
       ->addClass('project-board-wrapper');
 
     $nav = $this->buildIconNavView($project);
-    $nav->appendChild($header);
+    $nav->appendChild($header_box);
     $nav->appendChild($board_box);
 
     return $this->buildApplicationPage(
@@ -416,6 +420,7 @@ final class SprintBoardViewController
       array(
         'title' => pht('%s Board', $project->getName()),
         'showFooter' => false,
+        'pageObjects' => array($project->getPHID()),
       ));
   }
 
@@ -554,7 +559,7 @@ final class SprintBoardViewController
     $show_hidden) {
 
     $request = $this->getRequest();
-    $viewer = $request->getUser();
+    $viewer = $request->getViewer();
 
     $can_edit = PhabricatorPolicyFilter::hasCapability(
       $viewer,
@@ -635,7 +640,7 @@ final class SprintBoardViewController
     PhabricatorProjectColumn $column) {
 
     $request = $this->getRequest();
-    $viewer = $request->getUser();
+    $viewer = $request->getViewer();
 
     $can_edit = PhabricatorPolicyFilter::hasCapability(
       $viewer,

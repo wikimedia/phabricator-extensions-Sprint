@@ -6,7 +6,7 @@ final class SprintHistoryController extends SprintController {
   private $viewer;
 
   public function handleRequest(AphrontRequest $request) {
-    $this->viewer = $request->getUser();
+    $this->viewer = $request->getViewer();
 
     if ($request->isFormPost()) {
       $uri = $request->getRequestURI();

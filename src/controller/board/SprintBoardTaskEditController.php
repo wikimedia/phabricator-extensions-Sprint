@@ -2,15 +2,9 @@
 
 final class SprintBoardTaskEditController extends ManiphestController {
 
-  private $id;
-
-  public function willProcessRequest(array $data) {
-    $this->id = idx($data, 'id');
-  }
-
-  public function processRequest() {
-    $request = $this->getRequest();
-    $user = $request->getUser();
+  public function handleRequest(AphrontRequest $request) {
+    $viewer = $this->getViewer();
+    $id = $request->getURIData('id');
 
     $response_type = $request->getStr('responseType', 'task');
     $order = $request->getStr('order', PhabricatorProjectColumn::DEFAULT_ORDER);
@@ -26,22 +20,22 @@ final class SprintBoardTaskEditController extends ManiphestController {
     $can_edit_status = $this->hasApplicationCapability(
       ManiphestEditStatusCapability::CAPABILITY);
     $can_create_projects = PhabricatorPolicyFilter::hasCapability(
-        $user,
+        $viewer,
         PhabricatorApplication::getByClass('PhabricatorProjectApplication'),
         ProjectCreateProjectsCapability::CAPABILITY);
 
     $parent_task = null;
     $template_id = null;
 
-    if ($this->id) {
+    if ($id) {
       $task = id(new ManiphestTaskQuery())
-        ->setViewer($user)
+        ->setViewer($viewer)
         ->requireCapabilities(
           array(
             PhabricatorPolicyCapability::CAN_VIEW,
             PhabricatorPolicyCapability::CAN_EDIT,
           ))
-        ->withIDs(array($this->id))
+        ->withIDs(array($id))
         ->needSubscriberPHIDs(true)
         ->needProjectPHIDs(true)
         ->executeOne();
@@ -49,7 +43,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
         return new Aphront404Response();
       }
     } else {
-      $task = ManiphestTask::initializeNewTask($user);
+      $task = ManiphestTask::initializeNewTask($viewer);
 
       // We currently do not allow you to set the task status when creating
       // a new task, although now that statuses are custom it might make
@@ -82,7 +76,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
             }
 
             $default_projects = id(new PhabricatorObjectQuery())
-              ->setViewer($user)
+              ->setViewer($viewer)
               ->withNames($tokens)
               ->execute();
             $default_projects = mpull($default_projects, 'getPHID');
@@ -109,12 +103,12 @@ final class SprintBoardTaskEditController extends ManiphestController {
           $assign = $request->getStr('assign');
           if (strlen($assign)) {
             $assign_user = id(new PhabricatorPeopleQuery())
-              ->setViewer($user)
+              ->setViewer($viewer)
               ->withUsernames(array($assign))
               ->executeOne();
             if (!$assign_user) {
               $assign_user = id(new PhabricatorPeopleQuery())
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->withPHIDs(array($assign))
                 ->executeOne();
             }
@@ -132,7 +126,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
       $parent_id = $request->getInt('parent');
       if (strlen($parent_id)) {
         $parent_task = id(new ManiphestTaskQuery())
-          ->setViewer($user)
+          ->setViewer($viewer)
           ->withIDs(array($parent_id))
           ->executeOne();
         if (!$parent_task) {
@@ -150,10 +144,12 @@ final class SprintBoardTaskEditController extends ManiphestController {
     $field_list = PhabricatorCustomField::getObjectFields(
       $task,
       PhabricatorCustomField::ROLE_EDIT);
-    $field_list->setViewer($user);
+    $field_list->setViewer($viewer);
     $field_list->readFieldsFromStorage($task);
 
     $aux_fields = $field_list->getFields();
+
+    $v_space = $task->getSpacePHID();
 
     if ($request->isFormPost()) {
       $changes = array();
@@ -161,6 +157,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
       $new_title = $request->getStr('title');
       $new_desc = $request->getStr('description');
       $new_status = $request->getStr('status');
+      $v_space = $request->getStr('spacePHID');
 
       if (!$task->getID()) {
         $workflow = 'create';
@@ -247,7 +244,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
           // allow for putting a task in a project column at creation -only-
           if (!$task->getID() && $column_phid && $projects) {
             $column = id(new PhabricatorProjectColumnQuery())
-              ->setViewer($user)
+              ->setViewer($viewer)
               ->withProjectPHIDs($projects)
               ->withPHIDs(array($column_phid))
               ->executeOne();
@@ -268,6 +265,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
         }
 
         if ($can_edit_policies) {
+          $changes[PhabricatorTransactions::TYPE_SPACE] = $v_space;
           $changes[PhabricatorTransactions::TYPE_VIEW_POLICY] =
             $request->getStr('viewPolicy');
           $changes[PhabricatorTransactions::TYPE_EDIT_POLICY] =
@@ -325,7 +323,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
               'new'           => $is_new,
               'transactions'  => $transactions,
             ));
-          $event->setUser($user);
+          $event->setUser($viewer);
           $event->setAphrontRequest($request);
           PhutilEventEngine::dispatchEvent($event);
 
@@ -333,7 +331,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
           $transactions = $event->getValue('transactions');
 
           $editor = id(new ManiphestTransactionEditor())
-            ->setActor($user)
+            ->setActor($viewer)
             ->setContentSourceFromRequest($request)
             ->setContinueOnNoEffect(true)
             ->applyTransactions($task, $transactions);
@@ -345,7 +343,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
               'new'           => $is_new,
               'transactions'  => $transactions,
             ));
-          $event->setUser($user);
+          $event->setUser($viewer);
           $event->setAphrontRequest($request);
           PhutilEventEngine::dispatchEvent($event);
         }
@@ -368,15 +366,15 @@ final class SprintBoardTaskEditController extends ManiphestController {
               $owner = null;
               if ($task->getOwnerPHID()) {
                 $owner = id(new PhabricatorHandleQuery())
-                  ->setViewer($user)
+                  ->setViewer($viewer)
                   ->withPHIDs(array($task->getOwnerPHID()))
                   ->executeOne();
               }
 
-              $project = $this->getSprintProjectforTask($user, $projects);
+              $project = $this->getSprintProjectforTask($viewer, $projects);
 
               $tasks = id(new SprintBoardTaskCard())
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->setProject($project)
                 ->setTask($task)
                 ->setOwner($owner)
@@ -384,7 +382,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
                 ->getItem();
 
               $column = id(new PhabricatorProjectColumnQuery())
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->withPHIDs(array($request->getStr('columnPHID')))
                 ->executeOne();
               if (!$column) {
@@ -403,13 +401,13 @@ final class SprintBoardTaskEditController extends ManiphestController {
               }
 
               $positions = id(new PhabricatorProjectColumnPositionQuery())
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->withColumns(array($column))
                 ->execute();
               $task_phids = mpull($positions, 'getObjectPHID');
 
               $column_tasks = id(new ManiphestTaskQuery())
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->withPHIDs($task_phids)
                 ->execute();
 
@@ -461,11 +459,11 @@ final class SprintBoardTaskEditController extends ManiphestController {
     } else {
       if (!$task->getID()) {
         $task->attachSubscriberPHIDs(array(
-          $user->getPHID(),
+          $viewer->getPHID(),
         ));
         if ($template_id) {
           $template_task = id(new ManiphestTaskQuery())
-            ->setViewer($user)
+            ->setViewer($viewer)
             ->withIDs(array($template_id))
             ->needSubscriberPHIDs(true)
             ->needProjectPHIDs(true)
@@ -473,13 +471,15 @@ final class SprintBoardTaskEditController extends ManiphestController {
           if ($template_task) {
             $cc_phids = array_unique(array_merge(
               $template_task->getSubscriberPHIDs(),
-              array($user->getPHID())));
+              array($viewer->getPHID())));
             $task->attachSubscriberPHIDs($cc_phids);
             $task->attachProjectPHIDs($template_task->getProjectPHIDs());
             $task->setOwnerPHID($template_task->getOwnerPHID());
             $task->setPriority($template_task->getPriority());
             $task->setViewPolicy($template_task->getViewPolicy());
             $task->setEditPolicy($template_task->getEditPolicy());
+
+            $v_space = $template_task->getSpacePHID();
 
             $template_fields = PhabricatorCustomField::getObjectFields(
               $template_task,
@@ -497,7 +497,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
 
             if ($fields) {
               id(new PhabricatorCustomFieldList($fields))
-                ->setViewer($user)
+                ->setViewer($viewer)
                 ->readFieldsFromStorage($template_task);
 
               foreach ($fields as $key => $field) {
@@ -561,7 +561,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
 
     $form = new AphrontFormView();
     $form
-      ->setUser($user)
+      ->setUser($viewer)
       ->addHiddenInput('template', $template_id)
       ->addHiddenInput('responseType', $response_type)
       ->addHiddenInput('order', $order)
@@ -573,7 +573,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
         ->appendChild(
           id(new AphrontFormStaticControl())
             ->setLabel(pht('Parent Task'))
-            ->setValue($user->renderHandle($parent_task->getPHID())))
+            ->setValue($viewer->renderHandle($parent_task->getPHID())))
         ->addHiddenInput('parent', $parent_task->getID());
     }
 
@@ -605,7 +605,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
     }
 
     $policies = id(new PhabricatorPolicyQuery())
-      ->setViewer($user)
+      ->setViewer($viewer)
       ->setObject($task)
       ->execute();
 
@@ -615,7 +615,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
           ->setLabel(pht('Assigned To'))
           ->setName('assigned_to')
           ->setValue($assigned_value)
-          ->setUser($user)
+          ->setUser($viewer)
           ->setDatasource(new PhabricatorPeopleDatasource())
           ->setLimit(1));
     }
@@ -626,7 +626,7 @@ final class SprintBoardTaskEditController extends ManiphestController {
           ->setLabel(pht('CC'))
           ->setName('cc')
           ->setValue($cc_value)
-          ->setUser($user)
+          ->setUser($viewer)
           ->setDatasource(new PhabricatorMetaMTAMailableDatasource()));
 
     if ($can_edit_priority) {
@@ -643,14 +643,15 @@ final class SprintBoardTaskEditController extends ManiphestController {
       $form
         ->appendChild(
           id(new AphrontFormPolicyControl())
-            ->setUser($user)
+            ->setUser($viewer)
             ->setCapability(PhabricatorPolicyCapability::CAN_VIEW)
             ->setPolicyObject($task)
             ->setPolicies($policies)
+            ->setSpacePHID($v_space)
             ->setName('viewPolicy'))
         ->appendChild(
           id(new AphrontFormPolicyControl())
-            ->setUser($user)
+            ->setUser($viewer)
             ->setCapability(PhabricatorPolicyCapability::CAN_EDIT)
             ->setPolicyObject($task)
             ->setPolicies($policies)
@@ -693,14 +694,14 @@ final class SprintBoardTaskEditController extends ManiphestController {
       ->setName('description')
       ->setID('description-textarea')
       ->setValue($task->getDescription())
-      ->setUser($user);
+      ->setUser($viewer);
 
     $form
       ->appendChild($description_control);
 
     if ($request->isAjax()) {
       $dialog = id(new AphrontDialogView())
-        ->setUser($user)
+        ->setUser($viewer)
         ->setWidth(AphrontDialogView::WIDTH_FULL)
         ->setTitle($header_name)
         ->appendChild(
@@ -755,11 +756,17 @@ final class SprintBoardTaskEditController extends ManiphestController {
       ));
   }
 
-  private function getSprintProjectforTask($user, $projects) {
+  private function getSprintProjectforTask($viewer, $projects) {
     $project = null;
-    $query = id(new PhabricatorProjectQuery())
-        ->setViewer($user)
-        ->withPHIDs($projects);
+
+    if ($projects) {
+      $query = id(new PhabricatorProjectQuery())
+          ->setViewer($viewer)
+          ->withPHIDs($projects);
+    } else {
+      return null;
+    }
+
     $projects = $query->execute();
 
     foreach ($projects as $project) {

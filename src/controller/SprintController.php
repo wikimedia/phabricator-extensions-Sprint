@@ -71,8 +71,8 @@ abstract class SprintController extends PhabricatorController {
         ->addNavigationItems($nav->getMenu());
 
     if ($viewer->isLoggedIn()) {
-      $nav->addLabel(pht('Reports'));
-      $nav->addFilter('report', pht('Reports'));
+      $nav->addLabel(pht('Sprints'));
+      $nav->addFilter('report/list', pht('Sprint List'));
     }
 
     $nav->selectFilter(null);
@@ -129,7 +129,8 @@ abstract class SprintController extends PhabricatorController {
     $id = $project->getID();
     $picture = $project->getProfileImageURI();
     $name = $project->getName();
-
+    $enable_phragile = PhabricatorEnv::getEnvConfig('sprint.enable-phragile');
+    $phragile_uri = new PhutilURI('https://phragile.wmflabs.org/sprints/'.$id);
     $columns = id(new PhabricatorProjectColumnQuery())
         ->setViewer($viewer)
         ->withProjectPHIDs(array($project->getPHID()))
@@ -144,10 +145,13 @@ abstract class SprintController extends PhabricatorController {
     $nav->setIconNav(true);
     if ($this->isSprint($project) !== false) {
       $nav->setBaseURI(new PhutilURI($this->getApplicationURI()));
-      $nav->addIcon("profile/{$id}/", $name, null, $picture);
-      $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire');
-      $nav->addIcon("board/{$id}/", pht('Sprint Board'), $board_icon);
-      $nav->addIcon('.', pht('Sprint List'), 'fa-bar-chart');
+      $nav->addIcon("profile/{$id}/", $name, null, $picture, null);
+      $nav->addIcon("burn/{$id}/", pht('Burndown'), 'fa-fire', null, null);
+      if ($enable_phragile) {
+        $nav->addIcon("sprints/{$id}/", pht('Phragile'), 'fa-pie-chart', null, $phragile_uri);
+      }
+      $nav->addIcon("board/{$id}/", pht('Sprint Board'), $board_icon, null, null);
+      $nav->addIcon('.', pht('Sprint List'), 'fa-bar-chart', null, null);
     } else {
       $nav->setBaseURI(new PhutilURI($this->getProjectsURI()));
       $nav->addIcon("profile/{$id}/", $name, null, $picture);
@@ -162,9 +166,9 @@ abstract class SprintController extends PhabricatorController {
       $nav->addIcon(null, pht('Open Tasks'), 'fa-anchor', null, $query_uri);
     }
 
-    $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o');
-    $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group');
-    $nav->addIcon("details/{$id}/", pht('Edit Details'), 'fa-pencil');
+    $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o', null, null);
+    $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group', null, null);
+    $nav->addIcon("details/{$id}/", pht('Edit Details'), 'fa-pencil', null, null);
 
     return $nav;
   }

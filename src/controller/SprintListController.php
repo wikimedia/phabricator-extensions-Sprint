@@ -6,7 +6,7 @@ final class SprintListController extends SprintController {
   private $viewer;
 
   public function handleRequest(AphrontRequest $request) {
-    $this->viewer = $request->getUser();
+    $this->viewer = $request->getViewer();
 
     $error_box = null;
     $sprintlist_model = id(new SprintListDataProvider())

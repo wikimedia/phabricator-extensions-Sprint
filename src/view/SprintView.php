@@ -3,10 +3,10 @@
 
 abstract class SprintView extends AphrontView {
   public function renderReportFilters(array $tokens, $has_window, $request,
-                                      $user) {
+                                      $viewer) {
 
     $form = id(new AphrontFormView())
-        ->setUser($user)
+        ->setUser($viewer)
         ->appendControl(
             id(new AphrontFormTokenizerControl())
                 ->setDatasource(new PhabricatorProjectDatasource())
@@ -19,13 +19,7 @@ abstract class SprintView extends AphrontView {
       list($window_str, , $window_error) = $this->getWindow($request);
       $form
           ->appendChild(
-              id(new AphrontFormTextControl())
-                  ->setLabel(pht('Recently Means'))
-                  ->setName('set_window')
-                  ->setCaption(
-                      pht('Configure the cutoff for the "Recently Closed" column.'))
-                  ->setValue($window_str)
-                  ->setError($window_error));
+              id(new AphrontFormDividerControl()));
     }
 
     $form
@@ -80,7 +74,7 @@ abstract class SprintView extends AphrontView {
     if ($handle) {
       $tokens = $this->getTokens($handle);
     }
-    $filter = $this->renderReportFilters($tokens, $has_window = false,
+    $filter = $this->renderReportFilters($tokens, $has_window = true,
         $request, $this->user);
     return $filter;
   }

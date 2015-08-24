@@ -1,6 +1,6 @@
 <?php
 
-final class BoardDataPieView {
+final class BoardDataPieView extends Phobject{
 
   private $boardData;
 
@@ -17,25 +17,26 @@ final class BoardDataPieView {
     $boardpie = phutil_tag('div',
         array(
             'id' => 'c3-board-data-pie',
-            'style' => 'width: 225px; height:200px; padding-left: 50px;
+            'style' => 'width: 225px; height:200px; padding-left: 30px;
                 float: left;',
         ), pht('Board'));
     $taskpie = phutil_tag('div',
         array(
             'id' => 'pie',
-            'style' => 'width: 225px; height:200px; padding-left: 225px;
+            'style' => 'width: 225px; height:200px; padding-left: 170px;
             float: left;',
         ), pht('Task Status'));
     $priority_pie = phutil_tag('div',
         array(
             'id' => 'priority-pie',
             'style' => 'width: 500px; height:200px; padding-left: 75px;
-            margin-left: 900px;',
+            margin-left: 750px;',
         ), pht('Task Priority'));
 
     $box = id(new SprintUIObjectBoxView())
         ->setHeaderText(pht('Points Allocation Report for '.
             $project_name))
+        ->setColor('green')
         ->appendChild($boardpie)
         ->appendChild($taskpie)
         ->appendChild($priority_pie);

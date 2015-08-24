@@ -1,6 +1,6 @@
 <?php
 
-final class TasksTableView {
+final class TasksTableView extends Phobject{
 
   private $tableData;
 
@@ -50,7 +50,7 @@ final class TasksTableView {
 
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Tasks in this Sprint'))
-        ->appendChild($table);
+        ->setTable($table);
 
     return $box;
   }

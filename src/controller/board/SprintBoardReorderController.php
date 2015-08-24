@@ -3,15 +3,9 @@
 final class SprintBoardReorderController
   extends SprintBoardController {
 
-  private $projectID;
-
-  public function willProcessRequest(array $data) {
-    $this->projectID = $data['projectID'];
-  }
-
-  public function processRequest() {
-    $request = $this->getRequest();
-    $viewer = $request->getUser();
+  public function handleRequest(AphrontRequest $request) {
+    $viewer = $request->getViewer();
+    $projectid = $request->getURIData('projectID');
 
     $project = id(new PhabricatorProjectQuery())
       ->setViewer($viewer)
@@ -20,15 +14,13 @@ final class SprintBoardReorderController
           PhabricatorPolicyCapability::CAN_VIEW,
           PhabricatorPolicyCapability::CAN_EDIT,
         ))
-      ->withIDs(array($this->projectID))
+      ->withIDs(array($projectid))
       ->executeOne();
     if (!$project) {
       return new Aphront404Response();
     }
 
     $this->setProject($project);
-
-
     $project_id = $project->getID();
 
     $board_uri = $this->getApplicationURI("board/{$project_id}/");
@@ -102,8 +94,7 @@ final class SprintBoardReorderController
     $list = id(new PHUIObjectItemListView())
       ->setUser($viewer)
       ->setID($list_id)
-      ->setFlush(true)
-      ->setStackable(true);
+      ->setFlush(true);
 
     foreach ($columns as $column) {
       $item = id(new PHUIObjectItemView())
@@ -132,10 +123,14 @@ final class SprintBoardReorderController
         'reorderURI' => $reorder_uri,
       ));
 
+    $note = id(new PHUIInfoView())
+        ->appendChild(pht('Drag and drop columns to reorder them.'))
+        ->setSeverity(PHUIInfoView::SEVERITY_NOTICE);
+
     return $this->newDialog()
       ->setTitle(pht('Reorder Columns'))
       ->setWidth(AphrontDialogView::WIDTH_FORM)
-      ->appendParagraph(pht('Drag and drop columns to reorder them.'))
+      ->appendChild($note)
       ->appendChild($list)
       ->addSubmitButton(pht('Done'));
   }

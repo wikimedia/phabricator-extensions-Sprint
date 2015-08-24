@@ -1,6 +1,6 @@
 <?php
 
-final class SprintListTableView {
+final class SprintListTableView extends Phobject {
 
   private $tableData;
 

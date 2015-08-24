@@ -1,6 +1,6 @@
 <?php
 
-final class SprintValidator {
+final class SprintValidator extends Phobject {
 
   public function checkForSprint($showfields, $project_phid) {
     $show = $showfields($project_phid);

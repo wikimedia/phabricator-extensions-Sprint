@@ -5,7 +5,7 @@
  * @license GPL version 3
  */
 
-final class BurndownDataDate {
+final class BurndownDataDate extends Phobject {
 
   private $date;
   private $tasks_added_today;

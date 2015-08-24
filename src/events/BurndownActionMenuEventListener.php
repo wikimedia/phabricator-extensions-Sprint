@@ -21,11 +21,14 @@ final class BurndownActionMenuEventListener extends PhabricatorEventListener {
 
   private function handleActionsEvent(PhutilEvent $event) {
     $object = $event->getValue('object');
-
+    $enable_phragile = PhabricatorEnv::getEnvConfig('sprint.enable-phragile');
     $actions = null;
     if ($object instanceof PhabricatorProject &&
-      $this->isSprint($object) !== false) {
+      $this->isSprint($object) !== false && $enable_phragile === false) {
       $actions = $this->renderUserItems($event);
+    } else if ($object instanceof PhabricatorProject &&
+        $this->isSprint($object) !== false && $enable_phragile !== false) {
+      $actions = $this->renderOptionItems($event);
     }
 
     $this->addActionMenuItems($event, $actions);
@@ -62,6 +65,33 @@ final class BurndownActionMenuEventListener extends PhabricatorEventListener {
     return array ($burndown, $board);
   }
 
+  private function renderOptionItems(PhutilEvent $event) {
+    if (!$this->canUseApplication($event->getUser())) {
+      return null;
+    }
 
+    $project = $event->getValue('object');
+    $projectid = $project->getId();
 
+    $phragile_uri = 'https://phragile.wmflabs.org/sprints/'.$projectid;
+    $view_uri = '/project/sprint/view/'.$projectid;
+    $board_uri = '/project/sprint/board/'.$projectid;
+
+    $burndown = id(new PhabricatorActionView())
+        ->setIcon('fa-bar-chart-o')
+        ->setName(pht('View Burndown'))
+        ->setHref($view_uri);
+
+    $board = id(new PhabricatorActionView())
+        ->setIcon('fa-columns')
+        ->setName(pht('View Sprint Board'))
+        ->setHref($board_uri);
+
+    $phragile = id(new PhabricatorActionView())
+          ->setIcon('fa-pie-chart')
+          ->setName(pht('View in Phragile'))
+          ->setHref($phragile_uri);
+
+    return array ($burndown, $board, $phragile);
+  }
 }

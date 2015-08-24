@@ -1,3 +1,6 @@
 .phutil_module_cache
 vendor/
 /src/tests/clover.xml
+/src/tests/selenium/.idea/
+/src/tests/selenium/phabricator.sprint/.idea/
+/src/tests/selenium/phabricator.sprint/phabricator.sprint.iml

@@ -1,6 +1,6 @@
 <?php
 
-final class SprintBoardTaskCard {
+final class SprintBoardTaskCard extends Phobject {
 
   private $project;
   private $viewer;

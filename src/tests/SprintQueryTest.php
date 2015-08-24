@@ -8,9 +8,9 @@ final class SprintQueryTest extends SprintTestCase {
 
   public function testRequestSetUser() {
     $r = new AphrontRequest('example.com', '/');
-    $user = $this->generateNewTestUser();
-    $r->setUser($user);
-    $this->assertEquals($user, $r->getUser());
+    $viewer = $this->generateNewTestUser();
+    $r->setUser($viewer);
+    $this->assertEquals($viewer, $r->getUser());
     return $r;
   }
 
@@ -21,8 +21,8 @@ final class SprintQueryTest extends SprintTestCase {
     );
   }
 
-  private function createProject(PhabricatorUser $user) {
-    $project = PhabricatorProject::initializeNewProject($user);
+  private function createProject(PhabricatorUser $viewer) {
+    $project = PhabricatorProject::initializeNewProject($viewer);
     $project->setName('Test Project '.mt_rand());
     return $project;
   }

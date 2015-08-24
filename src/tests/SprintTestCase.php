@@ -189,11 +189,11 @@ abstract class SprintTestCase extends PHPUnit_Framework_TestCase {
 
   protected function generateNewTestUser() {
 
-    $user = id(new PhabricatorUser())
+    $viewer = id(new PhabricatorUser())
         ->getOmnipotentUser();
-    $user->setTimezoneIdentifier('Europe/Berlin');
+    $viewer->setTimezoneIdentifier('Europe/Berlin');
 
-    return $user;
+    return $viewer;
   }
 
   protected function generateNewTestProject() {

@@ -3,15 +3,9 @@
 final class SprintBoardMoveController
   extends SprintBoardController {
 
-  private $id;
-
-  public function willProcessRequest(array $data) {
-    $this->id = $data['id'];
-  }
-
-  public function processRequest() {
-    $request = $this->getRequest();
-    $viewer = $request->getUser();
+  public function handleRequest(AphrontRequest $request) {
+    $viewer = $request->getViewer();
+    $id = $request->getURIData('id');
 
     $column_phid = $request->getStr('columnPHID');
     $object_phid = $request->getStr('objectPHID');
@@ -27,7 +21,7 @@ final class SprintBoardMoveController
           PhabricatorPolicyCapability::CAN_VIEW,
           PhabricatorPolicyCapability::CAN_EDIT,
         ))
-      ->withIDs(array($this->id))
+      ->withIDs(array($id))
       ->executeOne();
     if (!$project) {
       return new Aphront404Response();

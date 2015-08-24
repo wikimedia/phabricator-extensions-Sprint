@@ -1,6 +1,6 @@
 <?php
 
-final class EventTableView {
+final class EventTableView extends Phobject{
   private $project;
   private $viewer;
   private $request;
@@ -66,7 +66,7 @@ final class EventTableView {
         ));
     $box = id(new PHUIObjectBoxView())
         ->setHeaderText(pht('Events related to this sprint'))
-        ->appendChild($table);
+        ->setTable($table);
 
     return $box;
   }

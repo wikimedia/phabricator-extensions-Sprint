@@ -1,6 +1,6 @@
 <?php
 
-final class SprintBoardCardToken {
+final class SprintBoardCardToken extends Phobject {
   private $viewer;
 
   public function setViewer ($viewer) {
