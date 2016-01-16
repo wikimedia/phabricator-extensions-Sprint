@@ -40,7 +40,7 @@ final class SprintBoardColumnDetailController
       new PhabricatorProjectColumnTransactionQuery());
     $timeline->setShouldTerminate(true);
 
-    $title = pht('%s', $column->getDisplayName());
+    $title = $column->getDisplayName();
 
     $header = $this->buildHeaderView($column);
     $actions = $this->buildActionView($column);
@@ -84,7 +84,6 @@ final class SprintBoardColumnDetailController
     $base_uri = '/board/'.$project_id.'/';
 
     $actions = id(new PhabricatorActionListView())
-      ->setObjectURI($this->getApplicationURI($base_uri.'column/'.$id.'/'))
       ->setUser($viewer);
 
     $can_edit = PhabricatorPolicyFilter::hasCapability(
@@ -112,15 +111,6 @@ final class SprintBoardColumnDetailController
       ->setUser($viewer)
       ->setObject($column)
       ->setActionList($actions);
-
-    $descriptions = PhabricatorPolicyQuery::renderPolicyDescriptions(
-      $viewer,
-      $column);
-
-    $properties->addProperty(
-      pht('Editable By'),
-      $descriptions[PhabricatorPolicyCapability::CAN_EDIT]);
-
 
     $limit = $column->getPointLimit();
     $properties->addProperty(

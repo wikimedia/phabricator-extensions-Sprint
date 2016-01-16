@@ -24,7 +24,7 @@ abstract class SprintController extends PhabricatorController {
   }
 
   public function buildApplicationMenu() {
-      return $this->buildSideNavView($this->getUser(),
+      return $this->buildSprintNavView($this->getUser(),
           $this->setApplicationURI(), true)->getMenu();
   }
 
@@ -45,7 +45,7 @@ abstract class SprintController extends PhabricatorController {
   /**
    * @param PhutilURI $uri
    */
-  public function buildSideNavView($viewer, $uri, $for_app = false) {
+  public function buildSprintNavView($viewer, $uri, $for_app = false) {
     $request = $this->getRequest();
     $id = $request->getURIData('id');
     $slug = $request->getURIData('slug');
@@ -130,7 +130,8 @@ abstract class SprintController extends PhabricatorController {
     $picture = $project->getProfileImageURI();
     $name = $project->getName();
     $enable_phragile = PhabricatorEnv::getEnvConfig('sprint.enable-phragile');
-    $phragile_uri = new PhutilURI('https://phragile.wmflabs.org/sprints/'.$id);
+    $phragile_base_uri = PhabricatorEnv::getEnvConfig('sprint.phragile-uri');
+    $phragile_uri = new PhutilURI($phragile_base_uri.$id);
     $columns = id(new PhabricatorProjectColumnQuery())
         ->setViewer($viewer)
         ->withProjectPHIDs(array($project->getPHID()))
@@ -168,10 +169,11 @@ abstract class SprintController extends PhabricatorController {
 
     $nav->addIcon("feed/{$id}/", pht('Feed'), 'fa-newspaper-o', null, null);
     $nav->addIcon("members/{$id}/", pht('Members'), 'fa-group', null, null);
-    $nav->addIcon("details/{$id}/", pht('Edit Details'), 'fa-pencil', null, null);
+    $nav->addIcon("edit/{$id}/", pht('Edit Details'), 'fa-pencil', null, null);
 
     return $nav;
   }
+
   protected function isSprint($object) {
     $validator = new SprintValidator();
     $issprint = call_user_func(array($validator, 'checkForSprint'),
@@ -181,7 +183,7 @@ abstract class SprintController extends PhabricatorController {
 
   public function getErrorBox($e) {
     $error_box = id(new PHUIInfoView())
-        ->setTitle(pht('Burndown could not be rendered for this project'))
+        ->setTitle(pht('Sprint could not be rendered for this project'))
         ->setErrors(array($e->getMessage()));
     return $error_box;
   }

@@ -105,17 +105,17 @@ final class SprintBoardViewController
       $saved = $engine->buildSavedQueryFromRequest($request);
       $engine->saveQuery($saved);
       $filter_form = id(new AphrontFormView())
-          ->setUser($viewer);
+        ->setUser($viewer);
       $engine->buildSearchForm($filter_form, $saved);
       if ($engine->getErrors()) {
         return $this->newDialog()
-            ->setWidth(AphrontDialogView::WIDTH_FULL)
-            ->setTitle(pht('Advanced Filter'))
-            ->appendChild($filter_form->buildLayoutView())
-            ->setErrors($engine->getErrors())
-            ->setSubmitURI($board_uri)
-            ->addSubmitButton(pht('Apply Filter'))
-            ->addCancelButton($board_uri);
+          ->setWidth(AphrontDialogView::WIDTH_FULL)
+          ->setTitle(pht('Advanced Filter'))
+          ->appendChild($filter_form->buildLayoutView())
+          ->setErrors($engine->getErrors())
+          ->setSubmitURI($board_uri)
+          ->addSubmitButton(pht('Apply Filter'))
+          ->addCancelButton($board_uri);
       }
       return id(new AphrontRedirectResponse())->setURI(
         $this->getURIWithState(
@@ -165,10 +165,10 @@ final class SprintBoardViewController
     $task_query = $engine->buildQueryFromSavedQuery($saved);
 
     $tasks = $task_query
-        ->withEdgeLogicPHIDs(
-            PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
-            PhabricatorQueryConstraint::OPERATOR_AND,
-            array($project->getPHID()))
+      ->withEdgeLogicPHIDs(
+        PhabricatorProjectObjectHasProjectEdgeType::EDGECONST,
+        PhabricatorQueryConstraint::OPERATOR_AND,
+        array($project->getPHID()))
       ->setOrder(ManiphestTaskQuery::ORDER_PRIORITY)
       ->setViewer($viewer)
       ->execute();
@@ -247,12 +247,12 @@ final class SprintBoardViewController
       if (!$batch_tasks) {
         $cancel_uri = $this->getURIWithState($board_uri);
         return $this->newDialog()
-            ->setTitle(pht('No Editable Tasks'))
-            ->appendParagraph(
-                pht(
-                    'The selected column contains no visible tasks which you '.
-                    'have permission to edit.'))
-            ->addCancelButton($board_uri);
+          ->setTitle(pht('No Editable Tasks'))
+          ->appendParagraph(
+            pht(
+              'The selected column contains no visible tasks which you '.
+              'have permission to edit.'))
+          ->addCancelButton($board_uri);
       }
 
       $batch_ids = mpull($batch_tasks, 'getID');
@@ -285,7 +285,6 @@ final class SprintBoardViewController
       $this->initSprintBehavior(
           'sprint-boards',
           $behavior_config);
-      $this->addExtraQuickSandConfig(array('boardConfig' => $behavior_config));
     } else {
       $behavior_config = array(
           'boardID' => $board_id,
@@ -297,7 +296,6 @@ final class SprintBoardViewController
       $this->initBehavior(
           'project-boards',
           $behavior_config);
-      $this->addExtraQuickSandConfig(array('boardConfig' => $behavior_config));
     }
 
     $this->handles = ManiphestTaskListView::loadTaskHandles($viewer, $tasks);
@@ -335,18 +333,18 @@ final class SprintBoardViewController
 
       $panel->setHeaderTag($count_tag);
 
-        $cards = id(new PHUIObjectItemListView())
-            ->setUser($viewer)
-            ->setFlush(true)
-            ->setAllowEmptyList(true)
-            ->addSigil('project-column')
-            ->setMetadata(
-                array(
-                    'columnPHID' => $column->getPHID(),
-                    'countTagID' => $tag_id,
-                    'countTagContentID' => $tag_content_id,
-                    'pointLimit' => $column->getPointLimit(),
-                ));
+      $cards = id(new PHUIObjectItemListView())
+        ->setUser($viewer)
+        ->setFlush(true)
+        ->setAllowEmptyList(true)
+        ->addSigil('project-column')
+        ->setMetadata(
+          array(
+            'columnPHID' => $column->getPHID(),
+            'countTagID' => $tag_id,
+            'countTagContentID' => $tag_content_id,
+            'pointLimit' => $column->getPointLimit(),
+          ));
 
       foreach ($column_tasks as $task) {
         $owner = null;
@@ -404,8 +402,8 @@ final class SprintBoardViewController
       ->setPolicyObject($project);
 
     $header_box = id(new PHUIBoxView())
-        ->appendChild($header)
-        ->addClass('project-board-header');
+      ->appendChild($header)
+      ->addClass('project-board-header');
 
     $board_box = id(new PHUIBoxView())
       ->appendChild($board)
@@ -416,7 +414,7 @@ final class SprintBoardViewController
     $nav->appendChild($board_box);
 
     return $this->buildApplicationPage(
-        $nav,
+      $nav,
       array(
         'title' => pht('%s Board', $project->getName()),
         'showFooter' => false,
@@ -605,15 +603,15 @@ final class SprintBoardViewController
     $batch_edit_uri = $request->getRequestURI();
     $batch_edit_uri->setQueryParam('batch', self::BATCH_EDIT_ALL);
     $can_batch_edit = PhabricatorPolicyFilter::hasCapability(
-        $viewer,
-        PhabricatorApplication::getByClass('PhabricatorManiphestApplication'),
-        ManiphestBulkEditCapability::CAPABILITY);
+      $viewer,
+      PhabricatorApplication::getByClass('PhabricatorManiphestApplication'),
+      ManiphestBulkEditCapability::CAPABILITY);
 
     $manage_items[] = id(new PhabricatorActionView())
-        ->setIcon('fa-list-ul')
-        ->setName(pht('Batch Edit Visible Tasks...'))
-        ->setHref($batch_edit_uri)
-        ->setDisabled(!$can_batch_edit);
+      ->setIcon('fa-list-ul')
+      ->setName(pht('Batch Edit Visible Tasks...'))
+      ->setHref($batch_edit_uri)
+      ->setDisabled(!$can_batch_edit);
 
     $manage_menu = id(new PhabricatorActionListView())
         ->setUser($viewer);
@@ -663,15 +661,15 @@ final class SprintBoardViewController
     $batch_edit_uri = $request->getRequestURI();
     $batch_edit_uri->setQueryParam('batch', $column->getID());
     $can_batch_edit = PhabricatorPolicyFilter::hasCapability(
-        $viewer,
-        PhabricatorApplication::getByClass('PhabricatorManiphestApplication'),
-        ManiphestBulkEditCapability::CAPABILITY);
+      $viewer,
+      PhabricatorApplication::getByClass('PhabricatorManiphestApplication'),
+      ManiphestBulkEditCapability::CAPABILITY);
 
     $column_items[] = id(new PhabricatorActionView())
-        ->setIcon('fa-list-ul')
-        ->setName(pht('Batch Edit Tasks...'))
-        ->setHref($batch_edit_uri)
-        ->setDisabled(!$can_batch_edit);
+      ->setIcon('fa-list-ul')
+      ->setName(pht('Batch Edit Tasks...'))
+      ->setHref($batch_edit_uri)
+      ->setDisabled(!$can_batch_edit);
 
     $edit_uri = $this->getApplicationURI(
       'board/'.$this->id.'/column/'.$column->getID().'/');

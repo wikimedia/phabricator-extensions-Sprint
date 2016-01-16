@@ -15,7 +15,7 @@ final class SprintBoardColumnEditController
           PhabricatorPolicyCapability::CAN_VIEW,
           PhabricatorPolicyCapability::CAN_EDIT,
         ))
-      ->withIDs(array($project_id ))
+      ->withIDs(array($project_id))
       ->needImages(true)
       ->executeOne();
 
@@ -148,7 +148,7 @@ final class SprintBoardColumnEditController
     $nav->appendChild($form_box);
 
     return $this->buildApplicationPage(
-        $nav,
+      $nav,
       array(
         'title' => $title,
       ));

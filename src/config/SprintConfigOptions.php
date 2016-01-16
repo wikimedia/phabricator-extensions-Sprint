@@ -99,6 +99,12 @@ final class SprintConfigOptions
                 pht(
                     "Phragile charts are provided by an external application at https://phragile.wmflabs.org".
                     "\n\n.")),
+        $this->newOption('sprint.phragile-uri', 'string', 'https://phragile.wmflabs.org/sprints/')
+            ->setSummary(pht('URI where Phragile is installed.'))
+            ->setDescription(
+                pht(
+                    'Set the URI where Phragile is installed.'))
+            ->addExample('https://phragile.wmflabs.org/sprints/', pht('Valid Setting')),
     );
   }
 

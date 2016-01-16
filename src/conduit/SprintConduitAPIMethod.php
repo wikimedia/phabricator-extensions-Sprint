@@ -21,7 +21,7 @@ abstract class SprintConduitAPIMethod extends ConduitAPIMethod {
     $project_slugs = $project->getSlugs();
     $project_slugs = array_values(mpull($project_slugs, 'getSlug'));
     $issprint = $this->isSprint($project->getPHID());
-    $project_icon = PhabricatorProjectIcon::getAPIName($project->getIcon());
+    $project_icon = substr($project->getIcon(), 3);
 
     $result[$project->getPHID()] = array(
         'id'               => $project->getID(),
@@ -55,7 +55,7 @@ abstract class SprintConduitAPIMethod extends ConduitAPIMethod {
       $project_slugs = $project->getSlugs();
       $project_slugs = array_values(mpull($project_slugs, 'getSlug'));
       $issprint = $this->isSprint($project->getPHID());
-      $project_icon = PhabricatorProjectIcon::getAPIName($project->getIcon());
+      $project_icon = substr($project->getIcon(), 3);
 
       $result[$project->getPHID()] = array(
         'id'               => $project->getID(),

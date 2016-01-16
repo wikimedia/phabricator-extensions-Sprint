@@ -79,11 +79,13 @@ final class SprintQuery extends SprintDAO {
         ->needProjectPHIDs(true)
         ->execute();
     if (empty($tasks)) {
-      $help = pht('To Create a Task, go to the Sprint Board and select the '
+      $message = pht('The project "'.$this->project->getName().'"'
+      .' is not set up for Sprint because it has no tasks'
+      ."\n"
+      .'To Create a Task, go to the Sprint Board and select the '
       .'column header menu');
-      throw new BurndownException("The project \"".$this->project->getName()
-          ."\" is not set up for Sprint because "
-          ."it has no tasks\n", $help);
+      $ex =  new SprintException('No Tasks in Project', $message, true);
+      throw $ex;
     } else {
       return $tasks;
     }
@@ -147,9 +149,12 @@ final class SprintQuery extends SprintDAO {
         $sprint_phids[] = $value->getObjectPHID();
       }
     if (empty($sprint_phids)) {
-      $help = pht('To Create a Sprint, go to /project/create/ and make sure that'
+      $message = pht('There are no Sprints to show yet'
+          ."\n"
+          .'To Create a Sprint, go to /project/create/ and make sure that'
           .' the "Is Sprint" box has been checked');
-      throw new BurndownException("There are no Sprints to show yet\n", $help);
+      $ex = new SprintException('No Sprints', $message, true);
+      throw $ex;
     } else {
       return $sprint_phids;
     }
@@ -284,9 +289,12 @@ final class SprintQuery extends SprintDAO {
       $columns = msort($columns, 'getSequence');
       return $columns;
     } else {
-      $help = pht('To Create a Sprint Board, go to the Project profile page'
+      $message = pht('There is no Sprint Board yet'
+          ."\n"
+          .'To Create a Sprint Board, go to the Project profile page'
           .' and select the Sprint Board icon from the left side bar');
-      throw new BurndownException("There is no Sprint Board yet\n", $help);
+      $ex = new SprintException('No Board', $message);
+      throw $ex;
     }
   }
 

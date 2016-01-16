@@ -124,8 +124,8 @@ final class SprintBoardReorderController
       ));
 
     $note = id(new PHUIInfoView())
-        ->appendChild(pht('Drag and drop columns to reorder them.'))
-        ->setSeverity(PHUIInfoView::SEVERITY_NOTICE);
+      ->appendChild(pht('Drag and drop columns to reorder them.'))
+      ->setSeverity(PHUIInfoView::SEVERITY_NOTICE);
 
     return $this->newDialog()
       ->setTitle(pht('Reorder Columns'))

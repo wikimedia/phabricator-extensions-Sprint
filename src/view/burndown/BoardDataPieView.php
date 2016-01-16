@@ -17,7 +17,7 @@ final class BoardDataPieView extends Phobject{
     $boardpie = phutil_tag('div',
         array(
             'id' => 'c3-board-data-pie',
-            'style' => 'width: 225px; height:200px; padding-left: 30px;
+            'style' => 'width: 265px; height:200px; padding-left: 30px;
                 float: left;',
         ), pht('Board'));
     $taskpie = phutil_tag('div',

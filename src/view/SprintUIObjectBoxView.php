@@ -45,8 +45,8 @@ final class SprintUIObjectBoxView extends AphrontView {
   }
 
   public function addPropertyList(
-      PHUIPropertyListView $property_list,
-      $tab = null) {
+    PHUIPropertyListView $property_list,
+    $tab = null) {
 
     if (!($tab instanceof PHUIListItemView) &&
         ($tab !== null)) {
@@ -69,9 +69,9 @@ final class SprintUIObjectBoxView extends AphrontView {
       if (empty($this->tabs[$key])) {
         $tab->addSigil('phui-object-box-tab');
         $tab->setMetadata(
-            array(
-                'tabKey' => $key,
-            ));
+          array(
+            'tabKey' => $key,
+          ));
 
         if (!$tab->getHref()) {
           $tab->setHref('#');
@@ -109,8 +109,8 @@ final class SprintUIObjectBoxView extends AphrontView {
   public function setFormErrors(array $errors, $title = null) {
     if ($errors) {
       $this->formErrors = id(new PHUIInfoView())
-          ->setTitle($title)
-          ->setErrors($errors);
+        ->setTitle($title)
+        ->setErrors($errors);
     }
     return $this;
   }
@@ -121,8 +121,8 @@ final class SprintUIObjectBoxView extends AphrontView {
     }
     if ($saved) {
       $save = id(new PHUIInfoView())
-          ->setSeverity(PHUIInfoView::SEVERITY_NOTICE)
-          ->appendChild($text);
+        ->setSeverity(PHUIInfoView::SEVERITY_NOTICE)
+        ->appendChild($text);
       $this->formSaved = $save;
     }
     return $this;
@@ -184,19 +184,19 @@ final class SprintUIObjectBoxView extends AphrontView {
   }
 
   public function setValidationException(
-      PhabricatorApplicationTransactionValidationException $ex = null) {
+    PhabricatorApplicationTransactionValidationException $ex = null) {
     $this->validationException = $ex;
     return $this;
   }
 
   public function render() {
-
     require_celerity_resource('phui-object-box-css', 'sprint');
 
     $header = $this->header;
+
     if ($this->headerText) {
       $header = id(new PHUIHeaderView())
-          ->setHeader($this->headerText);
+        ->setHeader($this->headerText);
     }
 
     $showhide = null;
@@ -204,6 +204,7 @@ final class SprintUIObjectBoxView extends AphrontView {
       if (!$header) {
         $header = id(new PHUIHeaderView());
       }
+
       Javelin::initBehavior('phabricator-reveal-content');
 
       $hide_action_id = celerity_generate_unique_node_id();
@@ -213,43 +214,43 @@ final class SprintUIObjectBoxView extends AphrontView {
       $hide_style = ($this->showHideOpen ? 'display: none;': null);
       $show_style = ($this->showHideOpen ? null : 'display: none;');
       $hide_action = id(new PHUIButtonView())
-          ->setTag('a')
-          ->addSigil('reveal-content')
-          ->setID($hide_action_id)
-          ->setStyle($hide_style)
-          ->setHref($this->showHideHref)
-          ->setMetaData(
-              array(
-                  'hideIDs' => array($hide_action_id),
-                  'showIDs' => array($content_id, $show_action_id),
-              ))
-          ->setText($this->showAction);
+        ->setTag('a')
+        ->addSigil('reveal-content')
+        ->setID($hide_action_id)
+        ->setStyle($hide_style)
+        ->setHref($this->showHideHref)
+        ->setMetaData(
+          array(
+            'hideIDs' => array($hide_action_id),
+            'showIDs' => array($content_id, $show_action_id),
+          ))
+        ->setText($this->showAction);
 
       $show_action = id(new PHUIButtonView())
-          ->setTag('a')
-          ->addSigil('reveal-content')
-          ->setStyle($show_style)
-          ->setHref('#')
-          ->setID($show_action_id)
-          ->setMetaData(
-              array(
-                  'hideIDs' => array($content_id, $show_action_id),
-                  'showIDs' => array($hide_action_id),
-              ))
-          ->setText($this->hideAction);
+        ->setTag('a')
+        ->addSigil('reveal-content')
+        ->setStyle($show_style)
+        ->setHref('#')
+        ->setID($show_action_id)
+        ->setMetaData(
+          array(
+            'hideIDs' => array($content_id, $show_action_id),
+            'showIDs' => array($hide_action_id),
+          ))
+        ->setText($this->hideAction);
 
       $header->addActionLink($hide_action);
       $header->addActionLink($show_action);
 
       $showhide = array(
-          phutil_tag(
-              'div',
-              array(
-                  'class' => 'phui-object-box-hidden-content',
-                  'id' => $content_id,
-                  'style' => $show_style,
-              ),
-              $this->showHideContent),
+        phutil_tag(
+          'div',
+          array(
+            'class' => 'phui-object-box-hidden-content',
+            'id' => $content_id,
+            'style' => $show_style,
+          ),
+          $this->showHideContent),
       );
     }
 
@@ -257,22 +258,22 @@ final class SprintUIObjectBoxView extends AphrontView {
     if ($this->actionListID) {
       $icon_id = celerity_generate_unique_node_id();
       $icon = id(new PHUIIconView())
-          ->setIconFont('fa-bars');
+        ->setIconFont('fa-bars');
       $meta = array(
-          'map' => array(
-              $this->actionListID => 'phabricator-action-list-toggle',
-              $icon_id => 'phuix-dropdown-open',
-          ),
+        'map' => array(
+          $this->actionListID => 'phabricator-action-list-toggle',
+          $icon_id => 'phuix-dropdown-open',
+        ),
       );
       $mobile_menu = id(new PHUIButtonView())
-          ->setTag('a')
-          ->setText(pht('Actions'))
-          ->setHref('#')
-          ->setIcon($icon)
-          ->addClass('phui-mobile-menu')
-          ->setID($icon_id)
-          ->addSigil('jx-toggle-class')
-          ->setMetadata($meta);
+        ->setTag('a')
+        ->setText(pht('Actions'))
+        ->setHref('#')
+        ->setIcon($icon)
+        ->addClass('phui-mobile-menu')
+        ->setID($icon_id)
+        ->addSigil('jx-toggle-class')
+        ->setMetadata($meta);
       $header->addActionLink($mobile_menu);
     }
 
@@ -285,7 +286,7 @@ final class SprintUIObjectBoxView extends AphrontView {
       }
       if ($messages) {
         $exception_errors = id(new PHUIInfoView())
-            ->setErrors($messages);
+          ->setErrors($messages);
       }
     }
 
@@ -332,12 +333,12 @@ final class SprintUIObjectBoxView extends AphrontView {
         }
 
         $tab_lists[] = phutil_tag(
-            'div',
-            array(
-                'style' => $style,
-                'id' => $tab_id,
-            ),
-            $group);
+          'div',
+          array(
+            'style' => $style,
+            'id' => $tab_id,
+          ),
+          $group);
       } else {
         if ($this->tabs) {
           $group->addClass('phui-property-group-noninitial');
@@ -349,7 +350,7 @@ final class SprintUIObjectBoxView extends AphrontView {
     $tabs = null;
     if ($this->tabs) {
       $tabs = id(new PHUIListView())
-          ->setType(PHUIListView::NAVBAR_LIST);
+        ->setType(PHUIListView::NAVBAR_LIST);
       foreach ($this->tabs as $tab) {
         $tabs->addMenuItem($tab);
       }
@@ -358,29 +359,29 @@ final class SprintUIObjectBoxView extends AphrontView {
     }
 
     $content = id(new PHUIBoxView())
-        ->appendChild(
-            array(
-                ($this->showHideOpen == false ? $this->anchor : null),
-                $header,
-                $this->infoView,
-                $this->formErrors,
-                $this->formSaved,
-                $exception_errors,
-                $this->form,
-                $tabs,
-                $tab_lists,
-                $showhide,
-                ($this->showHideOpen == true ? $this->anchor : null),
-                $property_lists,
-                $this->table,
-                $this->renderChildren(),
-            ))
-        ->setBorder(true)
-        ->setID($this->id)
-        ->addMargin(PHUI::MARGIN_LARGE_TOP)
-        ->addMargin(PHUI::MARGIN_LARGE_LEFT)
-        ->addMargin(PHUI::MARGIN_LARGE_RIGHT)
-        ->addClass('sprintui-object-box');
+      ->appendChild(
+        array(
+          ($this->showHideOpen == false ? $this->anchor : null),
+          $header,
+          $this->infoView,
+          $this->formErrors,
+          $this->formSaved,
+          $exception_errors,
+          $this->form,
+          $tabs,
+          $tab_lists,
+          $showhide,
+          ($this->showHideOpen == true ? $this->anchor : null),
+          $property_lists,
+          $this->table,
+          $this->renderChildren(),
+        ))
+      ->setBorder(true)
+      ->setID($this->id)
+      ->addMargin(PHUI::MARGIN_LARGE_TOP)
+      ->addMargin(PHUI::MARGIN_LARGE_LEFT)
+      ->addMargin(PHUI::MARGIN_LARGE_RIGHT)
+      ->addClass('sprintui-object-box');
 
     if ($this->color) {
       $content->addClass('phui-object-box-'.$this->color);
@@ -393,9 +394,9 @@ final class SprintUIObjectBoxView extends AphrontView {
     if ($this->tabs) {
       $content->addSigil('phui-object-box');
       $content->setMetadata(
-          array(
-              'tabMap' => $tab_map,
-          ));
+        array(
+          'tabMap' => $tab_map,
+        ));
     }
 
     if ($this->flush) {

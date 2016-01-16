@@ -72,8 +72,8 @@ final class BurndownActionMenuEventListener extends PhabricatorEventListener {
 
     $project = $event->getValue('object');
     $projectid = $project->getId();
-
-    $phragile_uri = 'https://phragile.wmflabs.org/sprints/'.$projectid;
+    $phragile_base_uri = PhabricatorEnv::getEnvConfig('sprint.phragile-uri');
+    $phragile_uri = $phragile_base_uri.$projectid;
     $view_uri = '/project/sprint/view/'.$projectid;
     $board_uri = '/project/sprint/board/'.$projectid;
 

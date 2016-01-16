@@ -72,8 +72,8 @@ final class SprintApplication extends PhabricatorApplication {
             // all routes following point to default controllers
               'archive/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectArchiveController',
-              'details/(?P<id>[1-9]\d*)/'
-              => 'PhabricatorProjectEditDetailsController',
+              $this->getEditRoutePattern('edit/')
+              => 'PhabricatorProjectEditController',
               'feed/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectFeedController',
               'icon/(?P<id>[1-9]\d*)/'
@@ -82,9 +82,13 @@ final class SprintApplication extends PhabricatorApplication {
               => 'PhabricatorProjectMembersEditController',
               'members/(?P<id>[1-9]\d*)/remove/'
               => 'PhabricatorProjectMembersRemoveController',
+              'milestones/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectMilestonesController',
               'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
               'picture/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectEditPictureController',
+              'subprojects/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectSubprojectsController',
               'update/(?P<id>[1-9]\d*)/(?P<action>[^/]+)/'
               => 'PhabricatorProjectUpdateController',
           ),
@@ -133,13 +137,19 @@ final class SprintApplication extends PhabricatorApplication {
               => 'PhabricatorProjectFeedController',
               'icon/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectEditIconController',
+              'lock/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectLockController',
               'members/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectMembersEditController',
               'members/(?P<id>[1-9]\d*)/remove/'
               => 'PhabricatorProjectMembersRemoveController',
               'move/(?P<id>[1-9]\d*)/' => 'SprintBoardMoveController',
+              'milestones/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectMilestonesController',
               'picture/(?P<id>[1-9]\d*)/'
               => 'PhabricatorProjectEditPictureController',
+              'subprojects/(?P<id>[1-9]\d*)/'
+              => 'PhabricatorProjectSubprojectsController',
               'update/(?P<id>[1-9]\d*)/(?P<action>[^/]+)/'
               => 'PhabricatorProjectUpdateController',
           ),

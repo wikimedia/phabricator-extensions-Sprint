@@ -1,7 +1,7 @@
 <?php
 
 final class SprintProjectProfileController
-  extends SprintController {
+  extends SprintProjectController {
 
   public function shouldAllowPublic() {
     return true;
@@ -10,27 +10,13 @@ final class SprintProjectProfileController
   public function handleRequest(AphrontRequest $request) {
     $viewer = $request->getViewer();
 
-    $query = id(new PhabricatorProjectQuery())
-      ->setViewer($viewer)
-      ->needMembers(true)
-      ->needWatchers(true)
-      ->needImages(true)
-      ->needSlugs(true);
-    $id = $request->getURIData('id');
-    $slug = $request->getURIData('slug');
-    if ($slug) {
-      $query->withSlugs(array($slug));
-    } else {
-      $query->withIDs(array($id));
+    $response = $this->loadProject();
+    if ($response) {
+      return $response;
     }
-    $project = $query->executeOne();
-    if (!$project) {
-      return new Aphront404Response();
-    }
-    if ($slug && $slug != $project->getPrimarySlug()) {
-      return id(new AphrontRedirectResponse())
-        ->setURI('/tag/'.$project->getPrimarySlug().'/');
-    }
+
+    $project = $this->getProject();
+    $id = $project->getID();
 
     $picture = $project->getProfileImageURI();
 
@@ -60,15 +46,15 @@ final class SprintProjectProfileController
 
     $nav = $this->buildIconNavView($project);
     $nav->selectFilter("profile/{$id}/");
-    $nav->appendChild($object_box);
-    $nav->appendChild($timeline);
+    $crumbs = $this->buildApplicationCrumbs();
 
-    return $this->buildApplicationPage(
-        $nav,
-      array(
-        'title' => $project->getName(),
-        'pageObjects' => array($project->getPHID()),
-      ));
+    return $this->newPage()
+        ->setNavigation($nav)
+        ->setCrumbs($crumbs)
+        ->setTitle($project->getName())
+        ->setPageObjectPHIDs(array($project->getPHID()))
+        ->appendChild($object_box)
+        ->appendChild($timeline);
   }
 
   private function buildActionListView(PhabricatorProject $project) {
@@ -79,8 +65,7 @@ final class SprintProjectProfileController
 
     $view = id(new PhabricatorActionListView())
       ->setUser($viewer)
-      ->setObject($project)
-      ->setObjectURI($request->getRequestURI());
+      ->setObject($project);
 
     $can_edit = PhabricatorPolicyFilter::hasCapability(
       $viewer,
@@ -91,7 +76,7 @@ final class SprintProjectProfileController
         id(new PhabricatorActionView())
             ->setName(pht('Edit Details'))
             ->setIcon('fa-pencil')
-            ->setHref($this->getApplicationURI("details/{$id}/")));
+            ->setHref($this->getApplicationURI("edit/{$id}/")));
 
     $view->addAction(
         id(new PhabricatorActionView())
@@ -216,6 +201,4 @@ final class SprintProjectProfileController
 
     return $view;
   }
-
-
 }
