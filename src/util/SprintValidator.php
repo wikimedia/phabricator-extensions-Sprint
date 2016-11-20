@@ -3,7 +3,7 @@
 final class SprintValidator extends Phobject {
 
   public function checkForSprint($showfields, $project_phid) {
-    $show = $showfields($project_phid);
+    $show = call_user_func(array($showfields[0],$showfields[1]),$project_phid);
     if ($show == false) {
       return false;
     } else {
