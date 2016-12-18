@@ -12,8 +12,8 @@ final class SprintConstants {
   const TYPE_REVIEW_STATUS_COLUMN = 'Review';
   const TYPE_DOING_STATUS_COLUMN = 'Doing';
   const TYPE_BACKLOG_STATUS_COLUMN = 'Backlog';
-  const PANEL_BURNDOWN = 'project.sprint';
-  const PANEL_PHRAGILE = 'project.phragile';
+  const ITEM_BURNDOWN = 'project.sprint';
+  const ITEM_PHRAGILE = 'project.phragile';
 
 
 }

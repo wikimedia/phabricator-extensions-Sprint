@@ -1,11 +1,11 @@
 <?php
 
-final class SprintProjectProfilePanel
-    extends PhabricatorProfilePanel {
+final class SprintProjectProfileMenuItem
+    extends PhabricatorProfileMenuItem {
 
-  const PANELKEY = 'project.sprint';
+  const MENUITEMKEY = 'project.sprint';
 
-  public function getPanelTypeName() {
+  public function getMenuItemTypeName() {
     return pht('Project Burndown');
   }
 
@@ -18,8 +18,8 @@ final class SprintProjectProfilePanel
   }
 
   public function getDisplayName(
-      PhabricatorProfilePanelConfiguration $config) {
-    $name = $config->getPanelProperty('name');
+      PhabricatorProfileMenuItemConfiguration $config) {
+    $name = $config->getMenuItemProperty('name');
 
     if (strlen($name)) {
       return $name;
@@ -29,18 +29,18 @@ final class SprintProjectProfilePanel
   }
 
   public function buildEditEngineFields(
-      PhabricatorProfilePanelConfiguration $config) {
+      PhabricatorProfileMenuItemConfiguration $config) {
     return array(
         id(new PhabricatorTextEditField())
             ->setKey('name')
             ->setLabel(pht('Name'))
             ->setPlaceholder($this->getDefaultName())
-            ->setValue($config->getPanelProperty('name')),
+            ->setValue($config->getMenuItemProperty('name')),
     );
   }
 
   protected function newNavigationMenuItems(
-      PhabricatorProfilePanelConfiguration $config) {
+      PhabricatorProfileMenuItemConfiguration $config) {
 
     $project = $config->getProfileObject();
 

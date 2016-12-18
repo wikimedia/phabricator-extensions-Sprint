@@ -72,7 +72,7 @@ final class SprintProjectProfileController
       ->setUserPHIDs($project->getWatcherPHIDs());
 
     $nav = $this->getProfileMenu();
-    $nav->selectFilter(PhabricatorProject::PANEL_PROFILE);
+    $nav->selectFilter(PhabricatorProject::ITEM_PROFILE);
 
     $stories = id(new PhabricatorFeedQuery())
       ->setViewer($viewer)

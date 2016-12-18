@@ -13,7 +13,7 @@ final class SprintDataViewController extends SprintController {
       if ($project) {
         $viewer = $this->getViewer();
 
-        $engine = id(new SprintProjectProfilePanelEngine())
+        $engine = id(new SprintProjectProfileMenuEngine())
             ->setViewer($viewer)
             ->setProfileObject($project);
 
