@@ -1,5 +1,11 @@
 /**
  * @provides javelin-behavior-c3-chart
+<<<<<<< HEAD
+ * @requires javelin-behavior
+ *           javelin-dom
+ *           javelin-vector
+=======
+>>>>>>> upstream/master
  */
 
 JX.behavior('c3-chart', function(config) {

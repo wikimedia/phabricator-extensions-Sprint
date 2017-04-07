@@ -1,4 +1,4 @@
-phabricator-sprint
+phabricator-extensions-Sprint
 ==================
 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/christopher-johnson/phabricator-extensions-Sprint/?branch=master)
@@ -23,6 +23,7 @@ Only tasks in Sprints have "Story Points".
 
 ![Alt text](rsrc/images/Screenshot-1.png?raw=true "Sprint Extension Burndown View")
 
+=======
 **INSTALLATION**
 
 Requirements: PHP: You need PHP 5.4 or newer.
