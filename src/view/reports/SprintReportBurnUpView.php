@@ -32,7 +32,7 @@ final class SprintReportBurnUpView extends SprintView {
   private function getXactionData($project_phid) {
      $query = id(new SprintQuery())
         ->setPHID($project_phid);
-      $data = $query->getXactionData(ManiphestTransaction::TYPE_STATUS);
+      $data = $query->getXactionData(ManiphestTaskStatusTransaction::TRANSACTIONTYPE);
     return $data;
   }
 
