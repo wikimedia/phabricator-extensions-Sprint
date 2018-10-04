@@ -69,14 +69,14 @@ final class SprintListDataProvider {
         phutil_tag(
         'a',
         array(
-            'href' => '/project/sprint/profile/'.$project_id,
+            'href' => '/project/sprint/profile/'.$project_id .'/',
             'style' => 'font-weight:bold',
         ),
             $project_name),
         phutil_tag(
             'a',
             array(
-                'href'  => '/project/sprint/view/'.$project_id,
+                'href'  => '/project/sprint/view/'.$project_id . '/',
              ),
             $this->getEditProjectDetailsIcon()),
         $start,
