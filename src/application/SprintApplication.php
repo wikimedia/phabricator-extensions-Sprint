@@ -56,13 +56,15 @@ final class SprintApplication extends PhabricatorApplication {
         ),
         ManiphestDefaultEditCapability::CAPABILITY => array(
             'caption' => pht('Default edit policy for newly created tasks.'),
-        ),
-        ManiphestEditStatusCapability::CAPABILITY => array(),
+        )
+        /*
+        ,
         ManiphestEditAssignCapability::CAPABILITY => array(),
         ManiphestEditPoliciesCapability::CAPABILITY => array(),
         ManiphestEditPriorityCapability::CAPABILITY => array(),
         ManiphestEditProjectsCapability::CAPABILITY => array(),
         ManiphestBulkEditCapability::CAPABILITY => array(),
+        */
     );
   }
 }
