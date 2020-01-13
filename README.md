@@ -47,5 +47,8 @@ To migrate story points to maniphest.points, see <https://secure.phabricator.com
 
 Report issues by creating a task here:
 
--  https://phabricator.wikimedia.org/maniphest/task/create/
--  and then add the phabricator-sprint-extension project.
+- https://phabricator.wikimedia.org/maniphest/task/create/?project=phabricator-sprint-extension
+
+Current issues:
+
+- https://phabricator.wikimedia.org/project/board/927/
